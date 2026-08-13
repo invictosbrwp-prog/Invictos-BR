@@ -1,5 +1,5 @@
 /**
- * Sistema Clash of Clans -> AppSheet (Versão Completa com Histórico por Temporada e Pontuação)
+ * Sistema Clash of Clans -> AppSheet (Versão Completa com Fotos de CV e Ataques Detalhados)
  */
 
 function getOrCreateSheet(ss, sheetName) {
@@ -16,11 +16,6 @@ function getThImageUrl(level) {
 function formatarDataCoC(strData) {
   if (!strData || strData.length < 15) return "";
   return strData.substring(0, 4) + "-" + strData.substring(4, 6) + "-" + strData.substring(6, 8) + " " + strData.substring(9, 11) + ":" + strData.substring(11, 13) + " UTC";
-}
-
-function obterTemporada(strData) {
-  if (!strData || strData.length < 6) return "";
-  return strData.substring(0, 4) + "-" + strData.substring(4, 6); // Ex: "2026-08"
 }
 
 function atualizarDadosGeraisAppSheet() {
@@ -56,9 +51,9 @@ function atualizarDadosGeraisAppSheet() {
     var clanJson = JSON.parse(clanResponse.getContentText());
     var warJson = JSON.parse(warResponse.getContentText());
 
-    // ==================== 1. ABA 'AtaquesEDefensas' (Resumo Atual) ====================
+    // ==================== 1. ABA 'AtaquesEDefensas' ====================
     var adSheet = getOrCreateSheet(ss, "AtaquesEDefensas");
-    var adHeaders = ["Foto CV", "Membro", "CV", "Ataques", "Estrelas (1º | 2º)", "Destruição (1º | 2º)", "Defesas", "Heroico", "Pontos Atq", "Pontos Def"];
+    var adHeaders = ["Foto CV", "Membro", "CV", "Ataques", "Estrelas (1º | 2º)", "Destruição (1º | 2º)", "Defesas", "Heroico"];
     adSheet.clearContents();
     adSheet.getRange(1, 1, 1, adHeaders.length).setValues([adHeaders]);
 
@@ -68,137 +63,32 @@ function atualizarDadosGeraisAppSheet() {
     evSheet.clearContents();
     evSheet.getRange(1, 1, 1, evHeaders.length).setValues([evHeaders]);
 
-    // ==================== 3. ABA 'HistoricoGuerras' (Histórico e Temporadas) ====================
-    var histSheet = getOrCreateSheet(ss, "HistoricoGuerras");
-    var histHeaders = ["ID Guerra", "Temporada", "Data da Guerra", "Membro", "CV", "Tipo", "Detalhes / Alvo", "Estrelas", "Destruição", "Heroico", "Pontos"];
-    
-    if (histSheet.getLastRow() === 0) {
-      histSheet.getRange(1, 1, 1, histHeaders.length).setValues([histHeaders]);
-    }
-
     if (warJson && warJson.state !== "notInWar") {
-      var warId = warJson.endTime || warJson.preparationStartTime || "unknown";
-      var temporada = obterTemporada(warJson.endTime);
-      var dataGuerraStr = formatarDataCoC(warJson.endTime);
-
       var warMembers = warJson.clan.members || [];
       var oponenteMembers = warJson.opponent ? (warJson.opponent.members || []) : [];
 
-      // Mapear defesas recebidas pelos membros
-      var defesasRecebidasPorMembro = {};
-      oponenteMembers.forEach(function(op) {
-        if (op.attacks) {
-          op.attacks.forEach(function(atk) {
-            var defTag = atk.defenderTag;
-            if (!defesasRecebidasPorMembro[defTag]) {
-              defesasRecebidasPorMembro[defTag] = [];
-            }
-            defesasRecebidasPorMembro[defTag].push(atk);
-          });
-        }
-      });
-
+      // Preencher Ataques e Defesas dos Membros
       var linhasAD = [];
-      var novosRegistrosHistorico = [];
-
       warMembers.forEach(function(wm) {
         var fotoCv = getThImageUrl(wm.townhallLevel || 0);
         var ataques = wm.attacks || [];
         var ataquesOrdenados = ataques.sort(function(a, b) { return a.order - b.order; });
         
-        var atq1 = ataquesOrdenados[0] || null;
-        var atq2 = ataquesOrdenados[1] || null;
+        var atq1 = ataquesOrdenados[0] || { stars: 0, destructionPercentage: 0 };
+        var atq2 = ataquesOrdenados[1] || { stars: 0, destructionPercentage: 0 };
 
-        var qtdAtqFeitos = ataques.length;
+        // Descrição heroica simples baseada em propriedade da API ou diferença de CV
+        var ehHeroico = wm.heroicAttack ? "Sim" : "Não";
 
-        // --- CÁLCULO DE PONTOS DE ATAQUE ---
-        var ptsAtq1 = 0;
-        if (atq1) {
-          if (atq1.stars === 3) ptsAtq1 = 10;
-          else if (atq1.stars === 2) ptsAtq1 = 6;
-          else if (atq1.stars === 1) ptsAtq1 = 3;
-          else ptsAtq1 = 0; // 0 estrelas
-
-          if (atq1.heroicAttack || wm.heroicAttack) ptsAtq1 += 5; // Bônus heróico
-        }
-
-        var ptsAtq2 = 0;
-        if (atq2) {
-          if (atq2.stars === 3) ptsAtq2 = 10;
-          else if (atq2.stars === 2) ptsAtq2 = 6;
-          else if (atq2.stars === 1) ptsAtq2 = 3;
-          else ptsAtq2 = 0;
-
-          if (atq2.heroicAttack) ptsAtq2 += 5;
-        }
-
-        // Penalidade se a guerra terminou e não atacou (-20 pts)
-        var penalidadeNaoAtacou = 0;
-        if (warJson.state === "warEnded" && qtdAtqFeitos === 0) {
-          penalidadeNaoAtacou = -20;
-        }
-
-        var pontosAtqTotal = ptsAtq1 + ptsAtq2 + penalidadeNaoAtacou;
-
-        // --- CÁLCULO DE PONTOS DE DEFESA ---
-        var defesasDoMembro = defesasRecebidasPorMembro[wm.tag] || [];
-        var pontosDefTotal = 0;
-
-        if (defesasDoMembro.length === 0) {
-          pontosDefTotal += 7; // Não foi atacado
-        } else {
-          defesasDoMembro.forEach(function(def) {
-            var starsDef = def.stars || 0;
-            var ptsDef = 0;
-            if (starsDef === 0) ptsDef = 10; // Defendeu o ataque
-            else if (starsDef === 1) ptsDef = 7;
-            else if (starsDef === 2) ptsDef = 5;
-            else if (starsDef === 3) ptsDef = 0;
-
-            if (def.heroicAttack) ptsDef += 5; // Defesa heróica
-            pontosDefTotal += ptsDef;
-          });
-        }
-
-        // --- REGISTRAR NO HISTÓRICO ---
-        if (atq1) {
-          var nomeAlvo1 = "Alvo";
-          oponenteMembers.forEach(function(op) {
-            if (op.mapPosition === atq1.defenderTag || op.tag === atq1.defenderTag) nomeAlvo1 = op.name;
-          });
-          novosRegistrosHistorico.push([
-            warId, temporada, dataGuerraStr, wm.name, wm.townhallLevel || 0, "Ataque 1", nomeAlvo1, atq1.stars, (atq1.destructionPercentage || 0) + "%", atq1.heroicAttack ? "Sim" : "Não", ptsAtq1
-          ]);
-        }
-
-        if (atq2) {
-          var nomeAlvo2 = "Alvo";
-          oponenteMembers.forEach(function(op) {
-            if (op.mapPosition === atq2.defenderTag || op.tag === atq2.defenderTag) nomeAlvo2 = op.name;
-          });
-          novosRegistrosHistorico.push([
-            warId, temporada, dataGuerraStr, wm.name, wm.townhallLevel || 0, "Ataque 2", nomeAlvo2, atq2.stars, (atq2.destructionPercentage || 0) + "%", atq2.heroicAttack ? "Sim" : "Não", ptsAtq2
-          ]);
-        }
-
-        if (warJson.state === "warEnded" && qtdAtqFeitos === 0) {
-          novosRegistrosHistorico.push([
-            warId, temporada, dataGuerraStr, wm.name, wm.townhallLevel || 0, "Não Atacou", "-", 0, "0%", "Não", -20
-          ]);
-        }
-
-        // Linha para Aba Principal (AtaquesEDefensas)
         linhasAD.push([
           fotoCv,
           wm.name,
           wm.townhallLevel || 0,
-          qtdAtqFeitos + "/2",
-          (atq1 ? atq1.stars : 0) + " | " + (atq2 ? atq2.stars : 0),
-          (atq1 ? atq1.destructionPercentage : 0) + "% | " + (atq2 ? atq2.destructionPercentage : 0) + "%",
-          defesasDoMembro.length + " defesas",
-          wm.heroicAttack ? "Sim" : "Não",
-          pontosAtqTotal,
-          pontosDefTotal
+          ataques.length + "/2",
+          atq1.stars + " | " + atq2.stars,
+          atq1.destructionPercentage + "% | " + atq2.destructionPercentage + "%",
+          (wm.opponentAttacks || 0) + " defesas",
+          ehHeroico
         ]);
       });
 
@@ -206,31 +96,12 @@ function atualizarDadosGeraisAppSheet() {
         adSheet.getRange(2, 1, linhasAD.length, adHeaders.length).setValues(linhasAD);
       }
 
-      // Atualizar / Inserir no Histórico (Evitando duplicar a mesma guerra)
-      if (novosRegistrosHistorico.length > 0) {
-        if (histSheet.getLastRow() > 1) {
-          var rangeCompleto = histSheet.getRange(2, 1, histSheet.getLastRow() - 1, histHeaders.length);
-          var valoresCompletos = rangeCompleto.getValues();
-          var valoresFiltrados = valoresCompletos.filter(function(row) {
-            return row[0] !== warId; // Remove dados antigos desta mesma guerra para atualizar sem duplicar
-          });
-          
-          histSheet.clearContents();
-          histSheet.getRange(1, 1, 1, histHeaders.length).setValues([histHeaders]);
-          if (valoresFiltrados.length > 0) {
-            histSheet.getRange(2, 1, valoresFiltrados.length, histHeaders.length).setValues(valoresFiltrados);
-          }
-        }
-
-        var proximaLinha = histSheet.getLastRow() + 1;
-        histSheet.getRange(proximaLinha, 1, novosRegistrosHistorico.length, histHeaders.length).setValues(novosRegistrosHistorico);
-      }
-
-      // ==================== 4. Eventos da Guerra ====================
+      // Preencher Eventos da Guerra (Ordenados do mais recente para o último)
       var todosAtaques = [];
       warMembers.forEach(function(m) {
         if (m.attacks) {
           m.attacks.forEach(function(a) {
+            // Descobrir o nome do alvo defendido no oponente
             var nomeAlvo = "Alvo #" + (a.defenderTag || "");
             oponenteMembers.forEach(function(op) {
               if (op.mapPosition === a.defenderTag || op.tag === a.defenderTag) {
@@ -251,6 +122,7 @@ function atualizarDadosGeraisAppSheet() {
         }
       });
 
+      // Ordenar do mais recente
       todosAtaques.sort(function(a, b) {
         return b.timeKey.localeCompare(a.timeKey);
       });
@@ -264,7 +136,7 @@ function atualizarDadosGeraisAppSheet() {
       }
     }
 
-    Logger.log("Atualização de Histórico e Pontuação concluída com sucesso!");
+    Logger.log("Atualização de Eventos e Ataques/Defesas concluída com sucesso!");
 
   } catch (e) {
     Logger.log("Erro na execução: " + e.toString());
@@ -293,8 +165,7 @@ function doGet(e) {
 
   var responseData = {
     ataquesEDefensas: sheetToObjects("AtaquesEDefensas"),
-    eventosDaGuerra: sheetToObjects("EventosDaGuerra"),
-    historicoGuerras: sheetToObjects("HistoricoGuerras")
+    eventosDaGuerra: sheetToObjects("EventosDaGuerra")
   };
 
   var callback = e ? e.parameter.callback : null;
