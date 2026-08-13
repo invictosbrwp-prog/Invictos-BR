@@ -1,6 +1,6 @@
 /**
  * Sistema Clash of Clans -> AppSheet
- * Sincronização do Clã, Membros, Guerra Atual, Histórico de Temporadas e Ranking
+ * Sincronização do Clã, Membros e Guerra Atual (Simplificado)
  */
 
 function getOrCreateSheet(ss, sheetName) {
@@ -120,7 +120,6 @@ function atualizarDadosGeraisAppSheet() {
     var timeZone = ss.getSpreadsheetTimeZone();
     var now = new Date();
     var dataFormatada = Utilities.formatDate(now, timeZone, "yyyy-MM-dd HH:mm:ss");
-    var temporadaAtual = Utilities.formatDate(now, timeZone, "yyyy-MM");
 
     // ==================== 1. ABA 'Clan' ====================
     var responseClan = UrlFetchApp.fetch(clanUrl, options);
@@ -198,7 +197,6 @@ function atualizarDadosGeraisAppSheet() {
 
     var responses = UrlFetchApp.fetchAll(requests);
     var newMemberRows = [];
-    var membrosDict = {};
 
     for (var i = 0; i < members.length; i++) {
       var m = members[i];
@@ -215,14 +213,6 @@ function atualizarDadosGeraisAppSheet() {
         thLevel,
         m.trophies
       ]);
-
-      membrosDict[m.tag] = {
-        fotoCv: getThImageUrl(thLevel),
-        nomeJogo: m.name,
-        cargo: traduzirCargo(m.role),
-        nivelCv: thLevel,
-        trofeus: m.trophies
-      };
     }
 
     membersSheet.clearContents();
@@ -231,64 +221,7 @@ function atualizarDadosGeraisAppSheet() {
       membersSheet.getRange(2, 1, newMemberRows.length, memberHeaders.length).setValues(newMemberRows);
     }
 
-    // ==================== 3. ABA 'Jogadores' e 'JogadoresDetalhados' ====================
-    var jogadoresSheet = getOrCreateSheet(ss, "Jogadores");
-    if (jogadoresSheet.getLastRow() === 0) {
-      jogadoresSheet.getRange(1, 1, 1, 4).setValues([["Tag", "NomeJogador", "Telefone", "Observacoes"]]);
-    }
-
-    var lastRowJogadores = jogadoresSheet.getLastRow();
-    var jogadoresMap = {};
-
-    if (lastRowJogadores > 1) {
-      var dataJogadores = jogadoresSheet.getRange(2, 1, lastRowJogadores - 1, 4).getValues();
-      dataJogadores.forEach(function(row) {
-        var tag = row[0] ? row[0].toString().trim() : "";
-        var nomePessoa = row[1] ? row[1].toString().trim() : "";
-        var telefone = row[2] ? row[2].toString().trim() : "";
-        var obs = row[3] ? row[3].toString().trim() : "";
-
-        if (tag) {
-          jogadoresMap[tag] = {
-            nomeJogador: nomePessoa,
-            telefone: telefone,
-            observacoes: obs
-          };
-        }
-      });
-    }
-
-    var jogadoresDetSheet = getOrCreateSheet(ss, "JogadoresDetalhados");
-    var jogDetHeaders = [
-      "Tag", "NomeJogador", "Telefone", "NomeJogo", "Cargo", "NivelCV", "Trofeus", "FotoCV", "Observacoes", "UltimaAtualizacao"
-    ];
-    jogadoresDetSheet.clearContents();
-    jogadoresDetSheet.getRange(1, 1, 1, jogDetHeaders.length).setValues([jogDetHeaders]);
-
-    var jogDetRows = [];
-    Object.keys(membrosDict).forEach(function(tag) {
-      var infoCad = jogadoresMap[tag] || { nomeJogador: "", telefone: "", observacoes: "" };
-      var infoGame = membrosDict[tag];
-
-      jogDetRows.push([
-        tag,
-        infoCad.nomeJogador || infoGame.nomeJogo,
-        infoCad.telefone,
-        infoGame.nomeJogo,
-        infoGame.cargo,
-        infoGame.nivelCv,
-        infoGame.trofeus,
-        infoGame.fotoCv,
-        infoCad.observacoes,
-        dataFormatada
-      ]);
-    });
-
-    if (jogDetRows.length > 0) {
-      jogadoresDetSheet.getRange(2, 1, jogDetRows.length, jogDetHeaders.length).setValues(jogDetRows);
-    }
-
-    // ==================== 4. PROCESSAMENTO DA GUERRA ATUAL ====================
+    // ==================== 3. ABA 'GuerraAtual' ====================
     var warSheet = getOrCreateSheet(ss, "GuerraAtual");
     var warHeaders = [
       "ID", "EstadoGuerra", "TamanhoGuerra", "AtaquesPorMembro",
@@ -301,25 +234,6 @@ function atualizarDadosGeraisAppSheet() {
     warSheet.clearContents();
     warSheet.getRange(1, 1, 1, warHeaders.length).setValues([warHeaders]);
 
-    var warMembersSheet = getOrCreateSheet(ss, "GuerraAtaquesDefesas");
-    var warMembersHeaders = [
-      "TagMembro", "NomeMembro", "PosicaoMapa", "NivelCV",
-      "AtaquesRealizados", "TotalEstrelasGanhas", "DestruicaoMedia",
-      "DetalhesAtaques", "VezesDefendido", "MelhorAtaqueInimigoEstrelas", "MelhorAtaqueInimigoDestruicao",
-      "UltimaAtualizacao"
-    ];
-    warMembersSheet.clearContents();
-    warMembersSheet.getRange(1, 1, 1, warMembersHeaders.length).setValues([warMembersHeaders]);
-
-    var eventsSheet = getOrCreateSheet(ss, "GuerraHistoricoEventos");
-    var eventsHeaders = [
-      "IDEvento", "Ordem", "TipoAtacante", "AtacanteNome", "AtacanteTag", "AtacantePosicao",
-      "DefensorNome", "DefensorTag", "DefensorPosicao",
-      "Estrelas", "Destruicao", "OrdemAtaqueInGame", "HorarioAtaque"
-    ];
-    eventsSheet.clearContents();
-    eventsSheet.getRange(1, 1, 1, eventsHeaders.length).setValues([eventsHeaders]);
-
     var responseWar = UrlFetchApp.fetch(warUrl, options);
     if (responseWar.getResponseCode() === 200) {
       var warJson = JSON.parse(responseWar.getContentText());
@@ -331,7 +245,6 @@ function atualizarDadosGeraisAppSheet() {
         var prepTime = formatarDataCoC(warJson.preparationStartTime);
         var startTime = formatarDataCoC(warJson.startTime);
         var endTime = formatarDataCoC(warJson.endTime);
-        var warIdKey = warJson.startTime || "GUERRA_SEM_DATA";
 
         var clanG = warJson.clan || {};
         var cNome = clanG.name || "";
@@ -357,137 +270,6 @@ function atualizarDadosGeraisAppSheet() {
           dataFormatada
         ]);
 
-        var opponentMap = {};
-        if (opG.members) {
-          opG.members.forEach(function(m) {
-            opponentMap[m.tag] = m;
-          });
-        }
-
-        if (clanG.members && clanG.members.length > 0) {
-          var memberRows = [];
-          clanG.members.sort(function(a, b) { return a.mapPosition - b.mapPosition; });
-
-          clanG.members.forEach(function(m) {
-            var mAttacks = m.attacks || [];
-            var qtdAtaques = mAttacks.length;
-            var totEstrelas = 0;
-            var sumDestruicao = 0;
-            var detalhesAtt = [];
-
-            mAttacks.forEach(function(att, idx) {
-              totEstrelas += att.stars;
-              sumDestruicao += att.destructionPercentage;
-              var defTarget = opponentMap[att.defenderTag];
-              var targetName = defTarget ? defTarget.name : att.defenderTag;
-              detalhesAtt.push("Att " + (idx+1) + ": " + att.stars + "★ (" + att.destructionPercentage + "%) vs #" + (defTarget ? defTarget.mapPosition : "?") + " " + targetName);
-            });
-
-            var destMedia = qtdAtaques > 0 ? (sumDestruicao / qtdAtaques).toFixed(2) + "%" : "0.00%";
-            var qtdDefesas = m.opponentAttacks || 0;
-            var bestOpponentStars = m.bestOpponentAttack ? m.bestOpponentAttack.stars : 0;
-            var bestOpponentDest = m.bestOpponentAttack ? m.bestOpponentAttack.destructionPercentage + "%" : "0%";
-
-            memberRows.push([
-              m.tag,
-              m.name,
-              m.mapPosition,
-              m.townhallLevel,
-              qtdAtaques,
-              totEstrelas,
-              destMedia,
-              detalhesAtt.join(" | "),
-              qtdDefesas,
-              bestOpponentStars,
-              bestOpponentDest,
-              dataFormatada
-            ]);
-          });
-
-          if (memberRows.length > 0) {
-            warMembersSheet.getRange(2, 1, memberRows.length, warMembersHeaders.length).setValues(memberRows);
-          }
-        }
-
-        // Histórico de Eventos
-        var allAttacks = [];
-
-        if (clanG.members) {
-          clanG.members.forEach(function(m) {
-            if (m.attacks) {
-              m.attacks.forEach(function(att) {
-                var target = opponentMap[att.defenderTag];
-                allAttacks.push({
-                  tipo: "Nosso Clã",
-                  attackerName: m.name,
-                  attackerTag: m.tag,
-                  attackerPos: m.mapPosition,
-                  defenderName: target ? target.name : att.defenderTag,
-                  defenderTag: att.defenderTag,
-                  defenderPos: target ? target.mapPosition : 0,
-                  stars: att.stars,
-                  destruction: att.destructionPercentage + "%",
-                  order: att.order || 0
-                });
-              });
-            }
-          });
-        }
-
-        var clanMap = {};
-        if (clanG.members) {
-          clanG.members.forEach(function(m) { clanMap[m.tag] = m; });
-        }
-
-        if (opG.members) {
-          opG.members.forEach(function(m) {
-            if (m.attacks) {
-              m.attacks.forEach(function(att) {
-                var target = clanMap[att.defenderTag];
-                allAttacks.push({
-                  tipo: "Oponente",
-                  attackerName: m.name,
-                  attackerTag: m.tag,
-                  attackerPos: m.mapPosition,
-                  defenderName: target ? target.name : att.defenderTag,
-                  defenderTag: att.defenderTag,
-                  defenderPos: target ? target.mapPosition : 0,
-                  stars: att.stars,
-                  destruction: att.destructionPercentage + "%",
-                  order: att.order || 0
-                });
-              });
-            }
-          });
-        }
-
-        allAttacks.sort(function(a, b) { return a.order - b.order; });
-
-        var eventRows = allAttacks.map(function(att, idx) {
-          return [
-            "EVT_" + (idx + 1),
-            idx + 1,
-            att.tipo,
-            att.attackerName,
-            att.attackerTag,
-            att.attackerPos,
-            att.defenderName,
-            att.defenderTag,
-            att.defenderPos,
-            att.stars,
-            att.destruction,
-            att.order,
-            dataFormatada
-          ];
-        });
-
-        if (eventRows.length > 0) {
-          eventsSheet.getRange(2, 1, eventRows.length, eventsHeaders.length).setValues(eventRows);
-        }
-
-        // ==================== 5. SALVAR HISTÓRICO DE GUERRA E CALCULAR RANKING ====================
-        salvarEProcessarHistoricoGuerra(ss, warJson, temporadaAtual, warIdKey, ataquesPorMembro);
-
       } else {
         warSheet.appendRow([
           "1", "Fora de Guerra", 0, 0,
@@ -499,204 +281,10 @@ function atualizarDadosGeraisAppSheet() {
       }
     }
 
-    // Atualizar Ranking Global
-    gerarRankingTemporada(ss, temporadaAtual);
-
-    Logger.log("Sucesso: Atualização e Ranking concluídos!");
+    Logger.log("Sucesso: Atualização concluída!");
 
   } catch (e) {
     Logger.log("Erro: " + e.toString());
-  }
-}
-
-/**
- * Salva todos os registros da guerra no Histórico por Temporada
- */
-function salvarEProcessarHistoricoGuerra(ss, warJson, temporada, warId, maxAtaques) {
-  var sheetHist = getOrCreateSheet(ss, "HistoricoAtaquesTemporada");
-  var headersHist = [
-    "IDChave", "Temporada", "IDGuerra", "TagMembro", "NomeMembro", 
-    "AtaquesRealizados", "AtaquesFaltantes", "EstrelasGanhas", "PontosAtaque", 
-    "AtaqueHeroico", "EstrelasSofridasDefesa", "PontosDefesa", "DefesaHeroica", 
-    "PontuacaoTotalGuerra"
-  ];
-
-  if (sheetHist.getLastRow() === 0) {
-    sheetHist.getRange(1, 1, 1, headersHist.length).setValues([headersHist]);
-  }
-
-  var existingKeys = {};
-  if (sheetHist.getLastRow() > 1) {
-    var keysData = sheetHist.getRange(2, 1, sheetHist.getLastRow() - 1, 1).getValues();
-    keysData.forEach(function(row) { existingKeys[row[0]] = true; });
-  }
-
-  var clanG = warJson.clan || {};
-  var opG = warJson.opponent || {};
-
-  var opMap = {};
-  if (opG.members) {
-    opG.members.forEach(function(m) { opMap[m.tag] = m; });
-  }
-
-  var newRows = [];
-
-  if (clanG.members) {
-    clanG.members.forEach(function(m) {
-      var key = warId + "_" + m.tag;
-      
-      var mAttacks = m.attacks || [];
-      var qtdAtaques = mAttacks.length;
-      var attFaltantes = Math.max(0, maxAtaques - qtdAtaques);
-      var ptsAtaque = 0;
-      var totEstrelasAtaque = 0;
-      var ataqueHeroico = false;
-
-      mAttacks.forEach(function(att) {
-        totEstrelasAtaque += att.stars;
-        if (att.stars === 3) ptsAtaque += 10;
-        else if (att.stars === 2) ptsAtaque += 6;
-        else if (att.stars === 1) ptsAtaque += 3;
-        else ptsAtaque += 0;
-
-        var defTarget = opMap[att.defenderTag];
-        if (defTarget && defTarget.townhallLevel > m.townhallLevel) {
-          if (att.stars === 3 || (att.stars === 2 && att.destructionPercentage >= 80)) {
-            ptsAtaque += 5;
-            ataqueHeroico = true;
-          }
-        }
-      });
-
-      ptsAtaque -= (attFaltantes * 20);
-
-      var qtdDefesas = m.opponentAttacks || 0;
-      var bestOpponentStars = m.bestOpponentAttack ? m.bestOpponentAttack.stars : -1;
-      var ptsDefesa = 0;
-      var defesaHeroica = false;
-
-      if (qtdDefesas === 0 || bestOpponentStars === -1) {
-        ptsDefesa = 7;
-      } else {
-        if (bestOpponentStars === 0) ptsDefesa = 10;
-        else if (bestOpponentStars === 1) ptsDefesa = 7;
-        else if (bestOpponentStars === 2) ptsDefesa = 5;
-        else if (bestOpponentStars === 3) ptsDefesa = 0;
-
-        if (m.bestOpponentAttack) {
-          var attacker = opMap[m.bestOpponentAttack.attackerTag];
-          if (attacker && attacker.townhallLevel > m.townhallLevel && bestOpponentStars < 3) {
-            ptsDefesa += 5;
-            defesaHeroica = true;
-          }
-        }
-      }
-
-      var pontosTotal = ptsAtaque + ptsDefesa;
-
-      if (!existingKeys[key]) {
-        newRows.push([
-          key, temporada, warId, m.tag, m.name,
-          qtdAtaques, attFaltantes, totEstrelasAtaque, ptsAtaque,
-          ataqueHeroico ? "Sim" : "Não",
-          bestOpponentStars >= 0 ? bestOpponentStars : "N/A",
-          ptsDefesa, defesaHeroica ? "Sim" : "Não",
-          pontosTotal
-        ]);
-      }
-    });
-  }
-
-  if (newRows.length > 0) {
-    sheetHist.getRange(sheetHist.getLastRow() + 1, 1, newRows.length, headersHist.length).setValues(newRows);
-  }
-}
-
-/**
- * Gera a Tabela dos Melhores e Piores membros no Ranking da Temporada
- */
-function gerarRankingTemporada(ss, temporada) {
-  var sheetHist = ss.getSheetByName("HistoricoAtaquesTemporada");
-  var sheetRank = getOrCreateSheet(ss, "RankingTemporada");
-
-  var headersRank = [
-    "Posicao", "Temporada", "TagMembro", "NomeMembro", "PontuacaoTotal",
-    "TotalAtaquesFeitos", "TotalAtaquesFaltantes", "TotalEstrelasGanhas", 
-    "AtaquesHeroicos", "DefesasHeroicas", "TotalGuerrasParticipadas"
-  ];
-
-  sheetRank.clearContents();
-  sheetRank.getRange(1, 1, 1, headersRank.length).setValues([headersRank]);
-
-  if (!sheetHist || sheetHist.getLastRow() <= 1) return;
-
-  var dataHist = sheetHist.getRange(2, 1, sheetHist.getLastRow() - 1, sheetHist.getLastColumn()).getValues();
-  var rankingMap = {};
-
-  dataHist.forEach(function(row) {
-    var tempRow = row[1];
-    var tag = row[3];
-    var nome = row[4];
-    var attFeitos = Number(row[5]) || 0;
-    var attFaltantes = Number(row[6]) || 0;
-    var estrelas = Number(row[7]) || 0;
-    var attHeroico = row[9] === "Sim" ? 1 : 0;
-    var defHeroica = row[12] === "Sim" ? 1 : 0;
-    var ptsTotal = Number(row[13]) || 0;
-
-    if (tempRow === temporada) {
-      if (!rankingMap[tag]) {
-        rankingMap[tag] = {
-          tag: tag,
-          nome: nome,
-          pontos: 0,
-          attFeitos: 0,
-          attFaltantes: 0,
-          estrelas: 0,
-          attHeroicos: 0,
-          defHeroicas: 0,
-          guerras: 0
-        };
-      }
-
-      rankingMap[tag].pontos += ptsTotal;
-      rankingMap[tag].attFeitos += attFeitos;
-      rankingMap[tag].attFaltantes += attFaltantes;
-      rankingMap[tag].estrelas += estrelas;
-      rankingMap[tag].attHeroicos += attHeroico;
-      rankingMap[tag].defHeroicas += defHeroica;
-      rankingMap[tag].guerras += 1;
-    }
-  });
-
-  var rankingList = [];
-  Object.keys(rankingMap).forEach(function(tag) {
-    rankingList.push(rankingMap[tag]);
-  });
-
-  rankingList.sort(function(a, b) {
-    if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-    return b.estrelas - a.estrelas;
-  });
-
-  var rowsRank = rankingList.map(function(item, idx) {
-    return [
-      idx + 1,
-      temporada,
-      item.tag,
-      item.nome,
-      item.pontos,
-      item.attFeitos,
-      item.attFaltantes,
-      item.estrelas,
-      item.attHeroicos,
-      item.defHeroicas,
-      item.guerras
-    ];
-  });
-
-  if (rowsRank.length > 0) {
-    sheetRank.getRange(2, 1, rowsRank.length, headersRank.length).setValues(rowsRank);
   }
 }
 
@@ -733,12 +321,7 @@ function doGet(e) {
   var responseData = {
     clan: clanData,
     membros: sheetToObjects("Membros"),
-    jogadores: sheetToObjects("JogadoresDetalhados"),
-    guerraAtual: sheetToObjects("GuerraAtual")[0] || {},
-    guerraAtaquesDefesas: sheetToObjects("GuerraAtaquesDefesas"),
-    guerraHistoricoEventos: sheetToObjects("GuerraHistoricoEventos"),
-    historicoAtaquesTemporada: sheetToObjects("HistoricoAtaquesTemporada"),
-    rankingTemporada: sheetToObjects("RankingTemporada")
+    guerraAtual: sheetToObjects("GuerraAtual")[0] || {}
   };
 
   var callback = e ? e.parameter.callback : null;
