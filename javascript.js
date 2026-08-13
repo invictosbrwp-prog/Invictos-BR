@@ -1,0 +1,754 @@
+/**
+ * Sistema Clash of Clans -> AppSheet
+ * Sincronização do Clã, Membros, Guerra Atual, Histórico de Temporadas e Ranking
+ */
+
+function getOrCreateSheet(ss, sheetName) {
+  if (typeof ss === "string") {
+    sheetName = ss;
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } else if (!ss) {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  }
+
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+  }
+  return sheet;
+}
+
+function traduzirEstadoGuerra(state) {
+  switch (state) {
+    case "inWar": return "Em Guerra";
+    case "preparation": return "Dia de Preparação";
+    case "warEnded": return "Guerra Finalizada";
+    case "notInWar": return "Fora de Guerra";
+    default: return state || "Desconhecido";
+  }
+}
+
+function traduzirLigaCWL(liga) {
+  if (!liga) return "Sem Liga";
+  var ligas = {
+    "Unranked": "Não Classificado",
+    "Bronze League III": "Liga Bronze III", "Bronze League II": "Liga Bronze II", "Bronze League I": "Liga Bronze I",
+    "Silver League III": "Liga Prata III", "Silver League II": "Liga Prata II", "Silver League I": "Liga Prata I",
+    "Gold League III": "Liga Ouro III", "Gold League II": "Liga Ouro II", "Gold League I": "Liga Ouro I",
+    "Crystal League III": "Liga Cristal III", "Crystal League II": "Liga Cristal II", "Crystal League I": "Liga Cristal I",
+    "Master League III": "Liga Mestre III", "Master League II": "Liga Mestre II", "Master League I": "Liga Mestre I",
+    "Champion League III": "Liga Campeão III", "Champion League II": "Liga Campeão II", "Champion League I": "Liga Campeão I"
+  };
+  return ligas[liga] || liga;
+}
+
+function traduzirFrequenciaGuerra(freq) {
+  if (!freq) return "Não especificado";
+  var frequencias = {
+    "always": "Sempre",
+    "moreThanOncePerWeek": "Mais de uma vez por semana",
+    "oncePerWeek": "Uma vez por semana",
+    "lessThanOncePerWeek": "Menos de uma vez por semana",
+    "never": "Nunca",
+    "unknown": "Desconhecido"
+  };
+  return frequencias[freq] || freq;
+}
+
+function traduzirTipoEntrada(tipo) {
+  if (!tipo) return "Não especificado";
+  var tipos = {
+    "open": "Aberto",
+    "inviteOnly": "Somente Convite",
+    "closed": "Fechado"
+  };
+  return tipos[tipo] || tipo;
+}
+
+function traduzirCargo(role) {
+  switch (role) {
+    case "leader": return "Líder";
+    case "coLeader": return "Co-líder";
+    case "admin": return "Ancião";
+    case "member": return "Membro";
+    default: return "Membro";
+  }
+}
+
+function getThImageUrl(level) {
+  if (level <= 0) return "";
+  if (level >= 12 && level <= 15) return "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + level + "-1.png";
+  return "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + level + ".png";
+}
+
+function formatarDataCoC(strData) {
+  if (!strData || strData.length < 15) return "";
+  var ano = strData.substring(0, 4);
+  var mes = strData.substring(4, 6);
+  var dia = strData.substring(6, 8);
+  var hora = strData.substring(9, 11);
+  var min = strData.substring(11, 13);
+  var seg = strData.substring(13, 15);
+  return ano + "-" + mes + "-" + dia + " " + hora + ":" + min + ":" + seg + " UTC";
+}
+
+/**
+ * Função Principal de Sincronização
+ */
+function atualizarDadosGeraisAppSheet() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  if (!API_TOKEN) {
+    Logger.log("ERRO: O API_TOKEN não está cadastrado. Execute 'salvarApiToken()' primeiro.");
+    return;
+  }
+
+  var CLAN_TAG = "%232QU2GV028";
+  var clanUrl = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG;
+  var warUrl = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG + "/currentwar";
+
+  var options = {
+    "method": "get",
+    "headers": {
+      "Authorization": "Bearer " + API_TOKEN.trim().replace(/\s+/g, ''),
+      "Accept": "application/json"
+    },
+    "muteHttpExceptions": true
+  };
+
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var timeZone = ss.getSpreadsheetTimeZone();
+    var now = new Date();
+    var dataFormatada = Utilities.formatDate(now, timeZone, "yyyy-MM-dd HH:mm:ss");
+    var temporadaAtual = Utilities.formatDate(now, timeZone, "yyyy-MM");
+
+    // ==================== 1. ABA 'Clan' ====================
+    var responseClan = UrlFetchApp.fetch(clanUrl, options);
+    if (responseClan.getResponseCode() !== 200) {
+      Logger.log("Erro na API do Clã: " + responseClan.getContentText());
+      return;
+    }
+
+    var clanJson = JSON.parse(responseClan.getContentText());
+    var clanSheet = getOrCreateSheet(ss, "Clan");
+    var clanHeaders = [
+      "ID", "Emblema", "Nome", "Tag", "Nivel", 
+      "Pais", "Membros", "TipoEntrada", "Trofeus", "TrofeusBuilder",
+      "LigaCWL", "FrequenciaGuerra", "Vitorias", "Derrotas", "Empates",
+      "TaxaVitorias", "SequenciaVitorias", "PublicoGuerra",
+      "CapitalNivel", "PontosCapital", "CVMinimo", "TrofeusMinimos",
+      "Descricao", "UltimaAtualizacao"
+    ];
+
+    clanSheet.clearContents();
+    clanSheet.getRange(1, 1, 1, clanHeaders.length).setValues([clanHeaders]);
+
+    var emblema = clanJson.badgeUrls ? clanJson.badgeUrls.large : "";
+    var pais = clanJson.location ? clanJson.location.name : "Internacional";
+    var trofeus = clanJson.clanPoints || 0;
+    var trofeusBuilder = clanJson.clanBuilderBasePoints || 0;
+    var ligaPt = traduzirLigaCWL(clanJson.warLeague ? clanJson.warLeague.name : "");
+    var freqPt = traduzirFrequenciaGuerra(clanJson.warFrequency);
+    var tipoEntradaPt = traduzirTipoEntrada(clanJson.type);
+    
+    var vitorias = clanJson.warWins || 0;
+    var derrotasExistem = clanJson.warLosses !== undefined;
+    var empatesExistem = clanJson.warTies !== undefined;
+    
+    var derrotas = derrotasExistem ? clanJson.warLosses : "Privado";
+    var empates = empatesExistem ? clanJson.warTies : "Privado";
+    var seqVitorias = clanJson.warWinStreak || 0;
+    var logPublico = clanJson.isWarLogPublic ? "Sim" : "Não";
+
+    var taxaVitorias = "Privado";
+    if (derrotasExistem && empatesExistem) {
+      var totalGuerras = vitorias + clanJson.warLosses + clanJson.warTies;
+      taxaVitorias = totalGuerras > 0 
+        ? ((vitorias / totalGuerras) * 100).toFixed(2) + "%" 
+        : "0.00%";
+    }
+
+    var capitalLvl = clanJson.clanCapital ? clanJson.clanCapital.capitalHallLevel : 0;
+    var pontosCapital = clanJson.clanCapital ? (clanJson.clanCapital.hierarchy ? clanJson.clanCapital.hierarchy.length : 0) : 0;
+    var cvMinimo = clanJson.requiredTownhallLevel || 1;
+    var trofeusMin = clanJson.requiredTrophies || 0;
+    var descricao = clanJson.description || "Sem descrição";
+
+    clanSheet.appendRow([
+      "1", emblema, clanJson.name, clanJson.tag, clanJson.clanLevel,
+      pais, clanJson.members + " / 50", tipoEntradaPt, trofeus, trofeusBuilder,
+      ligaPt, freqPt, vitorias, derrotas, empates,
+      taxaVitorias, seqVitorias, logPublico, "Nível " + capitalLvl,
+      pontosCapital, "CV " + cvMinimo, trofeusMin, descricao, dataFormatada
+    ]);
+
+    // ==================== 2. ABA 'Membros' ====================
+    var membersSheet = getOrCreateSheet(ss, "Membros");
+    var memberHeaders = ["Tag", "FotoCV", "NomeJogo", "Cargo", "NivelCV", "Trofeus"];
+    var members = clanJson.memberList || [];
+
+    var requests = members.map(function(m) {
+      return {
+        url: "https://cocproxy.royaleapi.dev/v1/players/" + encodeURIComponent(m.tag),
+        method: "get",
+        headers: options.headers,
+        muteHttpExceptions: true
+      };
+    });
+
+    var responses = UrlFetchApp.fetchAll(requests);
+    var newMemberRows = [];
+    var membrosDict = {};
+
+    for (var i = 0; i < members.length; i++) {
+      var m = members[i];
+      var playerRes = responses[i];
+      var thLevel = (playerRes.getResponseCode() === 200) 
+        ? (JSON.parse(playerRes.getContentText()).townHallLevel || 0) 
+        : 0;
+
+      newMemberRows.push([
+        m.tag,
+        getThImageUrl(thLevel),
+        m.name,
+        traduzirCargo(m.role),
+        thLevel,
+        m.trophies
+      ]);
+
+      membrosDict[m.tag] = {
+        fotoCv: getThImageUrl(thLevel),
+        nomeJogo: m.name,
+        cargo: traduzirCargo(m.role),
+        nivelCv: thLevel,
+        trofeus: m.trophies
+      };
+    }
+
+    membersSheet.clearContents();
+    membersSheet.getRange(1, 1, 1, memberHeaders.length).setValues([memberHeaders]);
+    if (newMemberRows.length > 0) {
+      membersSheet.getRange(2, 1, newMemberRows.length, memberHeaders.length).setValues(newMemberRows);
+    }
+
+    // ==================== 3. ABA 'Jogadores' e 'JogadoresDetalhados' ====================
+    var jogadoresSheet = getOrCreateSheet(ss, "Jogadores");
+    if (jogadoresSheet.getLastRow() === 0) {
+      jogadoresSheet.getRange(1, 1, 1, 4).setValues([["Tag", "NomeJogador", "Telefone", "Observacoes"]]);
+    }
+
+    var lastRowJogadores = jogadoresSheet.getLastRow();
+    var jogadoresMap = {};
+
+    if (lastRowJogadores > 1) {
+      var dataJogadores = jogadoresSheet.getRange(2, 1, lastRowJogadores - 1, 4).getValues();
+      dataJogadores.forEach(function(row) {
+        var tag = row[0] ? row[0].toString().trim() : "";
+        var nomePessoa = row[1] ? row[1].toString().trim() : "";
+        var telefone = row[2] ? row[2].toString().trim() : "";
+        var obs = row[3] ? row[3].toString().trim() : "";
+
+        if (tag) {
+          jogadoresMap[tag] = {
+            nomeJogador: nomePessoa,
+            telefone: telefone,
+            observacoes: obs
+          };
+        }
+      });
+    }
+
+    var jogadoresDetSheet = getOrCreateSheet(ss, "JogadoresDetalhados");
+    var jogDetHeaders = [
+      "Tag", "NomeJogador", "Telefone", "NomeJogo", "Cargo", "NivelCV", "Trofeus", "FotoCV", "Observacoes", "UltimaAtualizacao"
+    ];
+    jogadoresDetSheet.clearContents();
+    jogadoresDetSheet.getRange(1, 1, 1, jogDetHeaders.length).setValues([jogDetHeaders]);
+
+    var jogDetRows = [];
+    Object.keys(membrosDict).forEach(function(tag) {
+      var infoCad = jogadoresMap[tag] || { nomeJogador: "", telefone: "", observacoes: "" };
+      var infoGame = membrosDict[tag];
+
+      jogDetRows.push([
+        tag,
+        infoCad.nomeJogador || infoGame.nomeJogo,
+        infoCad.telefone,
+        infoGame.nomeJogo,
+        infoGame.cargo,
+        infoGame.nivelCv,
+        infoGame.trofeus,
+        infoGame.fotoCv,
+        infoCad.observacoes,
+        dataFormatada
+      ]);
+    });
+
+    if (jogDetRows.length > 0) {
+      jogadoresDetSheet.getRange(2, 1, jogDetRows.length, jogDetHeaders.length).setValues(jogDetRows);
+    }
+
+    // ==================== 4. PROCESSAMENTO DA GUERRA ATUAL ====================
+    var warSheet = getOrCreateSheet(ss, "GuerraAtual");
+    var warHeaders = [
+      "ID", "EstadoGuerra", "TamanhoGuerra", "AtaquesPorMembro",
+      "InicioPreparacao", "InicioGuerra", "FimGuerra",
+      "NossoClanNome", "NossoClanTag", "NossoClanEmblema", "NossasEstrelas", "NossoDestruicao", "NossosAtaquesUsados",
+      "OponenteNome", "OponenteTag", "OponenteEmblema", "EstrelasOponente", "DestruicaoOponente", "AtaquesOponenteUsados",
+      "UltimaAtualizacao"
+    ];
+
+    warSheet.clearContents();
+    warSheet.getRange(1, 1, 1, warHeaders.length).setValues([warHeaders]);
+
+    var warMembersSheet = getOrCreateSheet(ss, "GuerraAtaquesDefesas");
+    var warMembersHeaders = [
+      "TagMembro", "NomeMembro", "PosicaoMapa", "NivelCV",
+      "AtaquesRealizados", "TotalEstrelasGanhas", "DestruicaoMedia",
+      "DetalhesAtaques", "VezesDefendido", "MelhorAtaqueInimigoEstrelas", "MelhorAtaqueInimigoDestruicao",
+      "UltimaAtualizacao"
+    ];
+    warMembersSheet.clearContents();
+    warMembersSheet.getRange(1, 1, 1, warMembersHeaders.length).setValues([warMembersHeaders]);
+
+    var eventsSheet = getOrCreateSheet(ss, "GuerraHistoricoEventos");
+    var eventsHeaders = [
+      "IDEvento", "Ordem", "TipoAtacante", "AtacanteNome", "AtacanteTag", "AtacantePosicao",
+      "DefensorNome", "DefensorTag", "DefensorPosicao",
+      "Estrelas", "Destruicao", "OrdemAtaqueInGame", "HorarioAtaque"
+    ];
+    eventsSheet.clearContents();
+    eventsSheet.getRange(1, 1, 1, eventsHeaders.length).setValues([eventsHeaders]);
+
+    var responseWar = UrlFetchApp.fetch(warUrl, options);
+    if (responseWar.getResponseCode() === 200) {
+      var warJson = JSON.parse(responseWar.getContentText());
+
+      if (warJson && warJson.state !== "notInWar") {
+        var estado = traduzirEstadoGuerra(warJson.state);
+        var tamanho = warJson.teamSize || 0;
+        var ataquesPorMembro = warJson.attacksPerMember || 1;
+        var prepTime = formatarDataCoC(warJson.preparationStartTime);
+        var startTime = formatarDataCoC(warJson.startTime);
+        var endTime = formatarDataCoC(warJson.endTime);
+        var warIdKey = warJson.startTime || "GUERRA_SEM_DATA";
+
+        var clanG = warJson.clan || {};
+        var cNome = clanG.name || "";
+        var cTag = clanG.tag || "";
+        var cBadge = clanG.badgeUrls ? clanG.badgeUrls.large : "";
+        var cEstrelas = clanG.stars || 0;
+        var cDestruicao = (clanG.destructionPercentage || 0).toFixed(2) + "%";
+        var cAtaques = clanG.attacks || 0;
+
+        var opG = warJson.opponent || {};
+        var opNome = opG.name || "";
+        var opTag = opG.tag || "";
+        var opBadge = opG.badgeUrls ? opG.badgeUrls.large : "";
+        var opEstrelas = opG.stars || 0;
+        var opDestruicao = (opG.destructionPercentage || 0).toFixed(2) + "%";
+        var opAtaques = opG.attacks || 0;
+
+        warSheet.appendRow([
+          "1", estado, tamanho, ataquesPorMembro,
+          prepTime, startTime, endTime,
+          cNome, cTag, cBadge, cEstrelas, cDestruicao, cAtaques,
+          opNome, opTag, opBadge, opEstrelas, opDestruicao, opAtaques,
+          dataFormatada
+        ]);
+
+        var opponentMap = {};
+        if (opG.members) {
+          opG.members.forEach(function(m) {
+            opponentMap[m.tag] = m;
+          });
+        }
+
+        if (clanG.members && clanG.members.length > 0) {
+          var memberRows = [];
+          clanG.members.sort(function(a, b) { return a.mapPosition - b.mapPosition; });
+
+          clanG.members.forEach(function(m) {
+            var mAttacks = m.attacks || [];
+            var qtdAtaques = mAttacks.length;
+            var totEstrelas = 0;
+            var sumDestruicao = 0;
+            var detalhesAtt = [];
+
+            mAttacks.forEach(function(att, idx) {
+              totEstrelas += att.stars;
+              sumDestruicao += att.destructionPercentage;
+              var defTarget = opponentMap[att.defenderTag];
+              var targetName = defTarget ? defTarget.name : att.defenderTag;
+              detalhesAtt.push("Att " + (idx+1) + ": " + att.stars + "★ (" + att.destructionPercentage + "%) vs #" + (defTarget ? defTarget.mapPosition : "?") + " " + targetName);
+            });
+
+            var destMedia = qtdAtaques > 0 ? (sumDestruicao / qtdAtaques).toFixed(2) + "%" : "0.00%";
+            var qtdDefesas = m.opponentAttacks || 0;
+            var bestOpponentStars = m.bestOpponentAttack ? m.bestOpponentAttack.stars : 0;
+            var bestOpponentDest = m.bestOpponentAttack ? m.bestOpponentAttack.destructionPercentage + "%" : "0%";
+
+            memberRows.push([
+              m.tag,
+              m.name,
+              m.mapPosition,
+              m.townhallLevel,
+              qtdAtaques,
+              totEstrelas,
+              destMedia,
+              detalhesAtt.join(" | "),
+              qtdDefesas,
+              bestOpponentStars,
+              bestOpponentDest,
+              dataFormatada
+            ]);
+          });
+
+          if (memberRows.length > 0) {
+            warMembersSheet.getRange(2, 1, memberRows.length, warMembersHeaders.length).setValues(memberRows);
+          }
+        }
+
+        // Histórico de Eventos
+        var allAttacks = [];
+
+        if (clanG.members) {
+          clanG.members.forEach(function(m) {
+            if (m.attacks) {
+              m.attacks.forEach(function(att) {
+                var target = opponentMap[att.defenderTag];
+                allAttacks.push({
+                  tipo: "Nosso Clã",
+                  attackerName: m.name,
+                  attackerTag: m.tag,
+                  attackerPos: m.mapPosition,
+                  defenderName: target ? target.name : att.defenderTag,
+                  defenderTag: att.defenderTag,
+                  defenderPos: target ? target.mapPosition : 0,
+                  stars: att.stars,
+                  destruction: att.destructionPercentage + "%",
+                  order: att.order || 0
+                });
+              });
+            }
+          });
+        }
+
+        var clanMap = {};
+        if (clanG.members) {
+          clanG.members.forEach(function(m) { clanMap[m.tag] = m; });
+        }
+
+        if (opG.members) {
+          opG.members.forEach(function(m) {
+            if (m.attacks) {
+              m.attacks.forEach(function(att) {
+                var target = clanMap[att.defenderTag];
+                allAttacks.push({
+                  tipo: "Oponente",
+                  attackerName: m.name,
+                  attackerTag: m.tag,
+                  attackerPos: m.mapPosition,
+                  defenderName: target ? target.name : att.defenderTag,
+                  defenderTag: att.defenderTag,
+                  defenderPos: target ? target.mapPosition : 0,
+                  stars: att.stars,
+                  destruction: att.destructionPercentage + "%",
+                  order: att.order || 0
+                });
+              });
+            }
+          });
+        }
+
+        allAttacks.sort(function(a, b) { return a.order - b.order; });
+
+        var eventRows = allAttacks.map(function(att, idx) {
+          return [
+            "EVT_" + (idx + 1),
+            idx + 1,
+            att.tipo,
+            att.attackerName,
+            att.attackerTag,
+            att.attackerPos,
+            att.defenderName,
+            att.defenderTag,
+            att.defenderPos,
+            att.stars,
+            att.destruction,
+            att.order,
+            dataFormatada
+          ];
+        });
+
+        if (eventRows.length > 0) {
+          eventsSheet.getRange(2, 1, eventRows.length, eventsHeaders.length).setValues(eventRows);
+        }
+
+        // ==================== 5. SALVAR HISTÓRICO DE GUERRA E CALCULAR RANKING ====================
+        salvarEProcessarHistoricoGuerra(ss, warJson, temporadaAtual, warIdKey, ataquesPorMembro);
+
+      } else {
+        warSheet.appendRow([
+          "1", "Fora de Guerra", 0, 0,
+          "-", "-", "-",
+          "-", "-", "-", 0, "0%", 0,
+          "-", "-", "-", 0, "0%", 0,
+          dataFormatada
+        ]);
+      }
+    }
+
+    // Atualizar Ranking Global
+    gerarRankingTemporada(ss, temporadaAtual);
+
+    Logger.log("Sucesso: Atualização e Ranking concluídos!");
+
+  } catch (e) {
+    Logger.log("Erro: " + e.toString());
+  }
+}
+
+/**
+ * Salva todos os registros da guerra no Histórico por Temporada
+ */
+function salvarEProcessarHistoricoGuerra(ss, warJson, temporada, warId, maxAtaques) {
+  var sheetHist = getOrCreateSheet(ss, "HistoricoAtaquesTemporada");
+  var headersHist = [
+    "IDChave", "Temporada", "IDGuerra", "TagMembro", "NomeMembro", 
+    "AtaquesRealizados", "AtaquesFaltantes", "EstrelasGanhas", "PontosAtaque", 
+    "AtaqueHeroico", "EstrelasSofridasDefesa", "PontosDefesa", "DefesaHeroica", 
+    "PontuacaoTotalGuerra"
+  ];
+
+  if (sheetHist.getLastRow() === 0) {
+    sheetHist.getRange(1, 1, 1, headersHist.length).setValues([headersHist]);
+  }
+
+  var existingKeys = {};
+  if (sheetHist.getLastRow() > 1) {
+    var keysData = sheetHist.getRange(2, 1, sheetHist.getLastRow() - 1, 1).getValues();
+    keysData.forEach(function(row) { existingKeys[row[0]] = true; });
+  }
+
+  var clanG = warJson.clan || {};
+  var opG = warJson.opponent || {};
+
+  var opMap = {};
+  if (opG.members) {
+    opG.members.forEach(function(m) { opMap[m.tag] = m; });
+  }
+
+  var newRows = [];
+
+  if (clanG.members) {
+    clanG.members.forEach(function(m) {
+      var key = warId + "_" + m.tag;
+      
+      var mAttacks = m.attacks || [];
+      var qtdAtaques = mAttacks.length;
+      var attFaltantes = Math.max(0, maxAtaques - qtdAtaques);
+      var ptsAtaque = 0;
+      var totEstrelasAtaque = 0;
+      var ataqueHeroico = false;
+
+      mAttacks.forEach(function(att) {
+        totEstrelasAtaque += att.stars;
+        if (att.stars === 3) ptsAtaque += 10;
+        else if (att.stars === 2) ptsAtaque += 6;
+        else if (att.stars === 1) ptsAtaque += 3;
+        else ptsAtaque += 0;
+
+        var defTarget = opMap[att.defenderTag];
+        if (defTarget && defTarget.townhallLevel > m.townhallLevel) {
+          if (att.stars === 3 || (att.stars === 2 && att.destructionPercentage >= 80)) {
+            ptsAtaque += 5;
+            ataqueHeroico = true;
+          }
+        }
+      });
+
+      ptsAtaque -= (attFaltantes * 20);
+
+      var qtdDefesas = m.opponentAttacks || 0;
+      var bestOpponentStars = m.bestOpponentAttack ? m.bestOpponentAttack.stars : -1;
+      var ptsDefesa = 0;
+      var defesaHeroica = false;
+
+      if (qtdDefesas === 0 || bestOpponentStars === -1) {
+        ptsDefesa = 7;
+      } else {
+        if (bestOpponentStars === 0) ptsDefesa = 10;
+        else if (bestOpponentStars === 1) ptsDefesa = 7;
+        else if (bestOpponentStars === 2) ptsDefesa = 5;
+        else if (bestOpponentStars === 3) ptsDefesa = 0;
+
+        if (m.bestOpponentAttack) {
+          var attacker = opMap[m.bestOpponentAttack.attackerTag];
+          if (attacker && attacker.townhallLevel > m.townhallLevel && bestOpponentStars < 3) {
+            ptsDefesa += 5;
+            defesaHeroica = true;
+          }
+        }
+      }
+
+      var pontosTotal = ptsAtaque + ptsDefesa;
+
+      if (!existingKeys[key]) {
+        newRows.push([
+          key, temporada, warId, m.tag, m.name,
+          qtdAtaques, attFaltantes, totEstrelasAtaque, ptsAtaque,
+          ataqueHeroico ? "Sim" : "Não",
+          bestOpponentStars >= 0 ? bestOpponentStars : "N/A",
+          ptsDefesa, defesaHeroica ? "Sim" : "Não",
+          pontosTotal
+        ]);
+      }
+    });
+  }
+
+  if (newRows.length > 0) {
+    sheetHist.getRange(sheetHist.getLastRow() + 1, 1, newRows.length, headersHist.length).setValues(newRows);
+  }
+}
+
+/**
+ * Gera a Tabela dos Melhores e Piores membros no Ranking da Temporada
+ */
+function gerarRankingTemporada(ss, temporada) {
+  var sheetHist = ss.getSheetByName("HistoricoAtaquesTemporada");
+  var sheetRank = getOrCreateSheet(ss, "RankingTemporada");
+
+  var headersRank = [
+    "Posicao", "Temporada", "TagMembro", "NomeMembro", "PontuacaoTotal",
+    "TotalAtaquesFeitos", "TotalAtaquesFaltantes", "TotalEstrelasGanhas", 
+    "AtaquesHeroicos", "DefesasHeroicas", "TotalGuerrasParticipadas"
+  ];
+
+  sheetRank.clearContents();
+  sheetRank.getRange(1, 1, 1, headersRank.length).setValues([headersRank]);
+
+  if (!sheetHist || sheetHist.getLastRow() <= 1) return;
+
+  var dataHist = sheetHist.getRange(2, 1, sheetHist.getLastRow() - 1, sheetHist.getLastColumn()).getValues();
+  var rankingMap = {};
+
+  dataHist.forEach(function(row) {
+    var tempRow = row[1];
+    var tag = row[3];
+    var nome = row[4];
+    var attFeitos = Number(row[5]) || 0;
+    var attFaltantes = Number(row[6]) || 0;
+    var estrelas = Number(row[7]) || 0;
+    var attHeroico = row[9] === "Sim" ? 1 : 0;
+    var defHeroica = row[12] === "Sim" ? 1 : 0;
+    var ptsTotal = Number(row[13]) || 0;
+
+    if (tempRow === temporada) {
+      if (!rankingMap[tag]) {
+        rankingMap[tag] = {
+          tag: tag,
+          nome: nome,
+          pontos: 0,
+          attFeitos: 0,
+          attFaltantes: 0,
+          estrelas: 0,
+          attHeroicos: 0,
+          defHeroicas: 0,
+          guerras: 0
+        };
+      }
+
+      rankingMap[tag].pontos += ptsTotal;
+      rankingMap[tag].attFeitos += attFeitos;
+      rankingMap[tag].attFaltantes += attFaltantes;
+      rankingMap[tag].estrelas += estrelas;
+      rankingMap[tag].attHeroicos += attHeroico;
+      rankingMap[tag].defHeroicas += defHeroica;
+      rankingMap[tag].guerras += 1;
+    }
+  });
+
+  var rankingList = [];
+  Object.keys(rankingMap).forEach(function(tag) {
+    rankingList.push(rankingMap[tag]);
+  });
+
+  rankingList.sort(function(a, b) {
+    if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+    return b.estrelas - a.estrelas;
+  });
+
+  var rowsRank = rankingList.map(function(item, idx) {
+    return [
+      idx + 1,
+      temporada,
+      item.tag,
+      item.nome,
+      item.pontos,
+      item.attFeitos,
+      item.attFaltantes,
+      item.estrelas,
+      item.attHeroicos,
+      item.defHeroicas,
+      item.guerras
+    ];
+  });
+
+  if (rowsRank.length > 0) {
+    sheetRank.getRange(2, 1, rowsRank.length, headersRank.length).setValues(rowsRank);
+  }
+}
+
+/**
+ * Retorna os dados em JSON para o AppSheet e Front-end Web
+ */
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  function sheetToObjects(sheetName) {
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet || sheet.getLastRow() <= 1) return [];
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+    return data.map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, idx) {
+        if (h) obj[h.toString().trim()] = row[idx];
+      });
+      return obj;
+    });
+  }
+
+  var clanSheet = ss.getSheetByName("Clan");
+  var clanData = {};
+  if (clanSheet && clanSheet.getLastRow() > 1) {
+    var headersClan = clanSheet.getRange(1, 1, 1, clanSheet.getLastColumn()).getValues()[0];
+    var valuesClan = clanSheet.getRange(2, 1, 1, clanSheet.getLastColumn()).getValues()[0];
+    headersClan.forEach(function(h, idx) { 
+      if (h) clanData[h.toString().trim()] = valuesClan[idx]; 
+    });
+  }
+
+  var responseData = {
+    clan: clanData,
+    membros: sheetToObjects("Membros"),
+    jogadores: sheetToObjects("JogadoresDetalhados"),
+    guerraAtual: sheetToObjects("GuerraAtual")[0] || {},
+    guerraAtaquesDefesas: sheetToObjects("GuerraAtaquesDefesas"),
+    guerraHistoricoEventos: sheetToObjects("GuerraHistoricoEventos"),
+    historicoAtaquesTemporada: sheetToObjects("HistoricoAtaquesTemporada"),
+    rankingTemporada: sheetToObjects("RankingTemporada")
+  };
+
+  var callback = e ? e.parameter.callback : null;
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + "(" + JSON.stringify(responseData) + ")")
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(responseData))
+    .setMimeType(ContentService.MimeType.JSON);
+}
