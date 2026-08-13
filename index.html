@@ -1,34 +1,4 @@
 <!DOCTYPE html>
-
-
-<!-- Tela de Login -->
-<div id="login-screen" style="text-align:center; padding: 50px;">
-  <h2>Acesso ao Painel</h2>
-  <input type="text" id="tel-login" placeholder="Digite seu telefone (DDD+Número)">
-  <button onclick="tentarLogin()">Entrar</button>
-</div>
-
-<!-- Conteúdo Principal (deixe escondido por padrão) -->
-<div id="app-content" style="display:none;">
-  <!-- O seu conteúdo atual aqui -->
-</div>
-
-<script>
-function tentarLogin() {
-  var tel = document.getElementById('tel-login').value;
-  google.script.run.withSuccessHandler(function(usuario) {
-    if (usuario) {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-content').style.display = 'block';
-      console.log("Logado como: " + usuario.nome);
-    } else {
-      alert("Telefone não encontrado ou não cadastrado.");
-    }
-  }).validarLogin(tel);
-}
-</script>
-
-
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -64,7 +34,6 @@ function tentarLogin() {
       overflow-x: hidden;
     }
 
-    /* Topo: Emblema e Nome */
     .clan-header {
       display: flex;
       flex-direction: column;
@@ -98,7 +67,6 @@ function tentarLogin() {
       gap: 6px;
     }
 
-    /* Resumo de Guerras */
     .war-stats {
       display: flex;
       justify-content: center;
@@ -139,7 +107,6 @@ function tentarLogin() {
       color: #cbd5e1;
     }
 
-    /* Chips Grid */
     .chips-grid {
       display: flex;
       flex-wrap: wrap;
@@ -156,7 +123,6 @@ function tentarLogin() {
       color: #e2e8f0;
     }
 
-    /* Descrição */
     .description {
       text-align: center;
       font-size: 0.85rem;
@@ -166,7 +132,6 @@ function tentarLogin() {
       white-space: pre-wrap;
     }
 
-    /* Cabeçalho da Seção de Membros */
     .members-header {
       display: flex;
       justify-content: space-between;
@@ -190,7 +155,6 @@ function tentarLogin() {
       color: #ffffff;
     }
 
-    /* Lista de Membros */
     .members-list {
       display: flex;
       flex-direction: column;
@@ -257,7 +221,6 @@ function tentarLogin() {
       color: #838d99;
     }
 
-    /* Botão WhatsApp */
     .whatsapp-actions {
       display: flex;
       align-items: center;
@@ -304,7 +267,6 @@ function tentarLogin() {
       color: #64748b;
     }
 
-    /* Botão "Ver Guerra" */
     .btn-ver-guerra {
       background-color: #2a2f3d;
       color: #ffffff;
@@ -320,7 +282,6 @@ function tentarLogin() {
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    /* Sub-menu da Aba Guerras */
     .sub-nav {
       display: flex;
       background-color: #20222b;
@@ -349,7 +310,6 @@ function tentarLogin() {
       color: #ffffff;
     }
 
-    /* Tela de Guerra */
     .war-screen {
       display: flex;
       flex-direction: column;
@@ -452,7 +412,6 @@ function tentarLogin() {
       font-weight: 500;
     }
 
-    /* Eventos / Histórico */
     .event-item {
       background-color: #20222b;
       padding: 10px 12px;
@@ -513,7 +472,6 @@ function tentarLogin() {
       flex-shrink: 0;
     }
 
-    /* Cards de Ataque e Defesa */
     .war-def-card {
       background-color: #20222b;
       padding: 12px;
@@ -540,7 +498,6 @@ function tentarLogin() {
       gap: 3px;
     }
 
-    /* Estilos da Aba Jogadores */
     .player-card {
       background-color: #20222b;
       padding: 12px;
@@ -583,7 +540,6 @@ function tentarLogin() {
       margin-top: 2px;
     }
 
-    /* Estilos da Aba Classificação Geral (Mais) */
     .cards-ranking-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -642,7 +598,6 @@ function tentarLogin() {
       font-weight: 600;
     }
 
-    /* Botão Flutuante (FAB) */
     .fab-add {
       position: fixed;
       bottom: 80px;
@@ -667,7 +622,6 @@ function tentarLogin() {
       transform: scale(0.92);
     }
 
-    /* Modal de Cadastro */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -751,7 +705,6 @@ function tentarLogin() {
     .btn-save { background-color: #2563eb; color: #ffffff; }
     .btn-remove { background-color: #ef4444; color: #ffffff; }
 
-    /* Bottom Nav */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -809,7 +762,6 @@ function tentarLogin() {
     <div class="loading-state">Carregando dados...</div>
   </div>
 
-  <!-- Menu Inferior -->
   <div class="bottom-nav">
     <button class="nav-item" id="navGuerra" onclick="trocarAba('guerra')">
       <div class="nav-icon-wrapper"><span class="nav-icon">⚔️</span></div>
@@ -829,7 +781,6 @@ function tentarLogin() {
     </button>
   </div>
 
-  <!-- Modal de Adicionar/Editar Jogador -->
   <div class="modal-overlay" id="modalJogador" style="display: none;">
     <div class="modal-card">
       <div class="modal-title" id="modalTitulo">Registrar Jogador</div>
@@ -837,7 +788,6 @@ function tentarLogin() {
       <div class="form-group" id="groupSelectMembro">
         <label>Selecione a Vila do Clã:</label>
         <select class="form-control" id="selectMembroClan" onchange="aoSelecionarMembroModal(this.value)">
-          <!-- Opções preenchidas dinamicamente -->
         </select>
       </div>
 
@@ -871,7 +821,7 @@ function tentarLogin() {
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwLbjGVwc-Rt0Az4pGKKilWZvCwAx9DXO8DbAhBPXgZGSBzqFL-tajBjbLtTa0SiDlq/exec";
+    const API_URL = "COLOQUE_AQUI_A_SUA_URL_DO_WEB_APP_DO_APPSCRIPT";
 
     let dadosClanGlobal = {};
     let listaMembrosGlobal = [];
@@ -898,7 +848,6 @@ function tentarLogin() {
 
     function obterFotoCvDoMembro(nomeOuTag, nivelCvDefault = 1) {
       if (!nomeOuTag) return renderBadgeCv(nivelCvDefault);
-
       const busca = nomeOuTag.toString().toLowerCase().trim();
 
       const membro = listaMembrosGlobal.find(m => {
@@ -942,9 +891,7 @@ function tentarLogin() {
           rankingTemporadaGlobal = parsed.rankingTemporada || [];
           renderizarApp();
         }
-      } catch(e) {
-        console.warn('Erro ao ler cache:', e);
-      }
+      } catch(e) {}
     }
 
     function callbackClanData(data) {
@@ -968,7 +915,6 @@ function tentarLogin() {
 
     function carregarDados() {
       carregarCacheLocal();
-
       const script = document.createElement('script');
       script.src = API_URL + "?callback=callbackClanData&t=" + new Date().getTime();
 
@@ -1024,7 +970,6 @@ function tentarLogin() {
       if (aba === 'clas') document.getElementById('navClas').classList.add('active');
       if (aba === 'jogadores') document.getElementById('navJogadores').classList.add('active');
       if (aba === 'mais') document.getElementById('navMais').classList.add('active');
-
       renderizarApp();
     }
 
@@ -1035,18 +980,11 @@ function tentarLogin() {
 
     function renderizarApp() {
       const app = document.getElementById('app');
-
-      if (abaAtual === 'guerra') {
-        renderizarAbaGuerra(app);
-      } else if (abaAtual === 'clas') {
-        renderizarAbaClas(app);
-      } else if (abaAtual === 'jogadores') {
-        renderizarAbaJogadores(app);
-      } else if (abaAtual === 'mais') {
-        renderizarAbaMais(app);
-      } else {
-        app.innerHTML = `<div class="loading-state">Aba não encontrada.</div>`;
-      }
+      if (abaAtual === 'guerra') renderizarAbaGuerra(app);
+      else if (abaAtual === 'clas') renderizarAbaClas(app);
+      else if (abaAtual === 'jogadores') renderizarAbaJogadores(app);
+      else if (abaAtual === 'mais') renderizarAbaMais(app);
+      else app.innerHTML = `<div class="loading-state">Aba não encontrada.</div>`;
     }
 
     function renderizarAbaClas(container) {
@@ -1090,10 +1028,7 @@ function tentarLogin() {
         <div class="description">${clan.Descricao || ''}</div>
 
         <div class="members-header">
-          <button class="btn-ver-guerra" onclick="trocarAba('guerra')">
-            ⚔️ Ver guerra
-          </button>
-
+          <button class="btn-ver-guerra" onclick="trocarAba('guerra')">⚔️ Ver guerra</button>
           <select class="sort-dropdown" onchange="alterarOrdenacao(this.value)">
             <option value="trofeus" ${ordenacaoAtual === 'trofeus' ? 'selected' : ''}>Troféus ▾</option>
             <option value="cargo" ${ordenacaoAtual === 'cargo' ? 'selected' : ''}>Cargo ▾</option>
@@ -1136,7 +1071,6 @@ function tentarLogin() {
         if (dadosJogador && dadosJogador.Telefone && dadosJogador.Telefone.toString().trim() !== "") {
           const numLimpo = dadosJogador.Telefone.toString().replace(/\D/g, '');
           const linkZap = `https://wa.me/55${numLimpo}`;
-
           htmlBotoesZap = `
             <div class="whatsapp-actions">
               <a href="${linkZap}" target="_blank" class="action-btn btn-wa" title="WhatsApp">💬</a>
@@ -1147,17 +1081,13 @@ function tentarLogin() {
         htmlMembros += `
           <div class="member-card">
             <div class="member-rank">${index + 1}.</div>
-            <div class="member-cv">
-              ${imgHtml}
-            </div>
+            <div class="member-cv">${imgHtml}</div>
             <div class="member-info">
               <div class="member-name">${nome}</div>
               <div class="member-role">${cargo}</div>
             </div>
             ${htmlBotoesZap}
-            <div class="member-trophies-pill">
-              🏆 ${trofeus}
-            </div>
+            <div class="member-trophies-pill">🏆 ${trofeus}</div>
           </div>
         `;
       });
@@ -1172,7 +1102,7 @@ function tentarLogin() {
         listaJogadoresGlobal.forEach(j => {
           const tag = j.Tag ? j.Tag.replace('%23', '#') : 'Sem Tag';
           const nomeReal = j.NomeJogador || j.NomeReal || 'Nome não informado';
-          const nomeVila = j.NomeVila || j.NomeJogo || j.Nome || 'Sem Nome de Vila';
+          const nomeVila = j.NomeJogo || j.NomeVila || 'Sem Nome de Vila';
           const telefone = j.Telefone || 'Não informado';
           const obs = j.Observacoes || '';
 
@@ -1203,9 +1133,7 @@ function tentarLogin() {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <h2 style="font-size: 1.2rem; color: #ffffff;">Contatos dos Jogadores</h2>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${htmlCards}
-        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">${htmlCards}</div>
         <button class="fab-add" onclick="abrirModalAdicionar()">+</button>
       `;
     }
@@ -1236,7 +1164,7 @@ function tentarLogin() {
               <div class="ranking-position">${pos}</div>
               <div style="margin-right: 4px;">${imgCv}</div>
               <div style="flex: 1; overflow: hidden;">
-                <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;" class="member-name">${item.NomeMembro}</div>
+                <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${item.NomeMembro}</div>
                 <div style="font-size: 0.78rem; color: #94a3b8;">⭐ ${item.TotalEstrelasGanhas || 0} estrelas | Guerras: ${item.TotalGuerrasParticipadas || 0}</div>
                 <div style="font-size: 0.75rem; color: #cbd5e1;">Atts: <b>${item.TotalAtaquesFeitos}</b> | Faltas: <span class="${faltantes > 0 ? 'text-danger' : 'text-success'}">${faltantes}</span></div>
               </div>
@@ -1253,10 +1181,7 @@ function tentarLogin() {
 
       container.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <h2 style="font-size: 1.2rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">
-            🏆 Classificação da Temporada
-          </h2>
-
+          <h2 style="font-size: 1.2rem; color: #ffffff; display: flex; align-items: center; gap: 8px;">🏆 Classificação da Temporada</h2>
           <div class="cards-ranking-grid">
             <div class="card-ranking-stat">
               <span class="lbl">Top Líder</span>
@@ -1275,10 +1200,7 @@ function tentarLogin() {
               <span class="val" style="color: #e2e8f0;">${rankingTemporadaGlobal.length}</span>
             </div>
           </div>
-
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${htmlRanking}
-          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">${htmlRanking}</div>
         </div>
       `;
     }
@@ -1292,7 +1214,6 @@ function tentarLogin() {
       select.innerHTML = '<option value="">-- Selecione uma Vila --</option>';
 
       const membrosSemTel = listaMembrosGlobal.filter(m => !buscarDadosJogador(m));
-
       membrosSemTel.forEach(m => {
         const nome = m.NomeJogo || m.Nome || "Sem Nome";
         const tag = (m.Tag || m.TagMembro || "").replace('%23', '#');
@@ -1304,7 +1225,6 @@ function tentarLogin() {
       document.getElementById('inputNomeReal').value = "";
       document.getElementById('inputTelefone').value = "";
       document.getElementById('inputObservacoes').value = "";
-
       document.getElementById('modalJogador').style.display = "flex";
     }
 
@@ -1325,7 +1245,6 @@ function tentarLogin() {
       document.getElementById('inputNomeReal').value = nomeReal;
       document.getElementById('inputTelefone').value = telefone;
       document.getElementById('inputObservacoes').value = obs;
-
       document.getElementById('modalJogador').style.display = "flex";
     }
 
@@ -1335,7 +1254,6 @@ function tentarLogin() {
 
     function removerJogador(tag) {
       if (!tag) return;
-      
       if (confirm("Deseja realmente remover o cadastro deste jogador?")) {
         const tagFormatada = tag.replace('%23', '#');
         listaJogadoresGlobal = listaJogadoresGlobal.filter(j => (j.Tag || "").replace('%23', '#') !== tagFormatada);
@@ -1363,26 +1281,14 @@ function tentarLogin() {
       const telefone = document.getElementById('inputTelefone').value;
       const obs = document.getElementById('inputObservacoes').value;
 
-      if (!tag || !nomeVila) {
-        alert("Por favor, selecione uma vila do clã.");
-        return;
-      }
-
-      if (!nomeReal) {
-        alert("Por favor, informe o nome do jogador (pessoa).");
-        return;
-      }
-
-      if (!telefone) {
-        alert("Por favor, digite o número de telefone.");
-        return;
-      }
+      if (!tag || !nomeVila) { alert("Por favor, selecione uma vila do clã."); return; }
+      if (!nomeReal) { alert("Por favor, informe o nome do jogador (pessoa)."); return; }
+      if (!telefone) { alert("Por favor, digite o número de telefone."); return; }
 
       const idx = listaJogadoresGlobal.findIndex(j => (j.Tag || "").replace('%23', '#') === tag);
-      
       const novoObjeto = {
         Tag: tag,
-        NomeVila: nomeVila,
+        NomeJogo: nomeVila,
         NomeJogador: nomeReal,
         Telefone: telefone,
         Observacoes: obs
@@ -1402,7 +1308,6 @@ function tentarLogin() {
 
       fecharModal();
       renderizarApp();
-      
       alert("Contato salvo com sucesso!");
     }
 
@@ -1433,7 +1338,6 @@ function tentarLogin() {
       historicoEventosGlobal.forEach(ev => {
         const st = Number(ev.Estrelas) || 0;
         const eNos = (ev.TipoAtacante === "Nosso Clã");
-
         if (eNos) {
           if (st === 3) c3_nos++; else if (st === 2) c2_nos++; else if (st === 1) c1_nos++; else c0_nos++;
         } else {
@@ -1470,58 +1374,26 @@ function tentarLogin() {
         conteudoSubAba = `
           <div class="war-metric-row">
             <div class="war-metric-label">Estrelas</div>
-            <div class="war-metric-values">
-              <span>${nossasEstrelas}</span>
-              <span>⭐</span>
-              <span>${estrelasOponente}</span>
-            </div>
+            <div class="war-metric-values"><span>${nossasEstrelas}</span><span>⭐</span><span>${estrelasOponente}</span></div>
             <div class="war-metric-divider"></div>
           </div>
-
           <div class="war-metric-row">
             <div class="war-metric-label">Destruição total</div>
-            <div class="war-metric-values">
-              <span>${nossaDestruicao}%</span>
-              <span>%</span>
-              <span>${destruicaoOponente}%</span>
-            </div>
+            <div class="war-metric-values"><span>${nossaDestruicao}%</span><span>%</span><span>${destruicaoOponente}%</span></div>
             <div class="war-metric-divider"></div>
           </div>
-
           <div class="war-metric-row">
             <div class="war-metric-label">Ataques usados</div>
-            <div class="war-metric-values">
-              <span>${nossosAtaques}</span>
-              <span>⚔️</span>
-              <span>${ataquesOponente}</span>
-            </div>
+            <div class="war-metric-values"><span>${nossosAtaques}</span><span>⚔️</span><span>${ataquesOponente}</span></div>
             <div class="war-metric-divider"></div>
           </div>
-
           <div class="war-stars-breakdown">
             <div class="war-metric-label" style="text-align: center;">Estrelas por Ataque</div>
-            <div class="star-row">
-              <span>(${e3_nos}%) ${c3_nos}</span>
-              <span>⭐⭐⭐</span>
-              <span>${c3_eles} (${e3_eles}%)</span>
-            </div>
-            <div class="star-row">
-              <span>(${e2_nos}%) ${c2_nos}</span>
-              <span>⭐⭐★</span>
-              <span>${c2_eles} (${e2_eles}%)</span>
-            </div>
-            <div class="star-row">
-              <span>(${e1_nos}%) ${c1_nos}</span>
-              <span>⭐★★</span>
-              <span>${c1_eles} (${e1_eles}%)</span>
-            </div>
-            <div class="star-row">
-              <span>(${e0_nos}%) ${c0_nos}</span>
-              <span>★★★</span>
-              <span>${c0_eles} (${e0_eles}%)</span>
-            </div>
+            <div class="star-row"><span>(${e3_nos}%) ${c3_nos}</span><span>⭐⭐⭐</span><span>${c3_eles} (${e3_eles}%)</span></div>
+            <div class="star-row"><span>(${e2_nos}%) ${c2_nos}</span><span>⭐⭐★</span><span>${c2_eles} (${e2_eles}%)</span></div>
+            <div class="star-row"><span>(${e1_nos}%) ${c1_nos}</span><span>⭐★★</span><span>${c1_eles} (${e1_eles}%)</span></div>
+            <div class="star-row"><span>(${e0_nos}%) ${c0_nos}</span><span>★★★</span><span>${c0_eles} (${e0_eles}%)</span></div>
           </div>
-
           <div class="war-metric-row" style="margin-top: 5px;">
             <div style="display: flex; justify-content: space-around; width: 100%;">
               <div>
@@ -1530,11 +1402,10 @@ function tentarLogin() {
               </div>
               <div>
                 <div class="war-metric-label">Média de destruição</div>
-                <div style="font-size: 0.95rem; font-weight:700;">${mediaDestNos}% % ${mediaDestEles}%</div>
+                <div style="font-size: 0.95rem; font-weight:700;">${mediaDestNos}% | ${mediaDestEles}%</div>
               </div>
             </div>
           </div>
-
           <div class="war-footer-note">
             <div class="label">Previsão e Horários</div>
             <div class="value">${informacaoTempo || 'Datas não especificadas.'}</div>
@@ -1545,7 +1416,6 @@ function tentarLogin() {
         if (historicoEventosGlobal.length > 0) {
           historicoEventosGlobal.forEach(ev => {
             const isNosso = ev.TipoAtacante === "Nosso Clã";
-            
             const imgAtacante = obterFotoCvDoMembro(ev.AtacanteTag || ev.AtacanteNome);
             const imgDefensor = obterFotoCvDoMembro(ev.DefensorTag || ev.DefensorNome);
 
@@ -1556,15 +1426,9 @@ function tentarLogin() {
                   <span>Ordem #${ev.Ordem}</span>
                 </div>
                 <div class="event-body">
-                  <div class="event-player">
-                    ${imgAtacante}
-                    <span><b>#${ev.AtacantePosicao} ${ev.AtacanteNome}</b></span>
-                  </div>
+                  <div class="event-player">${imgAtacante}<span><b>#${ev.AtacantePosicao} ${ev.AtacanteNome}</b></span></div>
                   <span>➔</span>
-                  <div class="event-player">
-                    ${imgDefensor}
-                    <span><b>#${ev.DefensorPosicao} ${ev.DefensorNome}</b></span>
-                  </div>
+                  <div class="event-player">${imgDefensor}<span><b>#${ev.DefensorPosicao} ${ev.DefensorNome}</b></span></div>
                 </div>
                 <div style="text-align: right; font-weight: 700; color: #22c55e;">
                   ${'⭐'.repeat(Number(ev.Estrelas) || 0)} (${ev.Destruicao})
@@ -1617,7 +1481,7 @@ function tentarLogin() {
         `;
       }
 
-      let html = `
+      container.innerHTML = `
         <div class="war-screen">
           <div class="war-header-badges">
             <img class="war-clan-badge" src="${meuEmblema}" alt="Nosso Clã">
@@ -1628,18 +1492,14 @@ function tentarLogin() {
             </div>
             <img class="war-clan-badge" src="${oponenteEmblema}" alt="Oponente">
           </div>
-
           <div class="sub-nav" style="width: 100%;">
             <button class="sub-nav-btn ${subAbaGuerra === 'estatisticas' ? 'active' : ''}" onclick="trocarSubAbaGuerra('estatisticas')">Estatísticas</button>
             <button class="sub-nav-btn ${subAbaGuerra === 'evento' ? 'active' : ''}" onclick="trocarSubAbaGuerra('evento')">Evento</button>
             <button class="sub-nav-btn ${subAbaGuerra === 'ataquesDefesa' ? 'active' : ''}" onclick="trocarSubAbaGuerra('ataquesDefesa')">Ataque e Defesa</button>
           </div>
-
           ${conteudoSubAba}
         </div>
       `;
-
-      container.innerHTML = html;
     }
 
     carregarDados();
