@@ -1,4 +1,33 @@
 <!DOCTYPE html>
+
+<!-- Tela de Login -->
+<div id="login-screen" style="text-align:center; padding: 50px;">
+  <h2>Acesso ao Painel</h2>
+  <input type="text" id="tel-login" placeholder="Digite seu telefone (DDD+Número)">
+  <button onclick="tentarLogin()">Entrar</button>
+</div>
+
+<!-- Conteúdo Principal (deixe escondido por padrão) -->
+<div id="app-content" style="display:none;">
+  <!-- O seu conteúdo atual aqui -->
+</div>
+
+<script>
+function tentarLogin() {
+  var tel = document.getElementById('tel-login').value;
+  google.script.run.withSuccessHandler(function(usuario) {
+    if (usuario) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      console.log("Logado como: " + usuario.nome);
+    } else {
+      alert("Telefone não encontrado ou não cadastrado.");
+    }
+  }).validarLogin(tel);
+}
+</script>
+
+
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
