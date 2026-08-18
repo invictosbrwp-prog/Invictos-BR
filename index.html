@@ -19,7 +19,7 @@
       display: flex;
       justify-content: center;
       min-height: 100vh;
-      padding-bottom: 40px;
+      padding-bottom: 70px;
     }
 
     .app-container {
@@ -303,6 +303,33 @@
       color: #64748b;
     }
 
+    .maintenance-state {
+      text-align: center;
+      padding: 60px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background-color: #20222b;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .maintenance-icon {
+      font-size: 2.5rem;
+    }
+
+    .maintenance-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .maintenance-desc {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
     .cv-badge {
       width: 38px;
       height: 38px;
@@ -326,6 +353,56 @@
       object-fit: contain !important;
       flex-shrink: 0;
     }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #181920;
+      border-top: 1px solid #272934;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 8px 0;
+      z-index: 100;
+      max-width: 450px;
+      margin: 0 auto;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      width: 25%;
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+    }
+
+    .nav-icon-wrapper {
+      padding: 4px 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-item.active .nav-icon-wrapper {
+      background-color: #2e3447;
+    }
+
+    .nav-icon {
+      font-size: 1.2rem;
+    }
   </style>
 </head>
 <body>
@@ -336,6 +413,25 @@
     <div class="loading-state">Carregando dados do clã...</div>
   </div>
 
+  <div class="bottom-nav">
+    <button class="nav-item" id="navGuerra" onclick="trocarAba('guerra')">
+      <div class="nav-icon-wrapper"><span class="nav-icon">⚔️</span></div>
+      <span>Guerras</span>
+    </button>
+    <button class="nav-item active" id="navClas" onclick="trocarAba('clas')">
+      <div class="nav-icon-wrapper"><span class="nav-icon">🛡️</span></div>
+      <span>Meu Clã</span>
+    </button>
+    <button class="nav-item" id="navJogadores" onclick="trocarAba('jogadores')">
+      <div class="nav-icon-wrapper"><span class="nav-icon">👥</span></div>
+      <span>Membros</span>
+    </button>
+    <button class="nav-item" id="navMais" onclick="trocarAba('mais')">
+      <div class="nav-icon-wrapper"><span class="nav-icon">🏆</span></div>
+      <span>Mais</span>
+    </button>
+  </div>
+
   <script>
     const API_URL = "https://script.google.com/macros/library/d/16SlahteQfO4NfSXOe3XlWegfECLYGMU51DgxFI53OyVrXU9N5ukBeB2W/20";
 
@@ -343,6 +439,7 @@
     let listaMembrosGlobal = [];
     let listaJogadoresGlobal = [];
     let ordenacaoAtual = 'trofeus';
+    let abaAtual = 'clas';
     let dadosCarregadosComSucesso = false;
 
     function renderBadgeCv(level) {
@@ -505,8 +602,34 @@
       renderizarListaMembros();
     }
 
+    function trocarAba(aba) {
+      abaAtual = aba;
+      document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+      if (aba === 'guerra') document.getElementById('navGuerra').classList.add('active');
+      if (aba === 'clas') document.getElementById('navClas').classList.add('active');
+      if (aba === 'jogadores') document.getElementById('navJogadores').classList.add('active');
+      if (aba === 'mais') document.getElementById('navMais').classList.add('active');
+      renderizarApp();
+    }
+
     function renderizarApp() {
       const container = document.getElementById('app');
+
+      if (abaAtual === 'clas') {
+        renderizarAbaClas(container);
+      } else {
+        let nomeSecao = abaAtual === 'guerra' ? 'Guerras' : (abaAtual === 'jogadores' ? 'Membros' : 'Mais');
+        container.innerHTML = `
+          <div class="maintenance-state">
+            <div class="maintenance-icon">🚧</div>
+            <div class="maintenance-title">Em Manutenção / Em Breve</div>
+            <div class="maintenance-desc">A seção <b>${nomeSecao}</b> está temporariamente indisponível ou em desenvolvimento. Volte em breve para conferir as novidades!</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderizarAbaClas(container) {
       const clan = dadosClanGlobal;
       const clanTag = getClanTag(clan).replace('%23', '#');
       const emblem = getClanEmblema(clan);
@@ -626,4 +749,3 @@
   </script>
 </body>
 </html>
- 
