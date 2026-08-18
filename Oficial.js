@@ -79,6 +79,7 @@ function atualizarSistemaClash() {
 
     atualizarMembros();
     atualizarGuerra();
+    atualizarEventosGuerra();
     
     Logger.log("Dados do clã atualizados com sucesso!");
     
@@ -320,4 +321,92 @@ var membrosGuerra = guerra.clan.members || [];
   } else {
     Logger.log("Erro ao buscar guerra: " + resposta.getContentText());
   }
+}
+
+/**
+ * Busca ataques realizados e recebidos, ordena cronologicamente e gera a aba de eventos.
+ */
+function atualizarEventosGuerra() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  var CLAN_TAG = "%232QU2GV028";
+  var urlGuerra = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG + "/currentwar";
+  
+  var options = {
+    "method": "get",
+    "headers": { "Authorization": "Bearer " + API_TOKEN.trim(), "Accept": "application/json" },
+    "muteHttpExceptions": true
+  };
+  
+  var resposta = UrlFetchApp.fetch(urlGuerra, options);
+  if (resposta.getResponseCode() !== 200) return;
+  
+  var guerra = JSON.parse(resposta.getContentText());
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Eventos Guerra") || ss.insertSheet("Eventos Guerra");
+  sheet.clear();
+  
+  var eventos = [];
+
+  // Função para mapear nível do CV de um membro pelo nome
+  function getCvPeloNome(nome, lista) {
+    var membro = lista.find(function(m) { return m.name === nome; });
+    return membro ? membro.townhallLevel : 0;
+  }
+
+// --- SUBSTIRUA A LÓGICA DE PROCESSAMENTO DOS ATAQUES POR ESTA ---
+
+  // 1. Criar um mapa rápido para buscar nomes de oponentes por tag
+  var mapaOponentes = {};
+  guerra.opponent.members.forEach(function(m) {
+    mapaOponentes[m.tag] = m.name;
+  });
+
+  // 2. Processa ataques do nosso clã
+  guerra.clan.members.forEach(function(m) {
+    if (m.attacks) {
+      m.attacks.forEach(function(a) {
+        // Busca o nome do alvo pelo mapa que criamos acima
+        var nomeAlvo = mapaOponentes[a.defenderTag] || "Desconhecido";
+        
+        eventos.push({
+          data: a.creationTime,
+          tipo: "Ataque Realizado",
+          nomeAtacante: m.name,
+          fotoCV: "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + m.townhallLevel + ".png",
+          // Agora incluindo o nome do alvo aqui:
+          info: "Alvo: " + nomeAlvo + " (" + a.stars + "★ / " + a.destructionPercentage + "%)"
+        });
+      });
+    }
+  });
+
+  // Ordena por data (Mais antigo primeiro)
+  eventos.sort(function(a, b) { return a.data.localeCompare(b.data); });
+
+  // Prepara dados para a planilha
+  var cabecalhos = ["Data/Hora", "Tipo", "Atacante", "Foto CV", "Detalhes"];
+  var linhas = eventos.map(function(e) {
+    return [formatarDataEvento(e.data), e.tipo, e.nomeAtacante, e.fotoCV, e.info];
+  });
+
+  sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+  if (linhas.length > 0) {
+    sheet.getRange(2, 1, linhas.length, cabecalhos.length).setValues(linhas);
+    sheet.setRowHeights(2, linhas.length, 60);
+  }
+  
+  sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+  sheet.autoResizeColumns(1, cabecalhos.length);
+}
+
+// Substitua sua função formatarDataEvento por esta, que é mais segura:
+function formatarDataEvento(str) {
+  if (!str) return "";
+  // Exemplo: 20260818T183000.000Z
+  var dia = str.substring(6, 8);
+  var mes = str.substring(4, 6);
+  var hora = str.substring(9, 11);
+  var min = str.substring(11, 13);
+  
+  return dia + "/" + mes + " " + hora + ":" + min;
 }
