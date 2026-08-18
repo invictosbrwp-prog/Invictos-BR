@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Perfil do Clã & Membros</title>
+  <title>Perfil do Clã</title>
 
   <style>
     * {
@@ -19,7 +19,7 @@
       display: flex;
       justify-content: center;
       min-height: 100vh;
-      padding-bottom: 70px;
+      padding-bottom: 40px;
     }
 
     .app-container {
@@ -34,7 +34,599 @@
       overflow-x: hidden;
     }
 
+    .sync-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background-color: #272934;
+      color: #ffffff;
+      border: 1px solid #3f475a;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      z-index: 10;
+      transition: background-color 0.2s;
+    }
+
+    .sync-btn:active {
+      background-color: #3f475a;
+    }
+
     .clan-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .badge-wrapper {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 8px;
+    }
+
+    .badge-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .clan-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .clan-subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      display: flex;
+      gap: 6px;
+    }
+
+    .war-stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .icon-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .icon-green { background-color: #22c55e; color: #fff; }
+    .icon-blue { background-color: #3b82f6; color: #fff; }
+    .icon-red { background-color: #ef4444; color: #fff; }
+    .icon-gray { background-color: #475569; color: #fff; }
+
+    .streak-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    .chips-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .chip {
+      background-color: #272934;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+
+    .description {
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: #d1d5db;
+      padding: 0 8px 8px;
+      white-space: pre-wrap;
+    }
+
+    .members-header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 8px 0;
+      position: relative;
+    }
+
+    .sort-dropdown {
+      background-color: #272934;
+      color: #94a3b8;
+      border: 1px solid #3f475a;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .sort-dropdown option {
+      background-color: #272934;
+      color: #ffffff;
+    }
+
+    .members-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .member-card {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      gap: 8px;
+      background-color: #20222b;
+      border-radius: 10px;
+    }
+
+    .member-rank {
+      width: 22px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #94a3b8;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .member-cv {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      max-width: 40px;
+      max-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .member-cv img {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 40px !important;
+      max-height: 40px !important;
+      object-fit: contain !important;
+      display: block;
+    }
+
+    .member-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .member-name {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-role {
+      font-size: 0.75rem;
+      color: #838d99;
+    }
+
+    .member-donations {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      display: flex;
+      gap: 6px;
+    }
+
+    .member-donations span b {
+      color: #e2e8f0;
+    }
+
+    .whatsapp-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-wa { background-color: #22c55e; color: #fff; }
+    .action-btn:active { opacity: 0.7; }
+
+    .member-trophies-pill {
+      background-color: #272934;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 50px 0;
+      color: #64748b;
+    }
+
+    .cv-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+
+    .cv-icon-small {
+      width: 38px !important;
+      height: 38px !important;
+      max-width: 38px !important;
+      max-height: 38px !important;
+      object-fit: contain !important;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="sync-btn" onclick="sincronizarDados()">🔄 Sincronizar</button>
+
+  <div class="app-container" id="app">
+    <div class="loading-state">Carregando dados do clã...</div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/library/d/16SlahteQfO4NfSXOe3XlWegfECLYGMU51DgxFI53OyVrXU9N5ukBeB2W/17";
+
+    let dadosClanGlobal = {};
+    let listaMembrosGlobal = [];
+    let listaJogadoresGlobal = [];
+    let ordenacaoAtual = 'trofeus';
+    let dadosCarregadosComSucesso = false;
+
+    function renderBadgeCv(level) {
+      const lvl = Number(level) || 1;
+      return `<span class="cv-badge">CV${lvl}</span>`;
+    }
+
+    function tratarErroImagem(imgElement, nivelCv) {
+      if (imgElement && imgElement.parentNode) {
+        imgElement.parentNode.innerHTML = renderBadgeCv(nivelCv);
+      }
+    }
+
+    function getClanNome(c) { return c["Nome"] || c["NomeClã"] || c["Nome do Clã"] || "Clã"; }
+    function getClanTag(c) { return c["Tag"] || ""; }
+    function getClanNivel(c) { return c["Nível"] || c["Nivel"] || c["NivelClã"] || "1"; }
+    function getClanMembros(c) { return c["Membros"] || "0 / 50"; }
+    function getClanTrofeus(c) { return c["Troféus"] || c["Trofeus"] || 0; }
+    function getClanLigaCWL(c) { return c["Liga CWL"] || c["Liga"] || "Sem Liga"; }
+    function getClanVitorias(c) { return c["Vitórias"] || c["Vitorias"] || 0; }
+    function getClanDerrotas(c) { return c["Derrotas"] || 0; }
+    function getClanEmpates(c) { return c["Empates"] || 0; }
+    function getClanNivelCapital(c) { return c["Nível Capital"] || c["CapitalNivel"] || "0"; }
+    function getClanDescricao(c) { return c["Descrição"] || c["Descricao"] || ""; }
+    function getClanEmblema(c) { return c["Emblema"] || ""; }
+
+    function getNomeMembro(m) { return m["Nome da Vila"] || m["NomeJogo"] || m["Nome"] || "Sem Nome"; }
+    function getTagMembro(m) { return m["Tag"] || m["TagMembro"] || ""; }
+    function getFotoCvMembro(m) { return m["Foto CV"] || m["FotoCV"] || ""; }
+    function getNivelCvMembro(m) { return Number(m["Nível CV"] || m["NivelCV"] || 1); }
+    function getTrofeusMembro(m) { return Number(m["Troféus"] || m["Trofeus"] || 0); }
+    function getCargoMembro(m) { return m["Cargo"] || "Membro"; }
+    
+    function getDoadasMembro(m) { 
+      return Number(m["Doações Feitas"] || m["Doacoes"] || m["Doadas"] || 0); 
+    }
+    function getRecebidasMembro(m) { 
+      return Number(m["Doações Recebidas"] || m["Recebidas"] || m["TropasRecebidas"] || 0); 
+    }
+
+    function buscarDadosJogador(membro) {
+      if (!membro) return null;
+      const tagM = getTagMembro(membro).toLowerCase().trim().replace('%23', '#');
+      const nomeM = getNomeMembro(membro).toLowerCase().trim();
+
+      return listaJogadoresGlobal.find(j => {
+        const tagJ = (j.Tag || "").toString().toLowerCase().trim().replace('%23', '#');
+        const nomeJ = (j.NomeVila || j.NomeJogo || j.Nome || "").toString().toLowerCase().trim();
+        return (tagJ && tagJ === tagM) || (nomeJ && nomeJ === nomeM);
+      });
+    }
+
+    function processarDadosRecebidos(data) {
+      if (!data) return;
+      dadosCarregadosComSucesso = true;
+
+      if (Array.isArray(data)) {
+        dadosClanGlobal = data[0] || {};
+      } else if (data.clan) {
+        dadosClanGlobal = Array.isArray(data.clan) ? (data.clan[0] || {}) : data.clan;
+      } else {
+        dadosClanGlobal = data;
+      }
+
+      listaMembrosGlobal = data.membros || data.members || [];
+      listaJogadoresGlobal = data.jogadores || [];
+
+      try {
+        localStorage.setItem('coc_clan_cache', JSON.stringify(data));
+      } catch(e) {}
+
+      renderizarApp();
+    }
+
+    function callbackClanData(data) {
+      processarDadosRecebidos(data);
+    }
+
+    function carregarCacheLocal() {
+      try {
+        const cache = localStorage.getItem('coc_clan_cache');
+        if (cache) {
+          const parsed = JSON.parse(cache);
+          processarDadosRecebidos(parsed);
+        }
+      } catch(e) {}
+    }
+
+    function carregarDados() {
+      carregarCacheLocal();
+      executarScriptApi();
+    }
+
+    function sincronizarDados() {
+      const btn = document.querySelector('.sync-btn');
+      btn.innerText = "⏳ Sincronizando...";
+      executarScriptApi(() => {
+        btn.innerText = "🔄 Sincronizar";
+      });
+    }
+
+    function executarScriptApi(callbackFim) {
+      const scriptAntigo = document.getElementById('apiScriptDynamic');
+      if (scriptAntigo) scriptAntigo.remove();
+
+      const script = document.createElement('script');
+      script.id = 'apiScriptDynamic';
+      script.src = API_URL + "?callback=callbackClanData&t=" + new Date().getTime();
+
+      const timeout = setTimeout(() => {
+        if (!dadosCarregadosComSucesso && (!listaMembrosGlobal || listaMembrosGlobal.length === 0)) {
+          document.getElementById('app').innerHTML = '<div class="loading-state">Conexão lenta. Carregando dados salvos...</div>';
+        }
+        if (callbackFim) callbackFim();
+      }, 6000);
+
+      script.onload = () => {
+        clearTimeout(timeout);
+        if (callbackFim) callbackFim();
+      };
+      
+      script.onerror = function() {
+        clearTimeout(timeout);
+        if (!listaMembrosGlobal || listaMembrosGlobal.length === 0) {
+          document.getElementById('app').innerHTML = '<div class="loading-state">Erro ao conectar com a planilha.</div>';
+        }
+        if (callbackFim) callbackFim();
+      };
+
+      document.body.appendChild(script);
+    }
+
+    function getPesoCargo(cargo) {
+      if (!cargo) return 0;
+      const c = cargo.toString().toLowerCase();
+      if (c.includes('líder') || c.includes('lider') || c.includes('leader')) return 4;
+      if (c.includes('colíder') || c.includes('colider') || c.includes('co-leader')) return 3;
+      if (c.includes('ancião') || c.includes('anciao') || c.includes('elder')) return 2;
+      return 1;
+    }
+
+    function ordenarMembros(membros, criterio) {
+      return [...membros].sort((a, b) => {
+        if (criterio === 'trofeus') return getTrofeusMembro(b) - getTrofeusMembro(a);
+        if (criterio === 'nivelcv') return getNivelCvMembro(b) - getNivelCvMembro(a);
+        if (criterio === 'cargo') {
+          const cargoA = getPesoCargo(getCargoMembro(a));
+          const cargoB = getPesoCargo(getCargoMembro(b));
+          if (cargoA !== cargoB) return cargoB - cargoA;
+          return getTrofeusMembro(b) - getTrofeusMembro(a);
+        }
+        if (criterio === 'doadas') return getDoadasMembro(b) - getDoadasMembro(a);
+        if (criterio === 'recebidas') return getRecebidasMembro(b) - getRecebidasMembro(a);
+        return 0;
+      });
+    }
+
+    function alterarOrdenacao(novoCriterio) {
+      ordenacaoAtual = novoCriterio;
+      renderizarListaMembros();
+    }
+
+    function renderizarApp() {
+      const container = document.getElementById('app');
+      const clan = dadosClanGlobal;
+      const clanTag = getClanTag(clan).replace('%23', '#');
+      const emblem = getClanEmblema(clan);
+
+      let html = `
+        <div class="clan-header">
+          <div class="badge-wrapper">
+            <img class="badge-img" src="${emblem}" alt="Emblema" onerror="this.src='https://cdn.clashofclans.com/images/ui/shield_badge.png'">
+          </div>
+          <h1 class="clan-title">${getClanNome(clan)}</h1>
+          <div class="clan-subtitle">
+            <span>👥 ${getClanMembros(clan)}</span>
+            <span>|</span>
+            <span>Nível ${getClanNivel(clan)}</span>
+          </div>
+        </div>
+
+        <div class="war-stats">
+          <div class="stat-item"><span class="icon-box icon-green">📈</span> <span>${getClanVitorias(clan)} Vitórias</span></div>
+          <div class="stat-item"><span class="icon-box icon-blue">➡️</span> <span>${getClanEmpates(clan)} Empates</span></div>
+          <div class="stat-item"><span class="icon-box icon-red">📉</span> <span>${getClanDerrotas(clan)} Derrotas</span></div>
+        </div>
+
+        <div class="streak-bar">
+          <span class="icon-box icon-gray">📊</span>
+          <span>Nível Capital: <b>${getClanNivelCapital(clan)}</b></span>
+        </div>
+
+        <div class="chips-grid">
+          <div class="chip">🏆 ${getClanLigaCWL(clan)}</div>
+          <div class="chip">🏆 ${getClanTrofeus(clan)}</div>
+          <div class="chip">${clanTag}</div>
+        </div>
+
+        <div class="description">${getClanDescricao(clan)}</div>
+
+        <div class="members-header">
+          <select class="sort-dropdown" onchange="alterarOrdenacao(this.value)">
+            <option value="trofeus" ${ordenacaoAtual === 'trofeus' ? 'selected' : ''}>Troféus ▾</option>
+            <option value="cargo" ${ordenacaoAtual === 'cargo' ? 'selected' : ''}>Cargo ▾</option>
+            <option value="nivelcv" ${ordenacaoAtual === 'nivelcv' ? 'selected' : ''}>Nível de CV ▾</option>
+            <option value="doadas" ${ordenacaoAtual === 'doadas' ? 'selected' : ''}>Mais Doadas ▾</option>
+            <option value="recebidas" ${ordenacaoAtual === 'recebidas' ? 'selected' : ''}>Mais Recebidas ▾</option>
+          </select>
+        </div>
+
+        <div class="members-list" id="membersContainer"></div>
+      `;
+
+      container.innerHTML = html;
+      renderizarListaMembros();
+    }
+
+    function renderizarListaMembros() {
+      const container = document.getElementById('membersContainer');
+      if (!container) return;
+
+      if (!listaMembrosGlobal || listaMembrosGlobal.length === 0) {
+        container.innerHTML = `<div class="loading-state" style="padding: 20px 0;">Nenhum membro encontrado.</div>`;
+        return;
+      }
+
+      const membrosOrdenados = ordenarMembros(listaMembrosGlobal, ordenacaoAtual);
+      let htmlMembros = '';
+
+      membrosOrdenados.forEach((m, index) => {
+        const nome = getNomeMembro(m);
+        const cargo = getCargoMembro(m);
+        const trofeus = getTrofeusMembro(m);
+        const nivelCv = getNivelCvMembro(m);
+        const imagemCv = getFotoCvMembro(m);
+        const doadas = getDoadasMembro(m);
+        const recebidas = getRecebidasMembro(m);
+        
+        let imgHtml = '';
+        if (imagemCv && imagemCv.toString().trim() !== "") {
+          imgHtml = `<img src="${imagemCv}" alt="CV ${nivelCv}" onerror="tratarErroImagem(this, ${nivelCv})">`;
+        } else {
+          imgHtml = renderBadgeCv(nivelCv);
+        }
+
+        const dadosJogador = buscarDadosJogador(m);
+        let htmlBotoesZap = '';
+
+        if (dadosJogador && dadosJogador.Telefone && dadosJogador.Telefone.toString().trim() !== "") {
+          const numLimpo = dadosJogador.Telefone.toString().replace(/\D/g, '');
+          const linkZap = `https://wa.me/55${numLimpo}`;
+          htmlBotoesZap = `
+            <div class="whatsapp-actions">
+              <a href="${linkZap}" target="_blank" class="action-btn btn-wa" title="WhatsApp">💬</a>
+            </div>
+          `;
+        }
+
+        htmlMembros += `
+          <div class="member-card">
+            <div class="member-rank">${index + 1}</div>
+            <div class="member-cv">${imgHtml}</div>
+            <div class="member-info">
+              <div class="member-name">${nome}</div>
+              <div class="member-role">${cargo}</div>
+              <div class="member-donations">
+                <span>🟢 <b>${doadas}</b></span>
+                <span>🔴 <b>${recebidas}</b></span>
+              </div>
+            </div>
+            ${htmlBotoesZap}
+            <div class="member-trophies-pill">🏆 ${trofeus}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = htmlMembros;
+    }
+
+    carregarDados();
+  </script>
+</body>
+</html>
+     .clan-header {
       display: flex;
       flex-direction: column;
       align-items: center;
