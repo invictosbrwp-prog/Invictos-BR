@@ -54,7 +54,7 @@
     }
 
     .sync-btn.hidden {
-      display: none;
+      display: none !important;
     }
 
     .sync-btn:active {
@@ -165,7 +165,6 @@
       justify-content: flex-end;
       align-items: center;
       padding: 8px 0;
-      position: relative;
     }
 
     .sort-dropdown {
@@ -316,7 +315,7 @@
       gap: 12px;
       background-color: #20222b;
       border-radius: 12px;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
     .maintenance-icon {
@@ -731,6 +730,199 @@
       text-align: center;
     }
 
+    /* Estilos aba WhatsApp */
+    .whatsapp-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .whatsapp-top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 4px;
+    }
+
+    .add-whatsapp-btn {
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .add-whatsapp-btn:active {
+      background-color: #1d4ed8;
+    }
+
+    .whatsapp-card {
+      background-color: #20222b;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .whatsapp-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .whatsapp-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .whatsapp-realname {
+      font-size: 0.78rem;
+      color: #a78bfa;
+    }
+
+    .whatsapp-tag-vila {
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+    .whatsapp-masked-phone {
+      font-size: 0.78rem;
+      color: #22c55e;
+      font-weight: 600;
+    }
+
+    .whatsapp-buttons-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-action-wa {
+      background-color: #272934;
+      color: #ffffff;
+      border: 1px solid #3f475a;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-action-wa:active {
+      background-color: #3f475a;
+    }
+
+    .btn-action-danger {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Modal de Cadastro/Edição */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-content {
+      background-color: #20222b;
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      border: 1px solid #3f475a;
+    }
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .modal-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .modal-input, .modal-select {
+      background-color: #181920;
+      border: 1px solid #3f475a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #ffffff;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .modal-select option {
+      background-color: #181920;
+      color: #ffffff;
+    }
+
+    .modal-input:read-only {
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background-color: #272934;
+      color: #94a3b8;
+    }
+
+    .btn-save {
+      background-color: #22c55e;
+      color: #ffffff;
+    }
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -790,6 +982,44 @@
     <div class="loading-state">Carregando dados do clã...</div>
   </div>
 
+  <!-- Modal de Cadastro / Edição do WhatsApp -->
+  <div class="modal-overlay hidden" id="whatsappModal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalMainTitle">Cadastrar WhatsApp</div>
+      
+      <div class="modal-group" id="containerSelectMembro">
+        <label>Selecionar Membro</label>
+        <select id="selectNovoMembro" class="modal-select" onchange="aoSelecionarMembroModal(this.value)">
+        </select>
+      </div>
+
+      <div class="modal-group">
+        <label>Membro (Nome / Vila)</label>
+        <input type="text" id="modalVila" class="modal-input" readonly>
+      </div>
+
+      <div class="modal-group">
+        <label>Tag</label>
+        <input type="text" id="modalTag" class="modal-input" readonly>
+      </div>
+
+      <div class="modal-group">
+        <label>Nome Real</label>
+        <input type="text" id="modalNomeReal" class="modal-input" placeholder="Ex: João da Silva">
+      </div>
+
+      <div class="modal-group">
+        <label>Telefone</label>
+        <input type="text" id="modalTelefone" class="modal-input" placeholder="Ex: 11999998888">
+      </div>
+
+      <div class="modal-buttons">
+        <button class="modal-btn btn-cancel" onclick="fecharModalWhatsapp()">Cancelar</button>
+        <button class="modal-btn btn-save" onclick="salvarDadosWhatsapp()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="bottom-nav">
     <button class="nav-item" id="navGuerra" onclick="trocarAba('guerra')">
       <div class="nav-icon-wrapper"><span class="nav-icon">⚔️</span></div>
@@ -799,9 +1029,9 @@
       <div class="nav-icon-wrapper"><span class="nav-icon">🛡️</span></div>
       <span>Meu Clã</span>
     </button>
-    <button class="nav-item" id="navJogadores" onclick="trocarAba('jogadores')">
-      <div class="nav-icon-wrapper"><span class="nav-icon">👥</span></div>
-      <span>Membros</span>
+    <button class="nav-item" id="navWhatsapp" onclick="trocarAba('whatsapp')">
+      <div class="nav-icon-wrapper"><span class="nav-icon">💬</span></div>
+      <span>WhatsApp</span>
     </button>
     <button class="nav-item" id="navMais" onclick="trocarAba('mais')">
       <div class="nav-icon-wrapper"><span class="nav-icon">🏆</span></div>
@@ -870,7 +1100,7 @@
 
       return listaJogadoresGlobal.find(j => {
         const tagJ = (j.Tag || "").toString().toLowerCase().trim().replace('%23', '#');
-        const nomeJ = (j.NomeVila || j.NomeJogo || j.Nome || "").toString().toLowerCase().trim();
+        const nomeJ = (j.Vila || j.NomeVila || j.NomeJogo || j.Nome || "").toString().toLowerCase().trim();
         return (tagJ && tagJ === tagM) || (nomeJ && nomeJ === nomeM);
       });
     }
@@ -887,13 +1117,48 @@
       }
 
       listaMembrosGlobal = data.membros || data.members || [];
-      listaJogadoresGlobal = data.jogadores || [];
+      const jogadoresNovos = data.jogadores || [];
       listaGuerraGlobal = data.guerra || data.guerraAtual || data.war || [];
       listaAtaquesDefesasGlobal = data.ataquedefesa || data.ataquesedefesas || data.ataqueedefesa || data.ataquesDefesas || [];
       listaEventosGlobal = data.eventos || data.eventosDeGuerra || data.eventosdeguerra || [];
 
       try {
-        localStorage.setItem('coc_clan_cache', JSON.stringify(data));
+        const cacheAntigo = localStorage.getItem('coc_clan_cache');
+        if (cacheAntigo) {
+          const parsedCache = JSON.parse(cacheAntigo);
+          const jogadoresAntigos = parsedCache.jogadores || [];
+          
+          listaJogadoresGlobal = jogadoresNovos.map(novoJ => {
+            const tagNovo = (novoJ.Tag || "").toString().trim().toLowerCase();
+            const antigoJ = jogadoresAntigos.find(a => (a.Tag || "").toString().trim().toLowerCase() === tagNovo);
+            if (antigoJ) {
+              return {
+                ...novoJ,
+                Telefone: antigoJ.Telefone || novoJ.Telefone || "",
+                NomeReal: antigoJ.NomeReal || novoJ.NomeReal || ""
+              };
+            }
+            return novoJ;
+          });
+
+          jogadoresAntigos.forEach(antigoJ => {
+            const tagAntigo = (antigoJ.Tag || "").toString().trim().toLowerCase();
+            if (tagAntigo && !listaJogadoresGlobal.some(j => (j.Tag || "").toString().trim().toLowerCase() === tagAntigo)) {
+              if (antigoJ.Telefone || antigoJ.NomeReal) {
+                listaJogadoresGlobal.push(antigoJ);
+              }
+            }
+          });
+        } else {
+          listaJogadoresGlobal = jogadoresNovos;
+        }
+      } catch(e) {
+        listaJogadoresGlobal = jogadoresNovos;
+      }
+
+      try {
+        let dadosParaSalvar = { ...data, jogadores: listaJogadoresGlobal };
+        localStorage.setItem('coc_clan_cache', JSON.stringify(dadosParaSalvar));
       } catch(e) {}
 
       renderizarApp();
@@ -919,9 +1184,6 @@
     async function sincronizarDados() {
       const btn = document.getElementById('syncBtn');
       if (btn) btn.innerText = "⏳ Sincronizando...";
-      try {
-        localStorage.removeItem('coc_clan_cache');
-      } catch(e) {}
 
       await buscarDadosApi(true);
       if (btn) btn.innerText = "🔄 Sincronizar";
@@ -985,15 +1247,15 @@
       document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
       if (aba === 'guerra') document.getElementById('navGuerra').classList.add('active');
       if (aba === 'clas') document.getElementById('navClas').classList.add('active');
-      if (aba === 'jogadores') document.getElementById('navJogadores').classList.add('active');
+      if (aba === 'whatsapp') document.getElementById('navWhatsapp').classList.add('active');
       if (aba === 'mais') document.getElementById('navMais').classList.add('active');
       
       const syncBtn = document.getElementById('syncBtn');
       if (syncBtn) {
-        if (aba === 'guerra') {
-          syncBtn.classList.add('hidden');
-        } else {
+        if (aba === 'clas') {
           syncBtn.classList.remove('hidden');
+        } else {
+          syncBtn.classList.add('hidden');
         }
       }
 
@@ -1005,42 +1267,6 @@
       renderizarApp();
     }
 
-    function mudarFiltroTipoEquipe(val) {
-      filtroTipoEquipe = val;
-      filtroCondicaoEquipe = 'todos';
-      atualizarOpcoesFiltroCondicao();
-      renderizarListaMinhaEquipe();
-    }
-
-    function mudarFiltroCondicaoEquipe(val) {
-      filtroCondicaoEquipe = val;
-      renderizarListaMinhaEquipe();
-    }
-
-    function atualizarOpcoesFiltroCondicao() {
-      const selectCondicao = document.getElementById('selectCondicaoEquipe');
-      if (!selectCondicao) return;
-
-      let html = '';
-      if (filtroTipoEquipe === 'ataques') {
-        html = `
-          <option value="todos" ${filtroCondicaoEquipe === 'todos' ? 'selected' : ''}>Ataques Restantes</option>
-          <option value="0" ${filtroCondicaoEquipe === '0' ? 'selected' : ''}>0 Ataques Restantes</option>
-          <option value="1" ${filtroCondicaoEquipe === '1' ? 'selected' : ''}>1 Ataque Restante</option>
-          <option value="2" ${filtroCondicaoEquipe === '2' ? 'selected' : ''}>2 Ataques Restantes</option>
-        `;
-      } else {
-        html = `
-          <option value="todos" ${filtroCondicaoEquipe === 'todos' ? 'selected' : ''}>Todos os Jogadores</option>
-          <option value="3" ${filtroCondicaoEquipe === '3' ? 'selected' : ''}>3 Estrelas</option>
-          <option value="2" ${filtroCondicaoEquipe === '2' ? 'selected' : ''}>2 Estrelas</option>
-          <option value="1" ${filtroCondicaoEquipe === '1' ? 'selected' : ''}>1 Estrela</option>
-          <option value="0" ${filtroCondicaoEquipe === '0' ? 'selected' : ''}>0 Estrelas</option>
-        `;
-      }
-      selectCondicao.innerHTML = html;
-    }
-
     function renderizarApp() {
       const container = document.getElementById('app');
 
@@ -1048,8 +1274,10 @@
         renderizarAbaClas(container);
       } else if (abaAtual === 'guerra') {
         renderizarAbaGuerra(container);
+      } else if (abaAtual === 'whatsapp') {
+        renderizarAbaWhatsapp(container);
       } else {
-        let nomeSecao = abaAtual === 'jogadores' ? 'Membros' : 'Mais';
+        let nomeSecao = 'Mais';
         container.innerHTML = `
           <div class="maintenance-state">
             <div class="maintenance-icon">🚧</div>
@@ -1114,9 +1342,180 @@
       renderizarListaMembros();
     }
 
+    function renderizarAbaWhatsapp(container) {
+      if (!listaMembrosGlobal || listaMembrosGlobal.length === 0) {
+        container.innerHTML = `<div class="loading-state">Nenhum membro encontrado para exibir.</div>`;
+        return;
+      }
+
+      const membrosComZap = listaMembrosGlobal.filter(m => {
+        const dadosJ = buscarDadosJogador(m);
+        return dadosJ && dadosJ.Telefone && dadosJ.Telefone.toString().trim() !== "";
+      });
+
+      let html = `
+        <div class="whatsapp-top-bar">
+          <button class="add-whatsapp-btn" onclick="abrirModalCadastrarNovo()">➕ Cadastrar Novo</button>
+        </div>
+      `;
+
+      if (membrosComZap.length === 0) {
+        html += `
+          <div class="maintenance-state">
+            <div class="maintenance-icon">💬</div>
+            <div class="maintenance-title">Nenhum WhatsApp cadastrado</div>
+            <div class="maintenance-desc">Não há membros com número de telefone registrado no momento. Clique em "Cadastrar Novo" acima.</div>
+          </div>
+        `;
+      } else {
+        html += `<div class="whatsapp-container">`;
+        membrosComZap.forEach(m => {
+          const nomeVila = getNomeMembro(m);
+          const tag = getTagMembro(m);
+          const dadosJ = buscarDadosJogador(m);
+          const telefoneCadastrado = dadosJ ? dadosJ.Telefone : "";
+          const nomeReal = dadosJ && dadosJ.NomeReal ? dadosJ.NomeReal : "";
+          
+          let telefoneOculto = "••••••••••";
+          if (telefoneCadastrado) {
+            const limpo = telefoneCadastrado.toString().replace(/\D/g, '');
+            if (limpo.length > 4) {
+              telefoneOculto = "••••- " + limpo.slice(-4);
+            } else {
+              telefoneOculto = "••••";
+            }
+          }
+
+          html += `
+            <div class="whatsapp-card">
+              <div class="whatsapp-info">
+                <span class="whatsapp-name">${nomeVila}</span>
+                ${nomeReal ? `<span class="whatsapp-realname">👤 ${nomeReal}</span>` : ''}
+                <span class="whatsapp-tag-vila">Tag: ${tag}</span>
+                <span class="whatsapp-masked-phone">Tel: ${telefoneOculto}</span>
+              </div>
+              <div class="whatsapp-buttons-group">
+                <button class="btn-action-wa" onclick="abrirModalEditar('${encodeURIComponent(nomeVila)}', '${encodeURIComponent(tag)}', '${encodeURIComponent(telefoneCadastrado)}', '${encodeURIComponent(nomeReal)}')">Editar</button>
+                <button class="btn-action-danger" onclick="excluirWhatsApp('${encodeURIComponent(tag)}')">Excluir</button>
+              </div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function abrirModalCadastrarNovo() {
+      document.getElementById('modalMainTitle').innerText = "Cadastrar WhatsApp";
+      document.getElementById('containerSelectMembro').style.display = "flex";
+      
+      const select = document.getElementById('selectNovoMembro');
+      const semZap = listaMembrosGlobal.filter(m => {
+        const dadosJ = buscarDadosJogador(m);
+        return !dadosJ || !dadosJ.Telefone || dadosJ.Telefone.toString().trim() === "";
+      });
+
+      if (semZap.length === 0) {
+        alert("Todos os membros do clã já possuem WhatsApp cadastrado!");
+        return;
+      }
+
+      let optionsHtml = '<option value="">Selecione um membro...</option>';
+      semZap.forEach(m => {
+        const nome = getNomeMembro(m);
+        const tag = getTagMembro(m);
+        optionsHtml += `<option value="${tag}">${nome} (${tag})</option>`;
+      });
+      select.innerHTML = optionsHtml;
+
+      document.getElementById('modalVila').value = '';
+      document.getElementById('modalTag').value = '';
+      document.getElementById('modalNomeReal').value = '';
+      document.getElementById('modalTelefone').value = '';
+
+      document.getElementById('whatsappModal').classList.remove('hidden');
+    }
+
+    function aoSelecionarMembroModal(tagSelecionada) {
+      if (!tagSelecionada) {
+        document.getElementById('modalVila').value = '';
+        document.getElementById('modalTag').value = '';
+        return;
+      }
+      const membro = listaMembrosGlobal.find(m => getTagMembro(m).trim() === tagSelecionada.trim());
+      if (membro) {
+        document.getElementById('modalVila').value = getNomeMembro(membro);
+        document.getElementById('modalTag').value = getTagMembro(membro);
+      }
+    }
+
+    function abrirModalEditar(vila, tag, telefone, nomeReal) {
+      document.getElementById('modalMainTitle').innerText = "Editar WhatsApp";
+      document.getElementById('containerSelectMembro').style.display = "none";
+
+      document.getElementById('modalVila').value = decodeURIComponent(vila);
+      document.getElementById('modalTag').value = decodeURIComponent(tag);
+      document.getElementById('modalNomeReal').value = nomeReal && nomeReal !== 'undefined' ? decodeURIComponent(nomeReal) : '';
+      document.getElementById('modalTelefone').value = telefone && telefone !== 'undefined' ? decodeURIComponent(telefone) : '';
+      
+      document.getElementById('whatsappModal').classList.remove('hidden');
+    }
+
+    function fecharModalWhatsapp() {
+      document.getElementById('whatsappModal').classList.add('hidden');
+    }
+
+    function salvarDadosWhatsapp() {
+      const tag = document.getElementById('modalTag').value;
+      const telefone = document.getElementById('modalTelefone').value;
+      const nomeReal = document.getElementById('modalNomeReal').value;
+
+      if (!tag) {
+        alert("Selecione ou identifique o membro.");
+        return;
+      }
+
+      let jogador = listaJogadoresGlobal.find(j => (j.Tag || "").toString().trim() === tag.trim());
+      if (!jogador) {
+        jogador = { Tag: tag, Vila: document.getElementById('modalVila').value };
+        listaJogadoresGlobal.push(jogador);
+      }
+      jogador.Telefone = telefone;
+      jogador.NomeReal = nomeReal;
+
+      try {
+        let cache = JSON.parse(localStorage.getItem('coc_clan_cache') || '{}');
+        cache.jogadores = listaJogadoresGlobal;
+        localStorage.setItem('coc_clan_cache', JSON.stringify(cache));
+      } catch(e) {}
+
+      fecharModalWhatsapp();
+      renderizarAbaWhatsapp();
+    }
+
+    function excluirWhatsApp(tagEncoded) {
+      const tag = decodeURIComponent(tagEncoded).trim();
+      if (confirm("Tem certeza que deseja remover o número de WhatsApp deste membro?")) {
+        let jogador = listaJogadoresGlobal.find(j => (j.Tag || "").toString().trim() === tag);
+        if (jogador) {
+          jogador.Telefone = "";
+          jogador.NomeReal = "";
+        }
+
+        try {
+          let cache = JSON.parse(localStorage.getItem('coc_clan_cache') || '{}');
+          cache.jogadores = listaJogadoresGlobal;
+          localStorage.setItem('coc_clan_cache', JSON.stringify(cache));
+        } catch(e) {}
+
+        renderizarAbaWhatsapp();
+      }
+    }
+
     function renderizarAbaGuerra(container) {
       let g = (listaGuerraGlobal && listaGuerraGlobal.length > 0) ? listaGuerraGlobal[0] : {};
-
       let conteudoSubAba = '';
 
       if (subAbaGuerraAtual === 'estatisticas') {
@@ -1365,6 +1764,42 @@
       return "⭐".repeat(num);
     }
 
+    function mudarFiltroTipoEquipe(val) {
+      filtroTipoEquipe = val;
+      filtroCondicaoEquipe = 'todos';
+      atualizarOpcoesFiltroCondicao();
+      renderizarListaMinhaEquipe();
+    }
+
+    function mudarFiltroCondicaoEquipe(val) {
+      filtroCondicaoEquipe = val;
+      renderizarListaMinhaEquipe();
+    }
+
+    function atualizarOpcoesFiltroCondicao() {
+      const select = document.getElementById('selectCondicaoEquipe');
+      if (!select) return;
+
+      let html = '';
+      if (filtroTipoEquipe === 'ataques') {
+        html = `
+          <option value="todos" ${filtroCondicaoEquipe === 'todos' ? 'selected' : ''}>Todos os Ataques</option>
+          <option value="2" ${filtroCondicaoEquipe === '2' ? 'selected' : ''}>2 Restantes</option>
+          <option value="1" ${filtroCondicaoEquipe === '1' ? 'selected' : ''}>1 Restante</option>
+          <option value="0" ${filtroCondicaoEquipe === '0' ? 'selected' : ''}>0 Restantes (Concluídos)</option>
+        `;
+      } else {
+        html = `
+          <option value="todos" ${filtroCondicaoEquipe === 'todos' ? 'selected' : ''}>Todas as Defesas</option>
+          <option value="0" ${filtroCondicaoEquipe === '0' ? 'selected' : ''}>0 Estrelas Sofridas</option>
+          <option value="1" ${filtroCondicaoEquipe === '1' ? 'selected' : ''}>1 Estrela Sofrida</option>
+          <option value="2" ${filtroCondicaoEquipe === '2' ? 'selected' : ''}>2 Estrelas Sofridas</option>
+          <option value="3" ${filtroCondicaoEquipe === '3' ? 'selected' : ''}>3 Estrelas Sofridas</option>
+        `;
+      }
+      select.innerHTML = html;
+    }
+
     function renderizarListaMinhaEquipe() {
       const container = document.getElementById('teamMembersContainer');
       if (!container) return;
@@ -1379,7 +1814,16 @@
         return;
       }
 
-      const dadosFiltrados = dados.filter(item => {
+      const dadosOrdenados = [...dados].sort((a, b) => {
+        const cvA = Number(a["Nível CV"] || a["NivelCV"] || 1);
+        const cvB = Number(b["Nível CV"] || b["NivelCV"] || 1);
+        if (cvB !== cvA) return cvB - cvA;
+        const nomeA = (a["Membro"] || a["Nome da Vila"] || a["Nome"] || "").toString();
+        const nomeB = (b["Membro"] || b["Nome da Vila"] || b["Nome"] || "").toString();
+        return nomeA.localeCompare(nomeB);
+      });
+
+      const dadosFiltrados = dadosOrdenados.filter(item => {
         const ataquesStr = (item["Ataques (0/2)"] || item["Ataques"] || "0/2").toString();
         let usados = 0;
         if (ataquesStr.includes('/')) {
@@ -1522,7 +1966,7 @@
           const linkZap = `https://wa.me/55${numLimpo}`;
           htmlBotoesZap = `
             <div class="whatsapp-actions">
-              <a href="${linkZap}" target="_blank" class="action-btn btn-wa" title="WhatsApp">💬</a>
+              <a href="${linkZap}" target="_blank" rel="noopener noreferrer" class="action-btn btn-wa" title="WhatsApp">💬</a>
             </div>
           `;
         }
