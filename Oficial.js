@@ -1,17 +1,25 @@
-var CLAN_TAG = "%232QU2GV028"; // Declarada globalmente para evitar erros de escopo
+var CLAN_TAG = "%232QU2GV028"; // Declarada globalmente
 
 function atualizarSistemaClash() {
   var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  
+  if (!API_TOKEN) {
+    Logger.log("Erro: O API_TOKEN não está definido nas Propriedades do Script.");
+    return;
+  }
+
+  var urlClan = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG;
+  
   var options = {
     "method": "get",
-    "headers": { "Authorization": "Bearer " + API_TOKEN.trim(), "Accept": "application/json" },
+    "headers": { 
+      "Authorization": "Bearer " + API_TOKEN.trim(), 
+      "Accept": "application/json" 
+    },
     "muteHttpExceptions": true
   };
   
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  // --- BUSCAR E PROCESSAR DADOS DO CLÃ ---
-  var urlClan = "https://api.clashofclans.com/v1/clans/" + CLAN_TAG;
   var resposta = UrlFetchApp.fetch(urlClan, options);
   
   if (resposta.getResponseCode() === 200) {
@@ -23,37 +31,55 @@ function atualizarSistemaClash() {
     if (!sheet) {
       sheet = ss.insertSheet(nomeAba);
     } else {
-      sheet.clear(); // Limpa dados anteriores para atualizar
+      sheet.clear(); 
     }
     
-    // Organiza as informações principais em formato de chave/valor
-    var dadosClan = [
-      ["Informação", "Valor"],
-      ["Nome", clan.name],
-      ["Tag", clan.tag],
-      ["Nível do Clã", clan.clanLevel],
-      ["Pontos do Clã", clan.clanPoints],
-      ["Pontos de Vila Principal (Guerra)", clan.clanVersusPoints],
-      ["Membros", clan.members + " / 50"],
-      ["Tipo", clan.type],
-      ["Requisito de Troféus", clan.requiredTrophies],
-      ["Frequência de Guerras", clan.warFrequency],
-      ["Sequência de Vitórias em Guerra", clan.warWinStreak],
-      ["Vitórias em Guerra", clan.warWins],
-      ["Empates em Guerra", clan.warTies],
-      ["Derrotas em Guerra", clan.warLosses],
-      ["Localização", clan.location ? clan.location.name : "Internacional"],
-      ["Descrição", clan.description]
+    // Obter data atual para o registro de atualização
+    var timeZone = ss.getSpreadsheetTimeZone();
+    var dataFormatada = Utilities.formatDate(new Date(), timeZone, "dd/MM/yyyy HH:mm:ss");
+    
+    // Cabeçalhos organizados por colunas
+    var cabecalhos = [
+      "Nome", "Tag", "Emblema", "Nível do Clã", "Pontos do Clã", 
+      "Pontos de Vila Principal (Guerra)", "Membros", "Tipo", 
+      "Requisito de Troféus", "Frequência de Guerras", 
+      "Sequência de Vitórias em Guerra", "Vitórias em Guerra", 
+      "Empates em Guerra", "Derrotas em Guerra", "Localização", 
+      "Descrição", "Última Atualização" // Nova coluna adicionada
     ];
     
-    // Insere os dados na planilha
-    sheet.getRange(1, 1, dadosClan.length, dadosClan[0].setValues ? dadosClan[0].length : 2).setValues(dadosClan);
+    // Valores correspondentes aos cabeçalhos
+    var valores = [
+      clan.name,
+      clan.tag,
+      clan.badgeUrls ? clan.badgeUrls.large : "",
+      clan.clanLevel,
+      clan.clanPoints,
+      clan.clanVersusPoints,
+      clan.members + " / 50",
+      clan.type,
+      clan.requiredTrophies,
+      clan.warFrequency,
+      clan.warWinStreak,
+      clan.warWins,
+      clan.warTies,
+      clan.warLosses,
+      clan.location ? clan.location.name : "Internacional",
+      clan.description,
+      dataFormatada // Registro da hora
+    ];
     
-    // Formatação básica para melhorar a visualização
-    sheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#d9d9d9");
-    sheet.autoResizeColumns(1, 2);
+    // Insere os dados
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(2, 1, 1, valores.length).setValues([valores]);
+    
+    // Formatação
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+    
+    Logger.log("Dados do clã atualizados com sucesso!");
     
   } else {
-    Logger.log("Erro ao buscar dados do clã: " + resposta.getContentText());
+    Logger.log("Erro ao buscar dados do clã: " + resposta.getResponseCode() + " - " + resposta.getContentText());
   }
 }
