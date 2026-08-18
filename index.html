@@ -1471,6 +1471,7 @@
       const tag = document.getElementById('modalTag').value;
       const telefone = document.getElementById('modalTelefone').value;
       const nomeReal = document.getElementById('modalNomeReal').value;
+      const vila = document.getElementById('modalVila').value;
 
       if (!tag) {
         alert("Selecione ou identifique o membro.");
@@ -1480,7 +1481,7 @@
       // Atualiza na lista local e no cache
       let jogador = listaJogadoresGlobal.find(j => (j.Tag || "").toString().trim() === tag.trim());
       if (!jogador) {
-        jogador = { Tag: tag, Vila: document.getElementById('modalVila').value };
+        jogador = { Tag: tag, Vila: vila };
         listaJogadoresGlobal.push(jogador);
       }
       jogador.Telefone = telefone;
@@ -1492,7 +1493,7 @@
         localStorage.setItem('coc_clan_cache', JSON.stringify(cache));
       } catch(e) {}
 
-      // Envia os dados atualizados para a planilha via POST
+      // Envia os dados atualizados para a planilha via POST (utilizando text/plain para evitar CORS)
       const btnSalvar = document.querySelector('.btn-save');
       if (btnSalvar) btnSalvar.innerText = "Salvando...";
 
@@ -1500,12 +1501,13 @@
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
-            action: 'salvarWhatsApp',
+            action: 'salvarwhatsapp',
             tag: tag,
             telefone: telefone,
-            nomeReal: nomeReal
+            nomeReal: nomeReal,
+            vila: vila
           })
         });
       } catch (err) {
@@ -1537,9 +1539,9 @@
           await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
-              action: 'salvarWhatsApp',
+              action: 'salvarwhatsapp',
               tag: tag,
               telefone: "",
               nomeReal: ""
