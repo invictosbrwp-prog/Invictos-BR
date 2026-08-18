@@ -689,3 +689,70 @@
       container.innerHTML = html;
       renderizarListaMembros();
     }
+
+    function renderizarListaMembros() {
+      const container = document.getElementById('membersContainer');
+      if (!container) return;
+
+      if (!listaMembrosGlobal || listaMembrosGlobal.length === 0) {
+        container.innerHTML = `<div class="loading-state" style="padding: 20px 0;">Nenhum membro encontrado.</div>`;
+        return;
+      }
+
+      const membrosOrdenados = ordenarMembros(listaMembrosGlobal, ordenacaoAtual);
+      let htmlMembros = '';
+
+      membrosOrdenados.forEach((m, index) => {
+        const nome = getNomeMembro(m);
+        const cargo = getCargoMembro(m);
+        const trofeus = getTrofeusMembro(m);
+        const nivelCv = getNivelCvMembro(m);
+        const imagemCv = getFotoCvMembro(m);
+        const doadas = getDoadasMembro(m);
+        const recebidas = getRecebidasMembro(m);
+        
+        let imgHtml = '';
+        if (imagemCv && imagemCv.toString().trim() !== "") {
+          imgHtml = `<img src="${imagemCv}" alt="CV ${nivelCv}" onerror="tratarErroImagem(this, ${nivelCv})">`;
+        } else {
+          imgHtml = renderBadgeCv(nivelCv);
+        }
+
+        const dadosJogador = buscarDadosJogador(m);
+        let htmlBotoesZap = '';
+
+        if (dadosJogador && dadosJogador.Telefone && dadosJogador.Telefone.toString().trim() !== "") {
+          const numLimpo = dadosJogador.Telefone.toString().replace(/\D/g, '');
+          const linkZap = `https://wa.me/55${numLimpo}`;
+          htmlBotoesZap = `
+            <div class="whatsapp-actions">
+              <a href="${linkZap}" target="_blank" class="action-btn btn-wa" title="WhatsApp">💬</a>
+            </div>
+          `;
+        }
+
+        htmlMembros += `
+          <div class="member-card">
+            <div class="member-rank">${index + 1}</div>
+            <div class="member-cv">${imgHtml}</div>
+            <div class="member-info">
+              <div class="member-name">${nome}</div>
+              <div class="member-role">${cargo}</div>
+              <div class="member-donations">
+                <span>🟢 <b>${doadas}</b></span>
+                <span>🔴 <b>${recebidas}</b></span>
+              </div>
+            </div>
+            ${htmlBotoesZap}
+            <div class="member-trophies-pill">🏆 ${trofeus}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = htmlMembros;
+    }
+
+    carregarDados();
+  </script>
+</body>
+</html>
