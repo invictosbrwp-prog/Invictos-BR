@@ -80,6 +80,9 @@ function atualizarSistemaClash() {
     atualizarMembros();
     atualizarGuerra();
     atualizarEventosGuerra();
+    atualizarCadastroMembros();
+    atualizarSistemaAdvertencias;
+    calcularRankingGuerra();
     
     Logger.log("Dados do clã atualizados com sucesso!");
     
@@ -192,6 +195,8 @@ function atualizarGuerra() {
   
   sheetGuerra.clear();
   sheetJogadores.clear();
+
+  
   
   if (resposta.getResponseCode() === 200) {
     var guerra = JSON.parse(resposta.getContentText());
@@ -265,6 +270,28 @@ var cabecalhosGuerra = [
     
     sheetGuerra.getRange(1, 1, 1, cabecalhosGuerra.length).setValues([cabecalhosGuerra]);
     sheetGuerra.getRange(2, 1, 1, linhasGuerra.length).setValues([linhasGuerra]);
+
+    // --- LÓGICA DE PREVISÃO ---
+  var progresso = (guerra.attacksPerMember * guerra.teamSize); // Total de ataques
+  var tempoTotal = 24 * 60 * 60 * 1000; // 24h em ms
+  
+  // Calcula média de destruição atual
+  var nossaDestruicao = guerra.clan.destructionPercentage;
+  var destruicaoOponente = guerra.opponent.destructionPercentage;
+  
+  // Projeção simples (baseada no que já foi feito)
+  var status = "Em andamento";
+  if (nossaDestruicao > destruicaoOponente) { status = "Favorável"; }
+  else if (nossaDestruicao < destruicaoOponente) { status = "Desfavorável"; }
+  else { status = "Equilibrado"; }
+
+  // Cria aba de Previsão
+  var sheetPrev = ss.getSheetByName("Previsão Guerra") || ss.insertSheet("Previsão Guerra");
+  sheetPrev.clear();
+  sheetPrev.appendRow(["Métrica", "Nosso Clã", "Oponente"]);
+  sheetPrev.appendRow(["Destruição Atual", nossaDestruicao + "%", destruicaoOponente + "%"]);
+  sheetPrev.appendRow(["Status Projetado", status, ""]);
+  sheetPrev.getRange(1, 1, 3, 3).setFontWeight("bold");
     
     // -------------------------------------------------------------
     // 2. ABA: MEMBROS PARTICIPANTES (Guerra - Jogadores)
@@ -380,13 +407,17 @@ function atualizarEventosGuerra() {
     }
   });
 
-  // Ordena por data (Mais antigo primeiro)
-  eventos.sort(function(a, b) { return a.data.localeCompare(b.data); });
+// Ordena por data com segurança contra valores vazios
+  eventos.sort(function(a, b) {
+    var dataA = a.data || "";
+    var dataB = b.data || "";
+    return dataA.localeCompare(dataB);
+  });
 
   // Prepara dados para a planilha
-  var cabecalhos = ["Data/Hora", "Tipo", "Atacante", "Foto CV", "Detalhes"];
+  var cabecalhos = ["Tipo", "Atacante", "Foto CV", "Detalhes"];
   var linhas = eventos.map(function(e) {
-    return [formatarDataEvento(e.data), e.tipo, e.nomeAtacante, e.fotoCV, e.info];
+    return [e.tipo, e.nomeAtacante, e.fotoCV, e.info];
   });
 
   sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
@@ -399,14 +430,159 @@ function atualizarEventosGuerra() {
   sheet.autoResizeColumns(1, cabecalhos.length);
 }
 
-// Substitua sua função formatarDataEvento por esta, que é mais segura:
-function formatarDataEvento(str) {
-  if (!str) return "";
-  // Exemplo: 20260818T183000.000Z
-  var dia = str.substring(6, 8);
-  var mes = str.substring(4, 6);
-  var hora = str.substring(9, 11);
-  var min = str.substring(11, 13);
+/**
+ * Cria e atualiza a aba de Cadastro para vincular Nome Real, Telefone e Tag do Clash
+ */
+/**
+ * Cria e atualiza a aba de Cadastro para vincular Nome Real, Telefone, Tag do Clash e Status de Atividade
+ */
+function atualizarCadastroMembros() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var nomeAba = "Cadastro Membros";
+  var sheet = ss.getSheetByName(nomeAba);
   
-  return dia + "/" + mes + " " + hora + ":" + min;
+  // Se a aba não existir, cria com os cabeçalhos atualizados
+  if (!sheet) {
+    sheet = ss.insertSheet(nomeAba);
+    
+    // Cabeçalhos incluindo "Status (Ativo/Inativo)"
+    var cabecalhos = ["Nome Real", "Número de Telefone", "Tag do Clash", "Nome no Clash", "Status"];
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+    
+    Logger.log("Aba 'Cadastro Membros' criada com a coluna de status!");
+  } else {
+    // Se a aba já existe, garante que o cabeçalho "Status" esteja presente caso tenha sido criada antes sem ele
+    var primeiroCabecalho = sheet.getRange(1, 5).getValue();
+    if (primeiroCabecalho !== "Status") {
+      sheet.getRange(1, 5).setValue("Status").setFontWeight("bold").setBackground("#d9d9d9");
+    }
+    Logger.log("A aba 'Cadastro Membros' já existe. Status verificado.");
+  }
+}
+
+/**
+ * Cria e atualiza a aba de Controle de Advertências baseada no cadastro de membros
+ */
+function atualizarSistemaAdvertencias() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var nomeAba = "Advertências";
+  var sheet = ss.getSheetByName(nomeAba);
+  
+  // Se a aba não existir, cria a estrutura inicial
+  if (!sheet) {
+    sheet = ss.insertSheet(nomeAba);
+    
+    // Cabeçalhos do sistema de advertências
+    var cabecalhos = [
+      "ID Ocorrência", 
+      "Tag do Membro", 
+      "Nome no Clash", 
+      "Nível da Infração", 
+      "Data", 
+      "Motivo / Descrição", 
+      "Punição Aplicada", 
+      "Status da Punição"
+    ];
+    
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+    
+    Logger.log("Aba 'Advertências' criada com sucesso!");
+  } else {
+    Logger.log("A aba 'Advertências' já existe.");
+  }
+}
+/**
+ * Calcula a pontuação e métricas dos membros baseada na Base Guerra
+ */
+/**
+ * Calcula a pontuação e métricas dos membros baseada na Base Guerra
+ */
+function calcularRankingGuerra() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Verifica se a aba "Base Guerra" existe. Se não existir, cria para evitar o erro.
+  var sheetBase = ss.getSheetByName("Base Guerra");
+  if (!sheetBase) {
+    sheetBase = ss.insertSheet("Base Guerra");
+    // Adiciona o cabeçalho padrão para você preencher depois
+    sheetBase.appendRow(["ID Guerra", "Temporada", "Tag Jogador", "Nome", "Tipo", "Resultado", "Heroico"]);
+    sheetBase.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#d9d9d9");
+    Logger.log("Aba 'Base Guerra' criada. Preencha os dados dela antes de rodar o ranking novamente.");
+    return; // Para a execução para você preencher os dados
+  }
+  
+  var dados = sheetBase.getDataRange().getValues();
+  if (dados.length <= 1) {
+    Logger.log("A aba 'Base Guerra' está vazia além do cabeçalho.");
+    return;
+  }
+  
+  var ranking = {}; // Objeto para somar pontos e métricas
+  
+  // Pula o cabeçalho (i=1)
+  for (var i = 1; i < dados.length; i++) {
+    var row = dados[i];
+    var tag = row[2]; // Tag Jogador
+    var tipo = row[4]; // "Ataque" ou "Defesa"
+    var resultado = row[5]; // Estrelas ou Status
+    var heroico = row[6] === "Sim";
+    
+    if (!tag) continue; // Pula linha vazia
+    
+    if (!ranking[tag]) {
+      ranking[tag] = { pontos: 0, ataques: 0, defesas: 0, estrelasFeitas: 0, estrelasSofridas: 0 };
+    }
+    
+    // LÓGICA DE PONTOS
+    if (tipo === "Ataque") {
+      ranking[tag].ataques++;
+      ranking[tag].estrelasFeitas += Number(resultado) || 0;
+      
+      if (resultado == 0) ranking[tag].pontos += 0;
+      else if (resultado == 1) ranking[tag].pontos += 3;
+      else if (resultado == 2) ranking[tag].pontos += 6;
+      else if (resultado == 3) ranking[tag].pontos += 10;
+      else if (resultado === "NA") ranking[tag].pontos -= 20;
+      
+      if (heroico) ranking[tag].pontos += 5;
+      
+    } else if (tipo === "Defesa") {
+      ranking[tag].defesas++;
+      ranking[tag].estrelasSofridas += Number(resultado) || 0;
+      
+      if (resultado == 0) ranking[tag].pontos += 10;
+      else if (resultado == 1) ranking[tag].pontos += 7;
+      else if (resultado == 2) ranking[tag].pontos += 5;
+      else if (resultado == 3) ranking[tag].pontos += 0;
+      else if (resultado === "NFA") ranking[tag].pontos += 7;
+      
+      if (heroico) ranking[tag].pontos += 5;
+    }
+  }
+  
+  exibirRanking(ranking);
+}
+
+function exibirRanking(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Ranking") || ss.insertSheet("Ranking");
+  sheet.clear();
+  sheet.appendRow(["Tag", "Pontos", "Média Ataque", "Média Defesa", "Total Estrelas Feitas"]);
+  
+  for (var tag in data) {
+    var m = data[tag];
+    sheet.appendRow([
+      tag, 
+      m.pontos, 
+      m.ataques > 0 ? (m.estrelasFeitas / m.ataques).toFixed(2) : "0", 
+      m.defesas > 0 ? (m.estrelasSofridas / m.defesas).toFixed(2) : "0", 
+      m.estrelasFeitas
+    ]);
+  }
+  sheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#d9d9d9");
+  sheet.autoResizeColumns(1, 5);
 }
