@@ -81,7 +81,7 @@ function atualizarSistemaClash() {
     atualizarGuerra();
     atualizarEventosGuerra();
     atualizarCadastroMembros();
-    atualizarSistemaAdvertencias;
+    atualizarSistemaAdvertencias();
     calcularRankingGuerra();
     
     Logger.log("Dados do clã atualizados com sucesso!");
