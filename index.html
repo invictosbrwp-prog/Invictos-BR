@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Clã - Clash of Clans</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; color: #333; }
+        h1 { text-align: center; color: #2c3e50; }
+        .tab-container { margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #3498db; padding-bottom: 5px; color: #2980b9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        img.avatar { width: 40px; height: auto; }
+        .loading { text-align: center; font-size: 18px; color: #e67e22; }
+    </style>
+</head>
+<body>
+
+    <h1>Painel de Controle do Clã</h1>
+    <div id="loading" class="loading">Carregando dados do clã...</div>
+    <div id="content"></div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
+
+        fetch(WEB_APP_URL)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const container = document.getElementById('content');
+
+                for (let aba in data) {
+                    let linhas = data[aba];
+                    if (linhas.length === 0) continue;
+
+                    let div = document.createElement('div');
+                    div.className = 'tab-container';
+                    
+                    let h2 = document.createElement('h2');
+                    h2.innerText = aba;
+                    div.appendChild(h2);
+
+                    let table = document.createElement('table');
+                    let cabecalhos = linhas[0];
+                    
+                    // Cabeçalho da tabela
+                    let thead = document.createElement('thead');
+                    let trHead = document.createElement('tr');
+                    cabecalhos.forEach(cab => {
+                        let th = document.createElement('th');
+                        th.innerText = cab;
+                        trHead.appendChild(th);
+                    });
+                    thead.appendChild(trHead);
+                    table.appendChild(thead);
+
+                    // Corpo da tabela
+                    let tbody = document.createElement('tbody');
+                    for (let i = 1; i < linhas.length; i++) {
+                        let tr = document.createElement('tr');
+                        linhas[i].forEach(celula => {
+                            let td = document.createElement('td');
+                            // Se a célula for uma URL de imagem (como o emblema ou foto do CV)
+                            if (typeof celula === 'string' && celula.startsWith('http') && (celula.endsWith('.png') || celula.includes('fandom'))) {
+                                td.innerHTML = `<img src="${celula}" class="avatar">`;
+                            } else {
+                                td.innerText = celula;
+                            }
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    }
+                    table.appendChild(tbody);
+                    div.appendChild(table);
+                    container.appendChild(div);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = 'Erro ao carregar os dados.';
+                console.error('Erro:', error);
+            });
+    </script>
+</body>
+</html>
