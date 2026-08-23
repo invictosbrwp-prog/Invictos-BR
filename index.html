@@ -45,6 +45,32 @@
             border-bottom: 1px solid var(--border-color);
         }
 
+        .admin-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .btn-admin {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-admin.logged {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
         .clan-badge-container {
             display: flex;
             align-items: center;
@@ -634,6 +660,10 @@
         .nav-item span { font-size: 16px; }
         .nav-item.active { color: var(--accent-blue); font-weight: bold; }
         .nav-item:hover { color: var(--text-color); }
+
+        .admin-only {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -645,6 +675,13 @@
         <div id="tab-meu-cla" class="tab-content" style="display: none;">
             <div id="app">
                 <div class="clan-header">
+                    <!-- Botão de Acesso Admin -->
+                    <div class="admin-bar">
+                        <button id="btn-admin-toggle" class="btn-admin" onclick="controlarAcessoAdmin()">
+                            <span id="admin-icon">🔒</span> <span id="admin-text">Painel Admin</span>
+                        </button>
+                    </div>
+
                     <div class="clan-badge-container">
                         <img id="clan-badge" class="clan-badge" src="" alt="Emblema">
                         <div class="clan-title-info" style="text-align: left;">
@@ -700,7 +737,7 @@
         <!-- ABA 3: WHATSAPP (Cadastros) -->
         <div id="tab-whatsapp" class="tab-content" style="display: none;">
             <div class="whatsapp-container">
-                <button class="action-button" onclick="abrirModalCadastro()">
+                <button class="action-button admin-only btn-admin-control" onclick="abrirModalCadastro()">
                     <span>➕</span> Cadastrar Nova Vila
                 </button>
                 <div id="whatsapp-members-list"></div>
@@ -714,7 +751,7 @@
                 <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Gerenciamento de infrações, punições e inatividade</p>
             </div>
 
-            <button class="action-button red" onclick="abrirModalAdvertencia()">
+            <button class="action-button red admin-only btn-admin-control" onclick="abrirModalAdvertencia()">
                 <span>➕</span> Aplicar Nova Advertência
             </button>
 
@@ -756,6 +793,23 @@
                 <span>⚠️</span> Avisos
             </button>
         </nav>
+    </div>
+
+    <!-- MODAL DE LOGIN ADMIN -->
+    <div id="modal-login" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center;">
+            <h3>🔐 Acesso Administrativo</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Digite a senha de administrador para liberar a edição.</p>
+            <form onsubmit="realizarLogin(event)">
+                <div class="form-group">
+                    <input type="password" id="senha-admin" required placeholder="Senha do Administrador">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalLogin()">Cancelar</button>
+                    <button type="submit" class="btn-save">Entrar</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL DE CADASTRO/EDIÇÃO DE VILA -->
@@ -852,12 +906,68 @@
 
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
+        const SENHA_ADMIN_MESTRE = 'invictos2026'; // Altere para a senha que preferir
+        let isAdminLogado = false;
+
         let globalMembrosData = [];
         let globalCadastroData = [];
         let globalGuerraData = [];
         let globalPrevisaoData = [];
         let globalAdvertenciasData = [];
         let warInterval = null;
+
+        function controlarAcessoAdmin() {
+            if (isAdminLogado) {
+                if (confirm("Deseja sair do modo Administrador?")) {
+                    isAdminLogado = false;
+                    atualizarInterfaceAdmin();
+                }
+            } else {
+                document.getElementById('senha-admin').value = '';
+                document.getElementById('modal-login').style.display = 'flex';
+            }
+        }
+
+        function realizarLogin(event) {
+            event.preventDefault();
+            let senhaInformada = document.getElementById('senha-admin').value;
+
+            if (senhaInformada === SENHA_ADMIN_MESTRE) {
+                isAdminLogado = true;
+                fecharModalLogin();
+                atualizarInterfaceAdmin();
+                alert("Login efetuado com sucesso! Modo Administrador ativado.");
+            } else {
+                alert("Senha incorreta!");
+            }
+        }
+
+        function fecharModalLogin() {
+            document.getElementById('modal-login').style.display = 'none';
+        }
+
+        function atualizarInterfaceAdmin() {
+            const btnToggle = document.getElementById('btn-admin-toggle');
+            const iconEl = document.getElementById('admin-icon');
+            const textEl = document.getElementById('admin-text');
+            const elementosAdmin = document.querySelectorAll('.btn-admin-control');
+
+            if (isAdminLogado) {
+                btnToggle.classList.add('logged');
+                iconEl.innerText = '🔓';
+                textEl.innerText = 'Admin Ativo';
+                elementosAdmin.forEach(el => el.classList.remove('admin-only'));
+            } else {
+                btnToggle.classList.remove('logged');
+                iconEl.innerText = '🔒';
+                textEl.innerText = 'Painel Admin';
+                elementosAdmin.forEach(el => el.classList.add('admin-only'));
+            }
+            
+            // Re-renderiza abas para aplicar visibilidade dos botões internos
+            renderizarWhatsappMembros();
+            renderizarAdvertencias();
+        }
 
         function mudarAba(nomeAba, elementoBotao) {
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -1026,6 +1136,7 @@
                             });
                         }
                     }
+                    atualizarInterfaceAdmin();
                 })
                 .catch(error => {
                     document.getElementById('loading').innerText = 'Erro ao carregar dados da API.';
@@ -1139,7 +1250,7 @@
                             <p>📱 ${telMascarado} | Status: ${cad.status || 'Ativo'}</p>
                         </div>
                     </div>
-                    <div class="card-actions">
+                    <div class="card-actions ${isAdminLogado ? '' : 'admin-only'}">
                         <button class="btn-icon" onclick='editarCadastro(${JSON.stringify(cad)})'>✏️</button>
                         <button class="btn-icon delete" onclick="excluirCadastro(${cad.linhaPlanilha})">🗑️</button>
                     </div>
@@ -1268,6 +1379,7 @@
         }
 
         function abrirModalCadastro() {
+            if (!isAdminLogado) return;
             document.getElementById('modal-title').innerText = "Cadastrar Vila";
             document.getElementById('edit-index').value = "";
             document.getElementById('form-cadastro').reset();
@@ -1276,6 +1388,7 @@
         }
 
         function editarCadastro(cad) {
+            if (!isAdminLogado) return;
             document.getElementById('modal-title').innerText = "Editar Cadastro";
             document.getElementById('edit-index').value = cad.linhaPlanilha;
             document.getElementById('campo-nome-real').value = cad.nomeReal;
@@ -1294,6 +1407,7 @@
 
         function salvarCadastro(event) {
             event.preventDefault();
+            if (!isAdminLogado) return;
             let linha = document.getElementById('edit-index').value;
             let nomeReal = document.getElementById('campo-nome-real').value;
             let telefone = document.getElementById('campo-telefone').value;
@@ -1333,6 +1447,7 @@
         }
 
         function excluirCadastro(linha) {
+            if (!isAdminLogado) return;
             if(!confirm("Tem certeza que deseja excluir este cadastro?")) return;
 
             let payload = {
@@ -1357,6 +1472,7 @@
 
         // Funções da Aba Advertências
         function abrirModalAdvertencia() {
+            if (!isAdminLogado) return;
             document.getElementById('form-advertencia').reset();
             document.getElementById('edit-id-ocorrencia').value = "";
             document.getElementById('modal-title-text').innerText = "Aplicar Advertência";
@@ -1376,6 +1492,7 @@
         }
 
         function abrirModalEditarStatus(idOcorrencia) {
+            if (!isAdminLogado) return;
             let adv = globalAdvertenciasData.find(a => String(a.idOcorrencia) === String(idOcorrencia));
             if (!adv) return;
 
@@ -1407,6 +1524,7 @@
 
         function salvarAdvertencia(event) {
             event.preventDefault();
+            if (!isAdminLogado) return;
             let idOcorrencia = document.getElementById('edit-id-ocorrencia').value;
 
             let payload = {
@@ -1542,7 +1660,7 @@
                             <span style="font-weight: bold; color: ${isResolvido ? 'var(--accent-green)' : 'var(--accent-red)'};">
                                 ${adv.statusPunicao || 'Pendente'}
                             </span>
-                            <button class="btn-icon" onclick="abrirModalEditarStatus('${adv.idOcorrencia}')">✏️ Status</button>
+                            <button class="btn-icon ${isAdminLogado ? '' : 'admin-only'}" onclick="abrirModalEditarStatus('${adv.idOcorrencia}')">✏️ Status</button>
                         </div>
                     </div>
                 `;
