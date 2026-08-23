@@ -799,10 +799,13 @@
     <div id="modal-login" class="modal">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
             <h3>🔐 Acesso Administrativo</h3>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Digite a senha de administrador para liberar a edição.</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Informe seus dados cadastrados para entrar.</p>
             <form onsubmit="realizarLogin(event)">
                 <div class="form-group">
-                    <input type="password" id="senha-admin" required placeholder="Senha do Administrador">
+                    <input type="text" id="login-telefone" required placeholder="Número de Telefone">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="login-senha" required placeholder="Senha">
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="fecharModalLogin()">Cancelar</button>
@@ -906,7 +909,6 @@
 
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
-        const SENHA_ADMIN_MESTRE = 'invictos2026'; // Altere para a senha que preferir
         let isAdminLogado = false;
 
         let globalMembrosData = [];
@@ -914,6 +916,7 @@
         let globalGuerraData = [];
         let globalPrevisaoData = [];
         let globalAdvertenciasData = [];
+        let globalLoginData = [];
         let warInterval = null;
 
         function controlarAcessoAdmin() {
@@ -923,22 +926,30 @@
                     atualizarInterfaceAdmin();
                 }
             } else {
-                document.getElementById('senha-admin').value = '';
+                document.getElementById('login-telefone').value = '';
+                document.getElementById('login-senha').value = '';
                 document.getElementById('modal-login').style.display = 'flex';
             }
         }
 
         function realizarLogin(event) {
             event.preventDefault();
-            let senhaInformada = document.getElementById('senha-admin').value;
+            let telefoneInformado = String(document.getElementById('login-telefone').value).trim().replace(/\D/g, '');
+            let senhaInformada = String(document.getElementById('login-senha').value).trim();
 
-            if (senhaInformada === SENHA_ADMIN_MESTRE) {
+            let adminEncontrado = globalLoginData.find(adm => {
+                let telPlanilha = String(adm.telefone || '').trim().replace(/\D/g, '');
+                let senhaPlanilha = String(adm.senha || '').trim();
+                return telPlanilha === telefoneInformado && senhaPlanilha === senhaInformada;
+            });
+
+            if (adminEncontrado) {
                 isAdminLogado = true;
                 fecharModalLogin();
                 atualizarInterfaceAdmin();
                 alert("Login efetuado com sucesso! Modo Administrador ativado.");
             } else {
-                alert("Senha incorreta!");
+                alert("Número de telefone ou senha incorretos!");
             }
         }
 
@@ -964,7 +975,6 @@
                 elementosAdmin.forEach(el => el.classList.add('admin-only'));
             }
             
-            // Re-renderiza abas para aplicar visibilidade dos botões internos
             renderizarWhatsappMembros();
             renderizarAdvertencias();
         }
@@ -1136,6 +1146,22 @@
                             });
                         }
                     }
+
+                    // 7. Processar Aba Login
+                    const rawLogin = data["Login"];
+                    globalLoginData = [];
+                    if (rawLogin && rawLogin.length > 1) {
+                        const cabL = rawLogin[0];
+                        const idxL = (nome) => cabL.indexOf(nome);
+                        for (let i = 1; i < rawLogin.length; i++) {
+                            let linhaLog = rawLogin[i];
+                            globalLoginData.push({
+                                telefone: linhaLog[idxL("Telefone")],
+                                senha: linhaLog[idxL("Senha")]
+                            });
+                        }
+                    }
+
                     atualizarInterfaceAdmin();
                 })
                 .catch(error => {
