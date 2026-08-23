@@ -1410,20 +1410,17 @@
             membrosListDiv.innerHTML = '';
 
             globalMembrosData.forEach((m, index) => {
-                // Verificar se o membro tem cadastro no WhatsApp
                 let cadastroMatch = globalCadastroData.find(c => c.tagClash === m.tag);
                 let btnWhatsappHtml = '';
                 
                 if (cadastroMatch && cadastroMatch.telefone) {
                     let telLimpo = String(cadastroMatch.telefone).replace(/\D/g, '');
-                    // Garante o código do país padrão do Brasil (55) caso não venha informado
                     if (telLimpo.length <= 11 && !telLimpo.startsWith('55')) {
                         telLimpo = '55' + telLimpo;
                     }
                     let mensagemWpp = encodeURIComponent(`Olá ${m.nome}, aqui é da administração do clã Invictos BR.`);
                     let wppUrl = `https://wa.me/${telLimpo}?text=${mensagemWpp}`;
                     
-                    // Se o admin estiver logado, exibe o botão
                     let adminClass = isAdminLogado ? '' : 'admin-only';
                     btnWhatsappHtml = `<a href="${wppUrl}" target="_blank" class="btn-icon whatsapp ${adminClass}" title="Enviar WhatsApp">💬</a>`;
                 }
@@ -1738,7 +1735,7 @@
             document.getElementById('modal-cadastro').style.display = 'none';
         }
 
-                function salvarCadastro(event) {
+        function salvarCadastro(event) {
             event.preventDefault();
             if (!isAdminLogado) return;
             
@@ -1761,7 +1758,6 @@
                 status: status
             };
 
-            // Desabilita o botão para evitar cliques duplos enquanto salva
             const btnSalvar = event.target.querySelector('button[type="submit"]');
             if (btnSalvar) btnSalvar.disabled = true;
 
@@ -1774,11 +1770,8 @@
                 if (btnSalvar) btnSalvar.disabled = false;
                 if(res.sucesso) {
                     fecharModal();
-                    // Limpa o formulário explicitamente
                     document.getElementById('form-cadastro').reset();
                     document.getElementById('edit-index').value = "";
-                    
-                    // Recarrega os dados do servidor para atualizar as listas limpas
                     carregarDados();
                 } else {
                     alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
@@ -1786,26 +1779,6 @@
             })
             .catch(err => {
                 if (btnSalvar) btnSalvar.disabled = false;
-                console.error(err);
-                alert("Erro de conexão ao salvar.");
-            });
-        }
-
-
-            fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(res => {
-                if(res.sucesso) {
-                    fecharModal();
-                    carregarDados();
-                } else {
-                    alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
-                }
-            })
-            .catch(err => {
                 console.error(err);
                 alert("Erro de conexão ao salvar.");
             });
@@ -2034,5 +2007,3 @@
 
         carregarDados();
     </script>
-</body>
-</html>
