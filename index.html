@@ -689,7 +689,7 @@
         function formatarDataBrasil(dataString) {
             if (!dataString) return '--';
             const data = new Date(dataString);
-            if (isNaN(data.getTime())) return dataString; // Retorna original se falhar
+            if (isNaN(data.getTime())) return dataString; 
             return data.toLocaleString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 day: '2-digit',
@@ -729,7 +729,26 @@
                         document.getElementById('last-update').innerText = "Última atualização: " + getVal("Última Atualização");
                     }
 
-                    // 2. Processar Membros do Clash
+                    // 2. Processar Cadastros do WhatsApp PRIMEIRO (para o filtro funcionar corretamente)
+                    const rawCadastro = data["Cadastro Membros"];
+                    globalCadastroData = [];
+                    if (rawCadastro && rawCadastro.length > 1) {
+                        const cabC = rawCadastro[0];
+                        const idx = (nome) => cabC.indexOf(nome);
+                        for (let i = 1; i < rawCadastro.length; i++) {
+                            let c = rawCadastro[i];
+                            globalCadastroData.push({
+                                linhaPlanilha: i + 1,
+                                nomeReal: c[idx("Nome Real")],
+                                telefone: c[idx("Número de Telefone")],
+                                tagClash: c[idx("Tag do Clash")],
+                                nomeClash: c[idx("Nome no Clash")],
+                                status: c[idx("Status")]
+                            });
+                        }
+                    }
+
+                    // 3. Processar Membros do Clash
                     const rawMembros = data["Membros"];
                     if (rawMembros && rawMembros.length > 1) {
                         const cab = rawMembros[0];
@@ -752,25 +771,6 @@
                         }
                         renderizarMembros();
                         popularSelectMembros();
-                    }
-
-                    // 3. Processar Cadastros do WhatsApp
-                    const rawCadastro = data["Cadastro Membros"];
-                    globalCadastroData = [];
-                    if (rawCadastro && rawCadastro.length > 1) {
-                        const cabC = rawCadastro[0];
-                        const idx = (nome) => cabC.indexOf(nome);
-                        for (let i = 1; i < rawCadastro.length; i++) {
-                            let c = rawCadastro[i];
-                            globalCadastroData.push({
-                                linhaPlanilha: i + 1,
-                                nomeReal: c[idx("Nome Real")],
-                                telefone: c[idx("Número de Telefone")],
-                                tagClash: c[idx("Tag do Clash")],
-                                nomeClash: c[idx("Nome no Clash")],
-                                status: c[idx("Status")]
-                            });
-                        }
                     }
 
                     // 4. Processar Guerra Atual
@@ -843,14 +843,22 @@
             });
         }
 
-        function popularSelectMembros() {
+        function popularSelectMembros(tagEmEdicao = null) {
             const select = document.getElementById('campo-membro-clash');
             select.innerHTML = '<option value="">Selecione o membro...</option>';
+
+            // Pega todas as tags que já foram cadastradas, exceto a que está sendo editada atualmente (se houver edição)
+            const tagsCadastradas = globalCadastroData
+                .filter(c => c.tagClash !== tagEmEdicao)
+                .map(c => c.tagClash);
+
             globalMembrosData.forEach(m => {
-                let opt = document.createElement('option');
-                opt.value = m.tag;
-                opt.text = `${m.nome} (${m.tag})`;
-                select.appendChild(opt);
+                if (!tagsCadastradas.includes(m.tag)) {
+                    let opt = document.createElement('option');
+                    opt.value = m.tag;
+                    opt.text = `${m.nome} (${m.tag})`;
+                    select.appendChild(opt);
+                }
             });
         }
 
@@ -971,17 +979,14 @@
             let textoStatus = "";
 
             if (agora < inicio) {
-                // Preparação / Falta começar
                 diff = inicio - agora;
                 textoStatus = "⏳ Começa em: " + formatarMilisegundos(diff);
                 if(stateEl) stateEl.innerText = "Estado: Preparação";
             } else if (agora >= inicio && agora <= fim) {
-                // Em combate / Falta terminar
                 diff = fim - agora;
                 textoStatus = "⚔️ Termina em: " + formatarMilisegundos(diff);
                 if(stateEl) stateEl.innerText = "Estado: Em Guerra";
             } else {
-                // Guerra encerrada
                 textoStatus = "🏁 Guerra Encerrada";
                 if(stateEl) stateEl.innerText = "Estado: Encerrada";
             }
@@ -1005,6 +1010,7 @@
             document.getElementById('modal-title').innerText = "Cadastrar Vila";
             document.getElementById('edit-index').value = "";
             document.getElementById('form-cadastro').reset();
+            popularSelectMembros(); // Atualiza o select filtrando os já cadastrados
             document.getElementById('modal-cadastro').style.display = 'flex';
         }
 
@@ -1013,7 +1019,11 @@
             document.getElementById('edit-index').value = cad.linhaPlanilha;
             document.getElementById('campo-nome-real').value = cad.nomeReal;
             document.getElementById('campo-telefone').value = cad.telefone;
+            
+            // Popula o select permitindo manter a tag atual do membro sendo editado
+            popularSelectMembros(cad.tagClash);
             document.getElementById('campo-membro-clash').value = cad.tagClash;
+            
             document.getElementById('campo-status').value = cad.status || 'Ativo';
             document.getElementById('modal-cadastro').style.display = 'flex';
         }
