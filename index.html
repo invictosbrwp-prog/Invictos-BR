@@ -308,14 +308,116 @@
 
         .btn-icon.delete { color: var(--accent-red); }
 
+        /* Aba Guerra Atual Estilos */
+        .war-container {
+            padding: 15px;
+        }
+
+        .war-scoreboard {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .war-state-chip {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .war-countdown-box {
+            font-size: 13px;
+            color: var(--accent-yellow);
+            font-weight: bold;
+            margin-bottom: 12px;
+            background: rgba(234, 179, 8, 0.1);
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .battle-vs {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 10px;
+        }
+
+        .team-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .team-side img {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+        }
+
+        .team-side h3 {
+            font-size: 13px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+
+        .team-score {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .vs-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+
+        .war-details-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 13px;
+        }
+
+        .war-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .war-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .war-detail-label {
+            color: var(--text-secondary);
+        }
+
+        .war-detail-val {
+            font-weight: bold;
+        }
+
         /* Modal Formulário Corrigido */
         .modal {
             display: none;
             position: fixed;
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
             z-index: 9999;
             justify-content: center;
@@ -479,10 +581,12 @@
         </div>
 
         <!-- ABA 2: GUERRA ATUAL -->
-        <div id="tab-guerra" class="tab-content maintenance-screen">
-            <span>⚔️</span>
-            <h2>Guerra Atual</h2>
-            <p>Esta seção está em manutenção.<br>Em breve novidades sobre a guerra do clã!</p>
+        <div id="tab-guerra" class="tab-content" style="display: none;">
+            <div class="war-container">
+                <div id="war-content-box">
+                    <p style="text-align: center; color: var(--text-secondary);">Carregando dados da guerra...</p>
+                </div>
+            </div>
         </div>
 
         <!-- ABA 3: WHATSAPP (Cadastros) -->
@@ -491,9 +595,7 @@
                 <button class="action-button" onclick="abrirModalCadastro()">
                     <span>➕</span> Cadastrar Nova Vila
                 </button>
-                <div id="whatsapp-members-list">
-                    <!-- Preenchido via Script -->
-                </div>
+                <div id="whatsapp-members-list"></div>
             </div>
         </div>
 
@@ -560,6 +662,8 @@
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
         let globalMembrosData = [];
         let globalCadastroData = [];
+        let globalGuerraData = [];
+        let warInterval = null;
 
         function mudarAba(nomeAba, elementoBotao) {
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -571,12 +675,29 @@
             } else if (nomeAba === 'whatsapp') {
                 document.getElementById('tab-whatsapp').style.display = 'block';
                 renderizarWhatsappMembros();
+            } else if (nomeAba === 'guerra') {
+                document.getElementById('tab-guerra').style.display = 'block';
+                renderizarGuerraAtual();
             } else {
                 document.getElementById(`tab-${nomeAba}`).style.display = 'flex';
             }
 
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             elementoBotao.classList.add('active');
+        }
+
+        function formatarDataBrasil(dataString) {
+            if (!dataString) return '--';
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) return dataString; // Retorna original se falhar
+            return data.toLocaleString('pt-BR', {
+                timeZone: 'America/Sao_Paulo',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
 
         function carregarDados() {
@@ -648,6 +769,33 @@
                                 tagClash: c[idx("Tag do Clash")],
                                 nomeClash: c[idx("Nome no Clash")],
                                 status: c[idx("Status")]
+                            });
+                        }
+                    }
+
+                    // 4. Processar Guerra Atual
+                    const rawGuerra = data["Guerra Atual"];
+                    globalGuerraData = [];
+                    if (rawGuerra && rawGuerra.length > 1) {
+                        const cabG = rawGuerra[0];
+                        const ig = (nome) => cabG.indexOf(nome);
+                        for (let i = 1; i < rawGuerra.length; i++) {
+                            let g = rawGuerra[i];
+                            globalGuerraData.push({
+                                estado: g[ig("Estado")],
+                                tamanho: g[ig("Tamanho")],
+                                nossoEmblema: g[ig("Nosso Emblema")],
+                                nomeCla: g[ig("Nome Clã")],
+                                nossasEstrelas: g[ig("Nossas Estrelas")],
+                                nossaDestruicao: g[ig("Nossa Destruição (%)")],
+                                nossosAtaques: g[ig("Nossos Ataques")],
+                                emblemaOponente: g[ig("Emblema Oponente")],
+                                nomeOponente: g[ig("Nome Oponente")],
+                                estrelasOponente: g[ig("Estrelas Oponente")],
+                                destruicaoOponente: g[ig("Destruição Oponente (%)")],
+                                ataquesOponente: g[ig("Ataques Oponente")],
+                                inicio: g[ig("Início")],
+                                fim: g[ig("Fim")]
                             });
                         }
                     }
@@ -741,6 +889,116 @@
                 `;
                 container.appendChild(card);
             });
+        }
+
+        function renderizarGuerraAtual() {
+            if (warInterval) clearInterval(warInterval);
+
+            const box = document.getElementById('war-content-box');
+            if (!globalGuerraData || globalGuerraData.length === 0) {
+                box.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhum dado de guerra encontrado.</p>';
+                return;
+            }
+
+            let g = globalGuerraData[0];
+            
+            box.innerHTML = `
+                <div class="war-scoreboard">
+                    <div class="war-state-chip" id="war-state-text">Estado: ${g.estado || 'Indefinido'}</div>
+                    <div class="war-countdown-box" id="war-countdown-text">Calculando tempo...</div>
+                    <div class="battle-vs">
+                        <div class="team-side">
+                            <img src="${g.nossoEmblema || ''}" alt="Nosso Clã">
+                            <h3>${g.nomeCla || 'Nosso Clã'}</h3>
+                            <div class="team-score">⭐ ${g.nossasEstrelas || 0}</div>
+                            <span style="font-size: 11px; color: var(--text-secondary);">${g.nossaDestruicao || 0}%</span>
+                        </div>
+                        <div class="vs-text">VS</div>
+                        <div class="team-side">
+                            <img src="${g.emblemaOponente || ''}" alt="Oponente">
+                            <h3>${g.nomeOponente || 'Oponente'}</h3>
+                            <div class="team-score">⭐ ${g.estrelasOponente || 0}</div>
+                            <span style="font-size: 11px; color: var(--text-secondary);">${g.destruicaoOponente || 0}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="war-details-card">
+                    <div class="war-detail-row">
+                        <span class="war-detail-label">Tamanho da Guerra:</span>
+                        <span class="war-detail-val">${g.tamanho || '--'}</span>
+                    </div>
+                    <div class="war-detail-row">
+                        <span class="war-detail-label">Nossos Ataques:</span>
+                        <span class="war-detail-val">${g.nossosAtaques || '--'}</span>
+                    </div>
+                    <div class="war-detail-row">
+                        <span class="war-detail-label">Ataques Oponente:</span>
+                        <span class="war-detail-val">${g.ataquesOponente || '--'}</span>
+                    </div>
+                    <div class="war-detail-row">
+                        <span class="war-detail-label">Início:</span>
+                        <span class="war-detail-val">${formatarDataBrasil(g.inicio)}</span>
+                    </div>
+                    <div class="war-detail-row">
+                        <span class="war-detail-label">Fim:</span>
+                        <span class="war-detail-val">${formatarDataBrasil(g.fim)}</span>
+                    </div>
+                </div>
+            `;
+
+            atualizarContadorTempo(g.inicio, g.fim, g.estado);
+            warInterval = setInterval(() => {
+                atualizarContadorTempo(g.inicio, g.fim, g.estado);
+            }, 1000);
+        }
+
+        function atualizarContadorTempo(inicioStr, fimStr, estadoPlanilha) {
+            const countdownEl = document.getElementById('war-countdown-text');
+            const stateEl = document.getElementById('war-state-text');
+            if (!countdownEl) return;
+
+            const agora = new Date().getTime();
+            const inicio = new Date(inicioStr).getTime();
+            const fim = new Date(fimStr).getTime();
+
+            if (isNaN(inicio) || isNaN(fim)) {
+                countdownEl.innerText = "Horário inválido";
+                return;
+            }
+
+            let diff = 0;
+            let textoStatus = "";
+
+            if (agora < inicio) {
+                // Preparação / Falta começar
+                diff = inicio - agora;
+                textoStatus = "⏳ Começa em: " + formatarMilisegundos(diff);
+                if(stateEl) stateEl.innerText = "Estado: Preparação";
+            } else if (agora >= inicio && agora <= fim) {
+                // Em combate / Falta terminar
+                diff = fim - agora;
+                textoStatus = "⚔️ Termina em: " + formatarMilisegundos(diff);
+                if(stateEl) stateEl.innerText = "Estado: Em Guerra";
+            } else {
+                // Guerra encerrada
+                textoStatus = "🏁 Guerra Encerrada";
+                if(stateEl) stateEl.innerText = "Estado: Encerrada";
+            }
+
+            countdownEl.innerText = textoStatus;
+        }
+
+        function formatarMilisegundos(ms) {
+            let segundos = Math.floor((ms / 1000) % 60);
+            let minutos = Math.floor((ms / (1000 * 60)) % 60);
+            let horas = Math.floor((ms / (1000 * 60 * 60)) % 24);
+            let dias = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+            let resultado = "";
+            if (dias > 0) resultado += `${dias}d `;
+            resultado += `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`;
+            return resultado;
         }
 
         function abrirModalCadastro() {
