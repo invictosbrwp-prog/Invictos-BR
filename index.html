@@ -261,6 +261,7 @@
             gap: 8px;
         }
 
+        .action-button.red { background: var(--accent-red); width: calc(100% - 30px); margin: 15px 15px 0 15px; }
         .action-button:hover { opacity: 0.9; }
 
         .whatsapp-card {
@@ -413,6 +414,120 @@
             font-weight: bold;
         }
 
+        /* Card Previsão da Guerra */
+        .war-prediction-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .war-prediction-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-yellow);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .war-prediction-result {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        /* Estilos da Aba Advertências */
+        .stats-ranking-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin: 15px;
+            padding: 12px;
+        }
+
+        .stats-ranking-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--accent-yellow);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .ranking-item:last-child { border-bottom: none; }
+
+        .filters-section {
+            padding: 0 15px 15px 15px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            flex: 1;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .warnings-container { padding: 0 15px; }
+
+        .warning-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-red);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .warning-card.resolvido {
+            border-left-color: var(--accent-green);
+            opacity: 0.8;
+        }
+
+        .warning-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .warning-member-name { font-size: 14px; font-weight: bold; margin: 0; }
+        .warning-badge {
+            font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-grave { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .badge-media { background: rgba(234, 179, 8, 0.2); color: var(--accent-yellow); }
+        .badge-leve { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+
+        .warning-id { font-size: 11px; color: var(--text-secondary); }
+        .warning-body { font-size: 12px; color: var(--text-secondary); margin: 8px 0; line-height: 1.4; }
+        .warning-footer {
+            display: flex; justify-content: space-between; align-items: center; font-size: 11px;
+            border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;
+        }
+
         /* Modal Formulário Corrigido */
         .modal {
             display: none;
@@ -434,6 +549,8 @@
             width: 100%;
             max-width: 400px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-content h3 { margin-top: 0; color: var(--text-color); }
@@ -450,7 +567,7 @@
             margin-bottom: 4px;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             background: var(--bg-color);
             border: 1px solid var(--border-color);
@@ -460,7 +577,9 @@
             font-size: 14px;
             box-sizing: border-box;
             outline: none;
+            font-family: inherit;
         }
+        .form-group textarea { resize: vertical; height: 70px; }
 
         .modal-buttons {
             display: flex;
@@ -515,17 +634,6 @@
         .nav-item span { font-size: 16px; }
         .nav-item.active { color: var(--accent-blue); font-weight: bold; }
         .nav-item:hover { color: var(--text-color); }
-
-        .maintenance-screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--text-secondary);
-        }
-        .maintenance-screen h2 { color: var(--text-color); margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -599,11 +707,38 @@
             </div>
         </div>
 
-        <!-- ABA 4: RANKING -->
-        <div id="tab-ranking" class="tab-content maintenance-screen">
-            <span>🏆</span>
-            <h2>Ranking</h2>
-            <p>Esta seção está em manutenção.<br>Aguarde o placar geral de pontuações e doações.</p>
+        <!-- ABA 4: ADVERTÊNCIAS (Integrada) -->
+        <div id="tab-advertencias" class="tab-content" style="display: none;">
+            <div class="header" style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                <h1 style="margin: 0 0 5px 0; font-size: 20px; color: var(--accent-blue); display: flex; align-items: center; justify-content: center; gap: 8px;"><span>⚠️</span> Controle de Advertências</h1>
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Gerenciamento de infrações, punições e inatividade</p>
+            </div>
+
+            <button class="action-button red" onclick="abrirModalAdvertencia()">
+                <span>➕</span> Aplicar Nova Advertência
+            </button>
+
+            <!-- Painel de Ranking de Punições -->
+            <div class="stats-ranking-card">
+                <div class="stats-ranking-title">🏆 Top Punições no Clã</div>
+                <div id="ranking-list"></div>
+            </div>
+
+            <div class="filters-section">
+                <select id="filter-status-inativo" class="filter-select" onchange="renderizarAdvertencias()">
+                    <option value="todos">Status Clã (Ativo/Inativo)</option>
+                    <option value="Ativo">Apenas Ativos</option>
+                    <option value="Inativo">Apenas Inativos</option>
+                </select>
+                <select id="filter-gravidade" class="filter-select" onchange="renderizarAdvertencias()">
+                    <option value="todas">Infrações (Todas)</option>
+                    <option value="Grave">Grave</option>
+                    <option value="Média">Média</option>
+                    <option value="Leve">Leve</option>
+                </select>
+            </div>
+
+            <div class="warnings-container" id="warnings-list"></div>
         </div>
 
         <!-- MENU DE NAVEGAÇÃO INFERIOR -->
@@ -617,13 +752,13 @@
             <button class="nav-item" onclick="mudarAba('whatsapp', this)">
                 <span>💬</span> WhatsApp
             </button>
-            <button class="nav-item" onclick="mudarAba('ranking', this)">
-                <span>🏆</span> Ranking
+            <button class="nav-item" onclick="mudarAba('advertencias', this)">
+                <span>⚠️</span> Avisos
             </button>
         </nav>
     </div>
 
-    <!-- MODAL DE CADASTRO/EDIÇÃO -->
+    <!-- MODAL DE CADASTRO/EDIÇÃO DE VILA -->
     <div id="modal-cadastro" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Cadastrar Vila</h3>
@@ -658,11 +793,70 @@
         </div>
     </div>
 
+    <!-- MODAL DE CADASTRO / EDIÇÃO DE ADVERTÊNCIA -->
+    <div id="modal-advertencia" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title-text">Aplicar Advertência</h3>
+            <form id="form-advertencia" onsubmit="salvarAdvertencia(event)">
+                <input type="hidden" id="edit-id-ocorrencia" value="">
+                
+                <div class="form-group" id="grupo-select-membro">
+                    <label>Selecionar Membro</label>
+                    <select id="campo-membro-advertencia" onchange="preencherDadosMembroAdvertencia()">
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tag do Membro</label>
+                    <input type="text" id="campo-tag" readonly placeholder="Tag do Clash">
+                </div>
+                <div class="form-group">
+                    <label>Nome no Clash</label>
+                    <input type="text" id="campo-nome-clash" readonly placeholder="Nome no Clash">
+                </div>
+                <div class="form-group" id="grupo-nivel">
+                    <label>Nível da Infração</label>
+                    <select id="campo-nivel">
+                        <option value="Leve">Leve</option>
+                        <option value="Média">Média</option>
+                        <option value="Grave">Grave</option>
+                    </select>
+                </div>
+                <div class="form-group" id="grupo-data">
+                    <label>Data</label>
+                    <input type="date" id="campo-data">
+                </div>
+                <div class="form-group" id="grupo-motivo">
+                    <label>Motivo / Descrição</label>
+                    <textarea id="campo-motivo" placeholder="Motivo..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Punição Aplicada</label>
+                    <input type="text" id="campo-punicao" required placeholder="Ex: Banco de guerra">
+                </div>
+                <div class="form-group">
+                    <label>Status da Punição</label>
+                    <select id="campo-status-punicao">
+                        <option value="Pendente">Pendente</option>
+                        <option value="Cumprida">Cumprida</option>
+                        <option value="Resolvido">Resolvido</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalAdvertencia()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
         let globalMembrosData = [];
         let globalCadastroData = [];
         let globalGuerraData = [];
+        let globalPrevisaoData = [];
+        let globalAdvertenciasData = [];
         let warInterval = null;
 
         function mudarAba(nomeAba, elementoBotao) {
@@ -678,12 +872,14 @@
             } else if (nomeAba === 'guerra') {
                 document.getElementById('tab-guerra').style.display = 'block';
                 renderizarGuerraAtual();
-            } else {
-                document.getElementById(`tab-${nomeAba}`).style.display = 'flex';
+            } else if (nomeAba === 'advertencias') {
+                document.getElementById('tab-advertencias').style.display = 'block';
+                renderizarEstatisticasRanking();
+                renderizarAdvertencias();
             }
 
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-            elementoBotao.classList.add('active');
+            if (elementoBotao) elementoBotao.classList.add('active');
         }
 
         function formatarDataBrasil(dataString) {
@@ -729,7 +925,7 @@
                         document.getElementById('last-update').innerText = "Última atualização: " + getVal("Última Atualização");
                     }
 
-                    // 2. Processar Cadastros do WhatsApp PRIMEIRO (para o filtro funcionar corretamente)
+                    // 2. Processar Cadastros do WhatsApp
                     const rawCadastro = data["Cadastro Membros"];
                     globalCadastroData = [];
                     if (rawCadastro && rawCadastro.length > 1) {
@@ -743,7 +939,7 @@
                                 telefone: c[idx("Número de Telefone")],
                                 tagClash: c[idx("Tag do Clash")],
                                 nomeClash: c[idx("Nome no Clash")],
-                                status: c[idx("Status")]
+                                status: c[idx("Status")] || "Ativo"
                             });
                         }
                     }
@@ -771,6 +967,7 @@
                         }
                         renderizarMembros();
                         popularSelectMembros();
+                        popularSelectMembrosAdvertencia();
                     }
 
                     // 4. Processar Guerra Atual
@@ -796,6 +993,36 @@
                                 ataquesOponente: g[ig("Ataques Oponente")],
                                 inicio: g[ig("Início")],
                                 fim: g[ig("Fim")]
+                            });
+                        }
+                    }
+
+                    // 5. Processar Previsão da Guerra
+                    const rawPrevisao = data["Previsão Guerra"];
+                    globalPrevisaoData = [];
+                    if (rawPrevisao && rawPrevisao.length > 0) {
+                        for (let i = 0; i < rawPrevisao.length; i++) {
+                            globalPrevisaoData.push(rawPrevisao[i]);
+                        }
+                    }
+
+                    // 6. Processar Advertências
+                    const rawAdvertencias = data["Advertências"];
+                    globalAdvertenciasData = [];
+                    if (rawAdvertencias && rawAdvertencias.length > 1) {
+                        const cabA = rawAdvertencias[0];
+                        const idA = (nome) => cabA.indexOf(nome);
+                        for (let i = 1; i < rawAdvertencias.length; i++) {
+                            let adv = rawAdvertencias[i];
+                            globalAdvertenciasData.push({
+                                idOcorrencia: adv[idA("ID Ocorrência")],
+                                tagMembro: adv[idA("Tag do Membro")],
+                                nomeClash: adv[idA("Nome no Clash")],
+                                nivelInfracao: adv[idA("Nível da Infração")],
+                                data: adv[idA("Data")],
+                                motivo: adv[idA("Motivo / Descrição")],
+                                punicao: adv[idA("Punição Aplicada")],
+                                statusPunicao: adv[idA("Status da Punição")]
                             });
                         }
                     }
@@ -847,7 +1074,6 @@
             const select = document.getElementById('campo-membro-clash');
             select.innerHTML = '<option value="">Selecione o membro...</option>';
 
-            // Pega todas as tags que já foram cadastradas, exceto a que está sendo editada atualmente (se houver edição)
             const tagsCadastradas = globalCadastroData
                 .filter(c => c.tagClash !== tagEmEdicao)
                 .map(c => c.tagClash);
@@ -860,6 +1086,29 @@
                     select.appendChild(opt);
                 }
             });
+        }
+
+        function popularSelectMembrosAdvertencia() {
+            const select = document.getElementById('campo-membro-advertencia');
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+            globalCadastroData.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.tagClash;
+                opt.text = `${c.nomeClash || c.nomeReal} (${c.tagClash})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function preencherDadosMembroAdvertencia() {
+            const tagSelecionada = document.getElementById('campo-membro-advertencia').value;
+            let membro = globalCadastroData.find(c => c.tagClash === tagSelecionada);
+            if (membro) {
+                document.getElementById('campo-tag').value = membro.tagClash;
+                document.getElementById('campo-nome-clash').value = membro.nomeClash || membro.nomeReal;
+            } else {
+                document.getElementById('campo-tag').value = '';
+                document.getElementById('campo-nome-clash').value = '';
+            }
         }
 
         function renderizarWhatsappMembros() {
@@ -909,7 +1158,14 @@
             }
 
             let g = globalGuerraData[0];
-            
+            let textoPrevisao = "Previsão indisponível no momento.";
+            if (globalPrevisaoData && globalPrevisaoData.length > 2) {
+                let linhaAlvo = globalPrevisaoData[2];
+                if (Array.isArray(linhaAlvo)) {
+                    textoPrevisao = linhaAlvo[1] !== undefined && linhaAlvo[1] !== "" ? linhaAlvo[1] : textoPrevisao;
+                }
+            }
+
             box.innerHTML = `
                 <div class="war-scoreboard">
                     <div class="war-state-chip" id="war-state-text">Estado: ${g.estado || 'Indefinido'}</div>
@@ -952,6 +1208,11 @@
                         <span class="war-detail-label">Fim:</span>
                         <span class="war-detail-val">${formatarDataBrasil(g.fim)}</span>
                     </div>
+                </div>
+
+                <div class="war-prediction-card">
+                    <div class="war-prediction-title">🔮 Previsão da Guerra</div>
+                    <div class="war-prediction-result">${textoPrevisao}</div>
                 </div>
             `;
 
@@ -1010,7 +1271,7 @@
             document.getElementById('modal-title').innerText = "Cadastrar Vila";
             document.getElementById('edit-index').value = "";
             document.getElementById('form-cadastro').reset();
-            popularSelectMembros(); // Atualiza o select filtrando os já cadastrados
+            popularSelectMembros();
             document.getElementById('modal-cadastro').style.display = 'flex';
         }
 
@@ -1020,7 +1281,6 @@
             document.getElementById('campo-nome-real').value = cad.nomeReal;
             document.getElementById('campo-telefone').value = cad.telefone;
             
-            // Popula o select permitindo manter a tag atual do membro sendo editado
             popularSelectMembros(cad.tagClash);
             document.getElementById('campo-membro-clash').value = cad.tagClash;
             
@@ -1093,6 +1353,201 @@
                 }
             })
             .catch(err => alert("Erro de conexão."));
+        }
+
+        // Funções da Aba Advertências
+        function abrirModalAdvertencia() {
+            document.getElementById('form-advertencia').reset();
+            document.getElementById('edit-id-ocorrencia').value = "";
+            document.getElementById('modal-title-text').innerText = "Aplicar Advertência";
+            
+            document.getElementById('grupo-select-membro').style.display = 'block';
+            document.getElementById('grupo-nivel').style.display = 'block';
+            document.getElementById('grupo-data').style.display = 'block';
+            document.getElementById('grupo-motivo').style.display = 'block';
+            
+            document.getElementById('campo-membro-advertencia').setAttribute('required', 'true');
+            document.getElementById('campo-nivel').setAttribute('required', 'true');
+            document.getElementById('campo-data').setAttribute('required', 'true');
+            document.getElementById('campo-motivo').setAttribute('required', 'true');
+
+            document.getElementById('campo-data').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-advertencia').style.display = 'flex';
+        }
+
+        function abrirModalEditarStatus(idOcorrencia) {
+            let adv = globalAdvertenciasData.find(a => String(a.idOcorrencia) === String(idOcorrencia));
+            if (!adv) return;
+
+            document.getElementById('form-advertencia').reset();
+            document.getElementById('edit-id-ocorrencia').value = adv.idOcorrencia;
+            document.getElementById('modal-title-text').innerText = "Editar Status Punição";
+
+            document.getElementById('grupo-select-membro').style.display = 'none';
+            document.getElementById('grupo-nivel').style.display = 'none';
+            document.getElementById('grupo-data').style.display = 'none';
+            document.getElementById('grupo-motivo').style.display = 'none';
+
+            document.getElementById('campo-membro-advertencia').removeAttribute('required');
+            document.getElementById('campo-nivel').removeAttribute('required');
+            document.getElementById('campo-data').removeAttribute('required');
+            document.getElementById('campo-motivo').removeAttribute('required');
+
+            document.getElementById('campo-tag').value = adv.tagMembro;
+            document.getElementById('campo-nome-clash').value = adv.nomeClash;
+            document.getElementById('campo-punicao').value = adv.punicao;
+            document.getElementById('campo-status-punicao').value = adv.statusPunicao || 'Pendente';
+
+            document.getElementById('modal-advertencia').style.display = 'flex';
+        }
+
+        function fecharModalAdvertencia() {
+            document.getElementById('modal-advertencia').style.display = 'none';
+        }
+
+        function salvarAdvertencia(event) {
+            event.preventDefault();
+            let idOcorrencia = document.getElementById('edit-id-ocorrencia').value;
+
+            let payload = {
+                acao: idOcorrencia ? "editar_advertencia" : "cadastrar_advertencia",
+                idOcorrencia: idOcorrencia,
+                tagMembro: document.getElementById('campo-tag').value,
+                nomeClash: document.getElementById('campo-nome-clash').value,
+                nivelInfracao: document.getElementById('campo-nivel').value,
+                data: document.getElementById('campo-data').value,
+                motivo: document.getElementById('campo-motivo').value,
+                punicao: document.getElementById('campo-punicao').value,
+                statusPunicao: document.getElementById('campo-status-punicao').value
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    fecharModalAdvertencia();
+                    carregarDados();
+                } else {
+                    alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro de conexão.");
+            });
+        }
+
+        function renderizarEstatisticasRanking() {
+            const rankingList = document.getElementById('ranking-list');
+            rankingList.innerHTML = '';
+
+            let contagemMembros = {};
+
+            globalAdvertenciasData.forEach(adv => {
+                let nome = adv.nomeClash || 'Desconhecido';
+                if (!contagemMembros[nome]) {
+                    contagemMembros[nome] = { total: 0, pendentes: 0, resolvidos: 0 };
+                }
+                contagemMembros[nome].total++;
+                
+                let status = String(adv.statusPunicao || '').toLowerCase();
+                if (status.includes('pendente')) {
+                    contagemMembros[nome].pendentes++;
+                } else {
+                    contagemMembros[nome].resolvidos++;
+                }
+            });
+
+            let ordenados = Object.keys(contagemMembros).sort((a, b) => contagemMembros[b].total - contagemMembros[a].total);
+
+            if (ordenados.length === 0) {
+                rankingList.innerHTML = '<span style="font-size:11px; color: var(--text-secondary)">Nenhuma advertência registrada.</span>';
+                return;
+            }
+
+            ordenados.slice(0, 5).forEach((nome, index) => {
+                let stats = contagemMembros[nome];
+                let item = document.createElement('div');
+                item.className = 'ranking-item';
+                item.innerHTML = `
+                    <span>#${index + 1} <strong>${nome}</strong></span>
+                    <span style="color: var(--text-secondary);">
+                        Total: <strong style="color: var(--accent-red);">${stats.total}</strong> 
+                        (⏳ ${stats.pendentes} | ✅ ${stats.resolvidos})
+                    </span>
+                `;
+                rankingList.appendChild(item);
+            });
+        }
+
+        function formatarDataSimples(dataString) {
+            if (!dataString) return '--';
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) return dataString;
+            return data.toLocaleDateString('pt-BR');
+        }
+
+        function renderizarAdvertencias() {
+            const container = document.getElementById('warnings-list');
+            container.innerHTML = '';
+
+            const filtroStatusInativo = document.getElementById('filter-status-inativo').value;
+            const filtroGravidade = document.getElementById('filter-gravidade').value;
+
+            let filtrados = globalAdvertenciasData.filter(adv => {
+                let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
+                let statusMembro = cadastroMatch ? cadastroMatch.status : "Ativo";
+
+                if (filtroStatusInativo !== "todos" && statusMembro !== filtroStatusInativo) return false;
+                if (filtroGravidade !== "todas" && adv.nivelInfracao !== filtroGravidade) return false;
+                return true;
+            });
+
+            if (filtrados.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhuma advertência encontrada.</p>';
+                return;
+            }
+
+            filtrados.forEach(adv => {
+                let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
+                let statusMembro = cadastroMatch ? cadastroMatch.status : "Ativo";
+
+                let badgeClass = 'badge-leve';
+                if (adv.nivelInfracao === 'Grave') badgeClass = 'badge-grave';
+                else if (adv.nivelInfracao === 'Média') badgeClass = 'badge-media';
+
+                let isResolvido = String(adv.statusPunicao).toLowerCase().includes('resolvido') || String(adv.statusPunicao).toLowerCase().includes('cumprida');
+                let cardStatusClass = isResolvido ? 'resolvido' : '';
+
+                let card = document.createElement('div');
+                card.className = `warning-card ${cardStatusClass}`;
+                card.innerHTML = `
+                    <div class="warning-header">
+                        <div>
+                            <p class="warning-member-name">${adv.nomeClash || 'Membro'}</p>
+                            <span class="warning-id">ID: #${adv.idOcorrencia || '--'} | Tag: ${adv.tagMembro || '--'}</span>
+                        </div>
+                        <span class="warning-badge ${badgeClass}">${adv.nivelInfracao || 'Geral'}</span>
+                    </div>
+                    <div class="warning-body">
+                        <strong>Motivo:</strong> ${adv.motivo || 'Não informado'}<br>
+                        <span style="font-size: 11px; color: var(--text-secondary);">📅 ${formatarDataSimples(adv.data)} | Clã: <strong>${statusMembro}</strong></span>
+                    </div>
+                    <div class="warning-footer">
+                        <span style="color: var(--accent-yellow);">⚡ ${adv.punicao || 'Nenhuma'}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: bold; color: ${isResolvido ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                                ${adv.statusPunicao || 'Pendente'}
+                            </span>
+                            <button class="btn-icon" onclick="abrirModalEditarStatus('${adv.idOcorrencia}')">✏️ Status</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
         carregarDados();
