@@ -48,10 +48,11 @@
         .admin-bar {
             display: flex;
             justify-content: flex-end;
+            gap: 8px;
             margin-bottom: 15px;
         }
 
-        .btn-admin {
+        .btn-action-top {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
@@ -63,6 +64,11 @@
             align-items: center;
             gap: 6px;
             transition: all 0.2s;
+        }
+
+        .btn-action-top:hover {
+            background: var(--card-hover);
+            color: var(--text-color);
         }
 
         .btn-admin.logged {
@@ -243,6 +249,12 @@
 
         .member-stats-group {
             display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .member-stats-column {
+            display: flex;
             flex-direction: column;
             align-items: flex-end;
             gap: 4px;
@@ -367,9 +379,14 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-icon.delete { color: var(--accent-red); }
+        .btn-icon.whatsapp { color: var(--accent-green); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
 
         /* Aba Guerra Atual Estilos */
         .war-container {
@@ -661,6 +678,36 @@
         .btn-save { background: var(--accent-blue); color: white; }
         .btn-cancel { background: var(--border-color); color: var(--text-color); }
 
+        /* Estilos da Aba Mais */
+        .more-container {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .maintenance-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px 20px;
+            margin-bottom: 20px;
+        }
+
+        .maintenance-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .version-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
         /* Menu de Navegação Inferior (Abas) */
         .bottom-nav {
             position: fixed;
@@ -700,6 +747,14 @@
         .admin-only {
             display: none !important;
         }
+
+        /* Animação do ícone de Sincronizar */
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -711,9 +766,12 @@
         <div id="tab-meu-cla" class="tab-content" style="display: none;">
             <div id="app">
                 <div class="clan-header">
-                    <!-- Botão de Acesso Admin -->
+                    <!-- Botões Superiores (Sincronizar e Admin) -->
                     <div class="admin-bar">
-                        <button id="btn-admin-toggle" class="btn-admin" onclick="controlarAcessoAdmin()">
+                        <button id="btn-sync" class="btn-action-top" onclick="sincronizarPlanilha()">
+                            <span id="sync-icon">🔄</span> <span id="sync-text">Sincronizar</span>
+                        </button>
+                        <button id="btn-admin-toggle" class="btn-action-top btn-admin" onclick="controlarAcessoAdmin()">
                             <span id="admin-icon">🔒</span> <span id="admin-text">Painel Admin</span>
                         </button>
                     </div>
@@ -812,7 +870,7 @@
             </div>
         </div>
 
-        <!-- ABA 4: ADVERTÊNCIAS (Integrada) -->
+        <!-- ABA 4: ADVERTÊNCIAS -->
         <div id="tab-advertencias" class="tab-content" style="display: none;">
             <div class="header" style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                 <h1 style="margin: 0 0 5px 0; font-size: 20px; color: var(--accent-blue); display: flex; align-items: center; justify-content: center; gap: 8px;"><span>⚠️</span> Controle de Advertências</h1>
@@ -846,6 +904,24 @@
             <div class="warnings-container" id="warnings-list"></div>
         </div>
 
+        <!-- ABA 5: MAIS (Em Manutenção / Versão) -->
+        <div id="tab-mais" class="tab-content" style="display: none;">
+            <div class="more-container">
+                <div class="maintenance-card">
+                    <div class="maintenance-icon">🛠️</div>
+                    <h2 style="margin: 0 0 10px 0; font-size: 20px; color: var(--accent-yellow);">Em Manutenção</h2>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        Esta seção está sendo desenvolvida para trazer novas estatísticas e recursos para o clã.
+                    </p>
+                </div>
+
+                <div class="version-card">
+                    <span style="color: var(--text-secondary);">Versão do Sistema</span>
+                    <span style="font-weight: bold; color: var(--accent-blue);">1.0.0</span>
+                </div>
+            </div>
+        </div>
+
         <!-- MENU DE NAVEGAÇÃO INFERIOR -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="mudarAba('meu-cla', this)">
@@ -859,6 +935,9 @@
             </button>
             <button class="nav-item" onclick="mudarAba('advertencias', this)">
                 <span>⚠️</span> Avisos
+            </button>
+            <button class="nav-item" onclick="mudarAba('mais', this)">
+                <span>⚙️</span> Mais
             </button>
         </nav>
     </div>
@@ -989,6 +1068,19 @@
         let globalLoginData = [];
         let warInterval = null;
 
+        function sincronizarPlanilha() {
+            const iconEl = document.getElementById('sync-icon');
+            const textEl = document.getElementById('sync-text');
+
+            iconEl.classList.add('spin');
+            textEl.innerText = 'Sincronizando...';
+
+            carregarDados(() => {
+                iconEl.classList.remove('spin');
+                textEl.innerText = 'Sincronizar';
+            });
+        }
+
         function controlarAcessoAdmin() {
             if (isAdminLogado) {
                 if (confirm("Deseja sair do modo Administrador?")) {
@@ -1045,6 +1137,7 @@
                 elementosAdmin.forEach(el => el.classList.add('admin-only'));
             }
             
+            renderizarMembros();
             renderizarWhatsappMembros();
             renderizarAdvertencias();
         }
@@ -1066,6 +1159,8 @@
                 document.getElementById('tab-advertencias').style.display = 'block';
                 renderizarEstatisticasRanking();
                 renderizarAdvertencias();
+            } else if (nomeAba === 'mais') {
+                document.getElementById('tab-mais').style.display = 'block';
             }
 
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
@@ -1104,12 +1199,18 @@
             });
         }
 
-        function carregarDados() {
+        function carregarDados(callbackSuccess = null) {
             fetch(WEB_APP_URL)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('loading').style.display = 'none';
-                    document.getElementById('tab-meu-cla').style.display = 'block';
+                    if (document.getElementById('tab-meu-cla').style.display === 'none' &&
+                        document.getElementById('tab-guerra').style.display === 'none' &&
+                        document.getElementById('tab-whatsapp').style.display === 'none' &&
+                        document.getElementById('tab-advertencias').style.display === 'none' &&
+                        document.getElementById('tab-mais').style.display === 'none') {
+                        document.getElementById('tab-meu-cla').style.display = 'block';
+                    }
 
                     // 1. Processar Clã
                     const clanData = data["Clã"];
@@ -1281,10 +1382,12 @@
                     }
 
                     atualizarInterfaceAdmin();
+                    if (callbackSuccess) callbackSuccess();
                 })
                 .catch(error => {
                     document.getElementById('loading').innerText = 'Erro ao carregar dados da API.';
                     console.error('Erro:', error);
+                    if (callbackSuccess) callbackSuccess();
                 });
         }
 
@@ -1307,6 +1410,24 @@
             membrosListDiv.innerHTML = '';
 
             globalMembrosData.forEach((m, index) => {
+                // Verificar se o membro tem cadastro no WhatsApp
+                let cadastroMatch = globalCadastroData.find(c => c.tagClash === m.tag);
+                let btnWhatsappHtml = '';
+                
+                if (cadastroMatch && cadastroMatch.telefone) {
+                    let telLimpo = String(cadastroMatch.telefone).replace(/\D/g, '');
+                    // Garante o código do país padrão do Brasil (55) caso não venha informado
+                    if (telLimpo.length <= 11 && !telLimpo.startsWith('55')) {
+                        telLimpo = '55' + telLimpo;
+                    }
+                    let mensagemWpp = encodeURIComponent(`Olá ${m.nome}, aqui é da administração do clã Invictos BR.`);
+                    let wppUrl = `https://wa.me/${telLimpo}?text=${mensagemWpp}`;
+                    
+                    // Se o admin estiver logado, exibe o botão
+                    let adminClass = isAdminLogado ? '' : 'admin-only';
+                    btnWhatsappHtml = `<a href="${wppUrl}" target="_blank" class="btn-icon whatsapp ${adminClass}" title="Enviar WhatsApp">💬</a>`;
+                }
+
                 let card = document.createElement('div');
                 card.className = 'member-card';
                 card.innerHTML = `
@@ -1318,7 +1439,10 @@
                         <div class="member-extra-details">🟢 ${m.doadas} / 🔴 ${m.recebidas}</div>
                     </div>
                     <div class="member-stats-group">
-                        <div class="member-stat-box">🏆 ${m.trofeus}</div>
+                        ${btnWhatsappHtml}
+                        <div class="member-stats-column">
+                            <div class="member-stat-box">🏆 ${m.trofeus}</div>
+                        </div>
                     </div>
                 `;
                 membrosListDiv.appendChild(card);
@@ -1511,7 +1635,7 @@
                 if (filtroStatus === 'falta_tudo') return j.ataques === 0;
                 if (filtroStatus === 'falta_segundo') return j.ataques === 1;
                 if (filtroStatus === 'completou') return j.ataques >= 2;
-                return true; // geral
+                return true;
             });
 
             if (filtrados.length === 0) {
@@ -1531,8 +1655,10 @@
                             <div class="member-extra-details">⚔️ Ataques: ${j.ataques} / 2</div>
                         </div>
                         <div class="member-stats-group">
-                            <div class="member-stat-box">⭐ ${j.estrelas}</div>
-                            <span style="font-size: 11px; color: var(--text-secondary);">${j.destruicaoMedia}%</span>
+                            <div class="member-stats-column">
+                                <div class="member-stat-box">⭐ ${j.estrelas}</div>
+                                <span style="font-size: 11px; color: var(--text-secondary);">${j.destruicaoMedia}%</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1612,9 +1738,10 @@
             document.getElementById('modal-cadastro').style.display = 'none';
         }
 
-        function salvarCadastro(event) {
+                function salvarCadastro(event) {
             event.preventDefault();
             if (!isAdminLogado) return;
+            
             let linha = document.getElementById('edit-index').value;
             let nomeReal = document.getElementById('campo-nome-real').value;
             let telefone = document.getElementById('campo-telefone').value;
@@ -1633,6 +1760,37 @@
                 nomeClash: nomeClash,
                 status: status
             };
+
+            // Desabilita o botão para evitar cliques duplos enquanto salva
+            const btnSalvar = event.target.querySelector('button[type="submit"]');
+            if (btnSalvar) btnSalvar.disabled = true;
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (btnSalvar) btnSalvar.disabled = false;
+                if(res.sucesso) {
+                    fecharModal();
+                    // Limpa o formulário explicitamente
+                    document.getElementById('form-cadastro').reset();
+                    document.getElementById('edit-index').value = "";
+                    
+                    // Recarrega os dados do servidor para atualizar as listas limpas
+                    carregarDados();
+                } else {
+                    alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                if (btnSalvar) btnSalvar.disabled = false;
+                console.error(err);
+                alert("Erro de conexão ao salvar.");
+            });
+        }
+
 
             fetch(WEB_APP_URL, {
                 method: 'POST',
@@ -1677,7 +1835,6 @@
             .catch(err => alert("Erro de conexão."));
         }
 
-        // Funções da Aba Advertências
         function abrirModalAdvertencia() {
             if (!isAdminLogado) return;
             document.getElementById('form-advertencia').reset();
@@ -1823,7 +1980,7 @@
             const filtroGravidade = document.getElementById('filter-gravidade').value;
 
             let filtrados = globalAdvertenciasData.filter(adv => {
-                let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
+                let cadastroMatch = globalCadastroData.find(c => c.tagMembro === adv.tagMembro);
                 let statusMembro = cadastroMatch ? cadastroMatch.status : "Ativo";
 
                 if (filtroStatusInativo !== "todos" && statusMembro !== filtroStatusInativo) return false;
@@ -1837,7 +1994,7 @@
             }
 
             filtrados.forEach(adv => {
-                let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
+                let cadastroMatch = globalCadastroData.find(c => c.tagMembro === adv.tagMembro);
                 let statusMembro = cadastroMatch ? cadastroMatch.status : "Ativo";
 
                 let badgeClass = 'badge-leve';
