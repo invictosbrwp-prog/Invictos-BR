@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invictos BR - Painel do Clã</title>
+    <style>
+        :root {
+            --bg-color: #12141c;
+            --card-bg: #1a1d28;
+            --card-hover: #222634;
+            --text-color: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-yellow: #eab308;
+            --border-color: #2a2e3d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            padding-bottom: 80px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Barra de Navegação por Abas */
+        .nav-tabs {
+            display: flex;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-color);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Header do Clã */
+        .clan-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .clan-badge-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .clan-badge {
+            width: 70px;
+            height: auto;
+        }
+
+        .clan-title-info h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .clan-members-count {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* Estatísticas de Guerra */
+        .war-stats {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--card-bg);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-badge.win span { color: var(--accent-green); font-weight: bold; }
+        .stat-badge.tie span { color: var(--accent-blue); font-weight: bold; }
+        .stat-badge.lose span { color: var(--accent-red); font-weight: bold; }
+        .stat-badge.streak span { color: var(--accent-yellow); font-weight: bold; }
+
+        /* Chips de Informações */
+        .info-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .chip {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Descrição do Clã */
+        .clan-description {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            margin: 15px 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            text-align: left;
+        }
+
+        .last-update {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            text-align: right;
+            padding-right: 20px;
+        }
+
+        /* Seção de Membros e Controles */
+        .members-section {
+            padding: 0 15px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 10px 10px 10px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+
+        .sort-select {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .member-card {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .member-card:hover {
+            background: var(--card-hover);
+        }
+
+        .member-pos {
+            font-size: 13px;
+            color: var(--text-secondary);
+            width: 22px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .member-avatar {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            margin-right: 10px;
+        }
+
+        .member-info {
+            flex-grow: 1;
+        }
+
+        .member-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .member-role {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin: 2px 0 0 0;
+        }
+
+        .member-extra-details {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .member-stats-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .member-stat-box {
+            background: #12141c;
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .placeholder-tab {
+            padding: 25px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="loading" class="loading">Carregando dados do clã...</div>
+        <div id="app" style="display: none;">
+            
+            <!-- BARRA DE ABAS / MENUS -->
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="mudarAba('aba-cla', this)">Clã</button>
+                <button class="tab-btn" onclick="mudarAba('aba-membros', this)">Membros</button>
+                <button class="tab-btn" onclick="mudarAba('aba-guerra', this)">Guerra</button>
+                <button class="tab-btn" onclick="mudarAaba('aba-ranking', this)">Ranking</button>
+                <button class="tab-btn" onclick="mudarAba('aba-advertencias', this)">Advertências</button>
+            </div>
+
+            <!-- CONTEÚDO: CLÃ -->
+            <div id="aba-cla" class="tab-content active">
+                <div class="clan-header">
+                    <div class="clan-badge-container">
+                        <img id="clan-badge" class="clan-badge" src="" alt="Emblema">
+                        <div class="clan-title-info" style="text-align: left;">
+                            <h1 id="clan-name">Carregando...</h1>
+                            <div class="clan-members-count" id="clan-members">-- / 50</div>
+                        </div>
+                    </div>
+
+                    <div class="war-stats">
+                        <div class="stat-badge win"><span id="war-wins">0</span> Vitórias</div>
+                        <div class="stat-badge tie"><span id="war-ties">0</span> Empates</div>
+                        <div class="stat-badge lose"><span id="war-losses">0</span> Derrotas</div>
+                        <div class="stat-badge streak"><span id="war-streak">0</span> Sequência</div>
+                    </div>
+
+                    <div class="info-chips">
+                        <div class="chip" id="clan-points">🏆 Pontos: --</div>
+                        <div class="chip" id="clan-location">📍 Brasil</div>
+                        <div class="chip" id="clan-tag">#-------</div>
+                        <div class="chip" id="clan-freq">🕒 Frequência</div>
+                    </div>
+
+                    <div class="clan-description" id="clan-desc">
+                        Carregando descrição...
+                    </div>
+
+                    <div class="last-update" id="last-update">Última atualização: --</div>
+                </div>
+            </div>
+
+            <!-- CONTEÚDO: MEMBROS -->
+            <div id="aba-membros" class="tab-content">
+                <div class="members-section">
+                    <div class="section-header">
+                        <div class="section-title">Membros</div>
+                        <select id="sort-select" class="sort-select" onchange="renderizarMembros()">
+                            <option value="trofeus">Ordenar por: Troféus</option>
+                            <option value="cv">Nível de CV</option>
+                            <option value="cargo">Cargo</option>
+                            <option value="doadas">Tropas Doadas</option>
+                            <option value="recebidas">Tropas Recebidas</option>
+                            <option value="xp">Nível de XP</option>
+                        </select>
+                    </div>
+                    <div id="members-list"></div>
+                </div>
+            </div>
+
+            <!-- CONTEÚDO: GUERRA -->
+            <div id="aba-guerra" class="tab-content">
+                <div class="placeholder-tab">Informações da Guerra Atual e Eventos aparecerão aqui.</div>
+            </div>
+
+            <!-- CONTEÚDO: RANKING -->
+            <div id="aba-ranking" class="tab-content">
+                <div class="placeholder-tab">Ranking de Guerra e Pontuação aparecerão aqui.</div>
+            </div>
+
+            <!-- CONTEÚDO: ADVERTÊNCIAS -->
+            <div id="aba-advertencias" class="tab-content">
+                <div class="placeholder-tab">Controle de Advertências e Status aparecerão aqui.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
+        let globalMembrosData = [];
+
+        // Função para alternar entre as abas do menu
+        function mudarAba(idAba, elementoBtn) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(idAba).classList.add('active');
+            elementoBtn.classList.add('active');
+        }
+
+        fetch(WEB_APP_URL)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+
+                // 1. Processar Clã
+                const clanData = data["Clã"];
+                if (clanData && clanData.length > 1) {
+                    const cabecalhos = clanData[0];
+                    const valores = clanData[1];
+                    const getVal = (nome) => valores[cabecalhos.indexOf(nome)];
+
+                    document.getElementById('clan-name').innerText = getVal("Nome");
+                    document.getElementById('clan-badge').src = getVal("Emblema");
+                    document.getElementById('clan-members').innerText = getVal("Membros") + " | " + getVal("Tipo");
+                    document.getElementById('war-wins').innerText = getVal("Vitórias em Guerra");
+                    document.getElementById('war-ties').innerText = getVal("Empates em Guerra");
+                    document.getElementById('war-losses').innerText = getVal("Derrotas em Guerra");
+                    document.getElementById('war-streak').innerText = getVal("Sequência de Vitórias em Guerra");
+                    document.getElementById('clan-points').innerText = "🏆 Pontos: " + getVal("Pontos do Clã");
+                    document.getElementById('clan-location').innerText = "📍 " + getVal("Localização");
+                    document.getElementById('clan-tag').innerText = "🏷️ " + getVal("Tag");
+                    document.getElementById('clan-freq').innerText = "🕒 " + getVal("Frequência de Guerras");
+                    document.getElementById('clan-desc').innerText = getVal("Descrição");
+                    document.getElementById('last-update').innerText = "Última atualização: " + getVal("Última Atualização");
+                }
+
+                // 2. Processar Membros
+                const rawMembros = data["Membros"];
+                if (rawMembros && rawMembros.length > 1) {
+                    const cab = rawMembros[0];
+                    const mapIndex = (nome) => cab.indexOf(nome);
+
+                    globalMembrosData = [];
+                    for (let i = 1; i < rawMembros.length; i++) {
+                        let m = rawMembros[i];
+                        globalMembrosData.push({
+                            nome: m[mapIndex("Nome")],
+                            fotoCV: m[mapIndex("Foto CV")],
+                            tag: m[mapIndex("Tag")],
+                            cargo: m[mapIndex("Cargo")],
+                            xp: Number(m[mapIndex("Nível Exp")]) || 0,
+                            trofeus: Number(m[mapIndex("Troféus")]) || 0,
+                            doadas: Number(m[mapIndex("Doadas")]) || 0,
+                            recebidas: Number(m[mapIndex("Recebidas")]) || 0,
+                            cv: Number(m[mapIndex("Nível CV")]) || 0
+                        });
+                    }
+                    renderizarMembros();
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = 'Erro ao carregar dados da API.';
+                console.error('Erro:', error);
+            });
+
+        function renderizarMembros() {
+            const criterio = document.getElementById('sort-select').value;
+            
+            globalMembrosData.sort((a, b) => {
+                if (criterio === 'trofeus') return b.trofeus - a.trofeus;
+                if (criterio === 'cv') return b.cv - a.cv;
+                if (criterio === 'doadas') return b.doadas - a.doadas;
+                if (criterio === 'recebidas') return b.recebidas - a.recebidas;
+                if (criterio === 'xp') return b.xp - a.xp;
+                if (criterio === 'cargo') {
+                    const pesos = { "leader": 3, "coLeader": 2, "elder": 1, "member": 0 };
+                    let pesoA = pesos[a.cargo] !== undefined ? pesos[a.cargo] : -1;
+                    let pesoB = pesos[b.cargo] !== undefined ? pesos[b.cargo] : -1;
+                    return pesoB - pesoA;
+                }
+                return 0;
+            });
+
+            const membrosListDiv = document.getElementById('members-list');
+            membrosListDiv.innerHTML = '';
+
+            globalMembrosData.forEach((m, index) => {
+                let card = document.createElement('div');
+                card.className = 'member-card';
+                card.innerHTML = `
+                    <div class="member-pos">${index + 1}</div>
+                    <img src="${m.fotoCV}" class="member-avatar" alt="CV">
+                    <div class="member-info">
+                        <p class="member-name">${m.nome}</p>
+                        <p class="member-role">${m.cargo} • XP ${m.xp}</p>
+                        <div class="member-extra-details">🟢 ${m.doadas} / 🔴 ${m.recebidas}</div>
+                    </div>
+                    <div class="member-stats-group">
+                        <div class="member-stat-box">🏆 ${m.trofeus}</div>
+                    </div>
+                `;
+                membrosListDiv.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
