@@ -33,8 +33,9 @@
             max-width: 480px;
             min-height: 100vh;
             background-color: var(--bg-color);
-            padding-bottom: 80px;
+            padding-bottom: 90px; /* Aumentado para não cobrir o menu inferior */
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
         }
 
         /* Header do Clã */
@@ -237,76 +238,201 @@
             color: var(--text-secondary);
             font-size: 16px;
         }
+
+        /* Menu de Navegação Inferior (Abas) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px;
+            flex: 1;
+            transition: color 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item span {
+            font-size: 16px;
+        }
+
+        .nav-item.active {
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+
+        .nav-item:hover {
+            color: var(--text-color);
+        }
+
+        /* Tela de Manutenção para as outras abas */
+        .maintenance-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+        }
+
+        .maintenance-screen h2 {
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div id="loading" class="loading">Carregando dados do clã...</div>
-        <div id="app" style="display: none;">
-            
-            <!-- HEADER DO CLÃ -->
-            <div class="clan-header">
-                <div class="clan-badge-container">
-                    <img id="clan-badge" class="clan-badge" src="" alt="Emblema">
-                    <div class="clan-title-info" style="text-align: left;">
-                        <h1 id="clan-name">Carregando...</h1>
-                        <div class="clan-members-count" id="clan-members">-- / 50</div>
+        
+        <!-- ABA 1: MEU CLÃ (Conteúdo Principal) -->
+        <div id="tab-meu-cla" class="tab-content" style="display: none;">
+            <div id="app">
+                <!-- HEADER DO CLÃ -->
+                <div class="clan-header">
+                    <div class="clan-badge-container">
+                        <img id="clan-badge" class="clan-badge" src="" alt="Emblema">
+                        <div class="clan-title-info" style="text-align: left;">
+                            <h1 id="clan-name">Carregando...</h1>
+                            <div class="clan-members-count" id="clan-members">-- / 50</div>
+                        </div>
                     </div>
+
+                    <!-- Estatísticas de Guerra e Sequência -->
+                    <div class="war-stats">
+                        <div class="stat-badge win"><span id="war-wins">0</span> Vitórias</div>
+                        <div class="stat-badge tie"><span id="war-ties">0</span> Empates</div>
+                        <div class="stat-badge lose"><span id="war-losses">0</span> Derrotas</div>
+                        <div class="stat-badge streak"><span id="war-streak">0</span> Sequência</div>
+                    </div>
+
+                    <!-- Chips de Informações -->
+                    <div class="info-chips">
+                        <div class="chip" id="clan-points">🏆 Pontos: --</div>
+                        <div class="chip" id="clan-location">📍 Brasil</div>
+                        <div class="chip" id="clan-tag">#-------</div>
+                        <div class="chip" id="clan-freq">🕒 Frequência</div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="clan-description" id="clan-desc">
+                        Carregando descrição...
+                    </div>
+
+                    <div class="last-update" id="last-update">Última atualização: --</div>
                 </div>
 
-                <!-- Estatísticas de Guerra e Sequência -->
-                <div class="war-stats">
-                    <div class="stat-badge win"><span id="war-wins">0</span> Vitórias</div>
-                    <div class="stat-badge tie"><span id="war-ties">0</span> Empates</div>
-                    <div class="stat-badge lose"><span id="war-losses">0</span> Derrotas</div>
-                    <div class="stat-badge streak"><span id="war-streak">0</span> Sequência</div>
+                <!-- LISTA DE MEMBROS -->
+                <div class="members-section">
+                    <div class="section-header">
+                        <div class="section-title">Membros</div>
+                        <select id="sort-select" class="sort-select" onchange="renderizarMembros()">
+                            <option value="trofeus">Ordenar por: Troféus</option>
+                            <option value="cv">Nível de CV</option>
+                            <option value="cargo">Cargo</option>
+                            <option value="doadas">Tropas Doadas</option>
+                            <option value="recebidas">Tropas Recebidas</option>
+                            <option value="xp">Nível de XP</option>
+                        </select>
+                    </div>
+                    <div id="members-list"></div>
                 </div>
-
-                <!-- Chips de Informações (Pontos, Local, Tag, Frequência) -->
-                <div class="info-chips">
-                    <div class="chip" id="clan-points">🏆 Pontos: --</div>
-                    <div class="chip" id="clan-location">📍 Brasil</div>
-                    <div class="chip" id="clan-tag">#-------</div>
-                    <div class="chip" id="clan-freq">🕒 Frequência</div>
-                </div>
-
-                <!-- Descrição -->
-                <div class="clan-description" id="clan-desc">
-                    Carregando descrição...
-                </div>
-
-                <div class="last-update" id="last-update">Última atualização: --</div>
             </div>
-
-            <!-- LISTA DE MEMBROS -->
-            <div class="members-section">
-                <div class="section-header">
-                    <div class="section-title">Membros</div>
-                    <select id="sort-select" class="sort-select" onchange="renderizarMembros()">
-                        <option value="trofeus">Ordenar por: Troféus</option>
-                        <option value="cv">Nível de CV</option>
-                        <option value="cargo">Cargo</option>
-                        <option value="doadas">Tropas Doadas</option>
-                        <option value="recebidas">Tropas Recebidas</option>
-                        <option value="xp">Nível de XP</option>
-                    </select>
-                </div>
-                <div id="members-list"></div>
-            </div>
-
         </div>
+
+        <!-- ABA 2: GUERRA ATUAL (Em Manutenção) -->
+        <div id="tab-guerra" class="tab-content maintenance-screen">
+            <span>⚔️</span>
+            <h2>Guerra Atual</h2>
+            <p>Esta seção está em manutenção.<br>Em breve novidades sobre a guerra do clã!</p>
+        </div>
+
+        <!-- ABA 3: MEUS MEMBROS WHATSAPP (Em Manutenção) -->
+        <div id="tab-whatsapp" class="tab-content maintenance-screen">
+            <span>💬</span>
+            <h2>Meus Membros (WhatsApp)</h2>
+            <p>Esta seção está em manutenção.<br>Aqui ficarão apenas os membros ativos no grupo de WhatsApp.</p>
+        </div>
+
+        <!-- ABA 4: RANKING (Em Manutenção) -->
+        <div id="tab-ranking" class="tab-content maintenance-screen">
+            <span>🏆</span>
+            <h2>Ranking</h2>
+            <p>Esta seção está em manutenção.<br>Aguarde o placar geral de pontuações e doações.</p>
+        </div>
+
+        <!-- MENU DE NAVEGAÇÃO INFERIOR -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="mudarAba('meu-cla', this)">
+                <span>🛡️</span> Meu Clã
+            </button>
+            <button class="nav-item" onclick="mudarAba('guerra', this)">
+                <span>⚔️</span> Guerra Atual
+            </button>
+            <button class="nav-item" onclick="mudarAba('whatsapp', this)">
+                <span>💬</span> WhatsApp
+            </button>
+            <button class="nav-item" onclick="mudarAba('ranking', this)">
+                <span>🏆</span> Ranking
+            </button>
+        </nav>
     </div>
 
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
         let globalMembrosData = [];
 
+        // Função para alternar entre as abas do menu
+        function mudarAba(nomeAba, elementoBotao) {
+            // Oculta todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+
+            // Exibe apenas a aba selecionada
+            if (nomeAba === 'meu-cla') {
+                document.getElementById('tab-meu-cla').style.display = 'block';
+            } else if (nomeAba === 'guerra') {
+                document.getElementById('tab-guerra').style.display = 'flex';
+            } else if (nomeAba === 'whatsapp') {
+                document.getElementById('tab-whatsapp').style.display = 'flex';
+            } else if (nomeAba === 'ranking') {
+                document.getElementById('tab-ranking').style.display = 'flex';
+            }
+
+            // Atualiza o estado visual ativo dos botões do menu
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            elementoBotao.classList.add('active');
+        }
+
         fetch(WEB_APP_URL)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
+                document.getElementById('tab-meu-cla').style.display = 'block'; // Mostra a aba padrão carregada
 
                 // 1. Processar Clã
                 const clanData = data["Clã"];
