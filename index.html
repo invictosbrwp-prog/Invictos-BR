@@ -33,7 +33,7 @@
             max-width: 480px;
             min-height: 100vh;
             background-color: var(--bg-color);
-            padding-bottom: 90px; /* Aumentado para não cobrir o menu inferior */
+            padding-bottom: 90px;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             position: relative;
         }
@@ -239,6 +239,145 @@
             font-size: 16px;
         }
 
+        /* Aba WhatsApp Específicos */
+        .whatsapp-container {
+            padding: 15px;
+        }
+
+        .action-button {
+            background: var(--accent-green);
+            color: #fff;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-button:hover { opacity: 0.9; }
+
+        .whatsapp-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .whatsapp-card-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .whatsapp-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+        }
+
+        .whatsapp-details p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-icon.delete { color: var(--accent-red); }
+
+        /* Modal Formulário Corrigido */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .modal-content h3 { margin-top: 0; color: var(--text-color); }
+
+        .form-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-save { background: var(--accent-blue); color: white; }
+        .btn-cancel { background: var(--border-color); color: var(--text-color); }
+
         /* Menu de Navegação Inferior (Abas) */
         .bottom-nav {
             position: fixed;
@@ -271,20 +410,10 @@
             text-decoration: none;
         }
 
-        .nav-item span {
-            font-size: 16px;
-        }
+        .nav-item span { font-size: 16px; }
+        .nav-item.active { color: var(--accent-blue); font-weight: bold; }
+        .nav-item:hover { color: var(--text-color); }
 
-        .nav-item.active {
-            color: var(--accent-blue);
-            font-weight: bold;
-        }
-
-        .nav-item:hover {
-            color: var(--text-color);
-        }
-
-        /* Tela de Manutenção para as outras abas */
         .maintenance-screen {
             display: none;
             flex-direction: column;
@@ -294,11 +423,7 @@
             padding: 80px 20px;
             color: var(--text-secondary);
         }
-
-        .maintenance-screen h2 {
-            color: var(--text-color);
-            margin-bottom: 10px;
-        }
+        .maintenance-screen h2 { color: var(--text-color); margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -306,10 +431,9 @@
     <div class="container">
         <div id="loading" class="loading">Carregando dados do clã...</div>
         
-        <!-- ABA 1: MEU CLÃ (Conteúdo Principal) -->
+        <!-- ABA 1: MEU CLÃ -->
         <div id="tab-meu-cla" class="tab-content" style="display: none;">
             <div id="app">
-                <!-- HEADER DO CLÃ -->
                 <div class="clan-header">
                     <div class="clan-badge-container">
                         <img id="clan-badge" class="clan-badge" src="" alt="Emblema">
@@ -319,7 +443,6 @@
                         </div>
                     </div>
 
-                    <!-- Estatísticas de Guerra e Sequência -->
                     <div class="war-stats">
                         <div class="stat-badge win"><span id="war-wins">0</span> Vitórias</div>
                         <div class="stat-badge tie"><span id="war-ties">0</span> Empates</div>
@@ -327,7 +450,6 @@
                         <div class="stat-badge streak"><span id="war-streak">0</span> Sequência</div>
                     </div>
 
-                    <!-- Chips de Informações -->
                     <div class="info-chips">
                         <div class="chip" id="clan-points">🏆 Pontos: --</div>
                         <div class="chip" id="clan-location">📍 Brasil</div>
@@ -335,15 +457,10 @@
                         <div class="chip" id="clan-freq">🕒 Frequência</div>
                     </div>
 
-                    <!-- Descrição -->
-                    <div class="clan-description" id="clan-desc">
-                        Carregando descrição...
-                    </div>
-
+                    <div class="clan-description" id="clan-desc">Carregando descrição...</div>
                     <div class="last-update" id="last-update">Última atualização: --</div>
                 </div>
 
-                <!-- LISTA DE MEMBROS -->
                 <div class="members-section">
                     <div class="section-header">
                         <div class="section-title">Membros</div>
@@ -361,21 +478,26 @@
             </div>
         </div>
 
-        <!-- ABA 2: GUERRA ATUAL (Em Manutenção) -->
+        <!-- ABA 2: GUERRA ATUAL -->
         <div id="tab-guerra" class="tab-content maintenance-screen">
             <span>⚔️</span>
             <h2>Guerra Atual</h2>
             <p>Esta seção está em manutenção.<br>Em breve novidades sobre a guerra do clã!</p>
         </div>
 
-        <!-- ABA 3: MEUS MEMBROS WHATSAPP (Em Manutenção) -->
-        <div id="tab-whatsapp" class="tab-content maintenance-screen">
-            <span>💬</span>
-            <h2>Meus Membros (WhatsApp)</h2>
-            <p>Esta seção está em manutenção.<br>Aqui ficarão apenas os membros ativos no grupo de WhatsApp.</p>
+        <!-- ABA 3: WHATSAPP (Cadastros) -->
+        <div id="tab-whatsapp" class="tab-content" style="display: none;">
+            <div class="whatsapp-container">
+                <button class="action-button" onclick="abrirModalCadastro()">
+                    <span>➕</span> Cadastrar Nova Vila
+                </button>
+                <div id="whatsapp-members-list">
+                    <!-- Preenchido via Script -->
+                </div>
+            </div>
         </div>
 
-        <!-- ABA 4: RANKING (Em Manutenção) -->
+        <!-- ABA 4: RANKING -->
         <div id="tab-ranking" class="tab-content maintenance-screen">
             <span>🏆</span>
             <h2>Ranking</h2>
@@ -399,95 +521,145 @@
         </nav>
     </div>
 
+    <!-- MODAL DE CADASTRO/EDIÇÃO -->
+    <div id="modal-cadastro" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Cadastrar Vila</h3>
+            <form id="form-cadastro" onsubmit="salvarCadastro(event)">
+                <input type="hidden" id="edit-index" value="">
+                <div class="form-group">
+                    <label>Nome Real</label>
+                    <input type="text" id="campo-nome-real" required placeholder="Ex: João Silva">
+                </div>
+                <div class="form-group">
+                    <label>Número de Telefone (WhatsApp)</label>
+                    <input type="text" id="campo-telefone" required placeholder="Ex: 11988887777">
+                </div>
+                <div class="form-group">
+                    <label>Selecionar Membro do Clã</label>
+                    <select id="campo-membro-clash" required>
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="campo-status">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuoW_UR03HsncO85esTqeQGdkSpR6kyZyzr4Bp0KLJdnul1DNEI_VQgJ_oIrm1P9pX/exec';
         let globalMembrosData = [];
+        let globalCadastroData = [];
 
-        // Função para alternar entre as abas do menu
         function mudarAba(nomeAba, elementoBotao) {
-            // Oculta todas as abas
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.style.display = 'none';
             });
 
-            // Exibe apenas a aba selecionada
             if (nomeAba === 'meu-cla') {
                 document.getElementById('tab-meu-cla').style.display = 'block';
-            } else if (nomeAba === 'guerra') {
-                document.getElementById('tab-guerra').style.display = 'flex';
             } else if (nomeAba === 'whatsapp') {
-                document.getElementById('tab-whatsapp').style.display = 'flex';
-            } else if (nomeAba === 'ranking') {
-                document.getElementById('tab-ranking').style.display = 'flex';
+                document.getElementById('tab-whatsapp').style.display = 'block';
+                renderizarWhatsappMembros();
+            } else {
+                document.getElementById(`tab-${nomeAba}`).style.display = 'flex';
             }
 
-            // Atualiza o estado visual ativo dos botões do menu
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             elementoBotao.classList.add('active');
         }
 
-        fetch(WEB_APP_URL)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('tab-meu-cla').style.display = 'block'; // Mostra a aba padrão carregada
+        function carregarDados() {
+            fetch(WEB_APP_URL)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('tab-meu-cla').style.display = 'block';
 
-                // 1. Processar Clã
-                const clanData = data["Clã"];
-                if (clanData && clanData.length > 1) {
-                    const cabecalhos = clanData[0];
-                    const valores = clanData[1];
-                    const getVal = (nome) => valores[cabecalhos.indexOf(nome)];
+                    // 1. Processar Clã
+                    const clanData = data["Clã"];
+                    if (clanData && clanData.length > 1) {
+                        const cabecalhos = clanData[0];
+                        const valores = clanData[1];
+                        const getVal = (nome) => valores[cabecalhos.indexOf(nome)];
 
-                    document.getElementById('clan-name').innerText = getVal("Nome");
-                    document.getElementById('clan-badge').src = getVal("Emblema");
-                    document.getElementById('clan-members').innerText = getVal("Membros") + " | " + getVal("Tipo");
-                    document.getElementById('war-wins').innerText = getVal("Vitórias em Guerra");
-                    document.getElementById('war-ties').innerText = getVal("Empates em Guerra");
-                    document.getElementById('war-losses').innerText = getVal("Derrotas em Guerra");
-                    document.getElementById('war-streak').innerText = getVal("Sequência de Vitórias em Guerra");
-                    document.getElementById('clan-points').innerText = "🏆 Pontos: " + getVal("Pontos do Clã");
-                    document.getElementById('clan-location').innerText = "📍 " + getVal("Localização");
-                    document.getElementById('clan-tag').innerText = "🏷️ " + getVal("Tag");
-                    document.getElementById('clan-freq').innerText = "🕒 " + getVal("Frequência de Guerras");
-                    document.getElementById('clan-desc').innerText = getVal("Descrição");
-                    document.getElementById('last-update').innerText = "Última atualização: " + getVal("Última Atualização");
-                }
-
-                // 2. Processar Membros
-                const rawMembros = data["Membros"];
-                if (rawMembros && rawMembros.length > 1) {
-                    const cab = rawMembros[0];
-                    const mapIndex = (nome) => cab.indexOf(nome);
-
-                    globalMembrosData = [];
-                    for (let i = 1; i < rawMembros.length; i++) {
-                        let m = rawMembros[i];
-                        globalMembrosData.push({
-                            nome: m[mapIndex("Nome")],
-                            fotoCV: m[mapIndex("Foto CV")],
-                            tag: m[mapIndex("Tag")],
-                            cargo: m[mapIndex("Cargo")],
-                            xp: Number(m[mapIndex("Nível Exp")]) || 0,
-                            trofeus: Number(m[mapIndex("Troféus")]) || 0,
-                            doadas: Number(m[mapIndex("Doadas")]) || 0,
-                            recebidas: Number(m[mapIndex("Recebidas")]) || 0,
-                            cv: Number(m[mapIndex("Nível CV")]) || 0
-                        });
+                        document.getElementById('clan-name').innerText = getVal("Nome");
+                        document.getElementById('clan-badge').src = getVal("Emblema");
+                        document.getElementById('clan-members').innerText = getVal("Membros") + " | " + getVal("Tipo");
+                        document.getElementById('war-wins').innerText = getVal("Vitórias em Guerra");
+                        document.getElementById('war-ties').innerText = getVal("Empates em Guerra");
+                        document.getElementById('war-losses').innerText = getVal("Derrotas em Guerra");
+                        document.getElementById('war-streak').innerText = getVal("Sequência de Vitórias em Guerra");
+                        document.getElementById('clan-points').innerText = "🏆 Pontos: " + getVal("Pontos do Clã");
+                        document.getElementById('clan-location').innerText = "📍 " + getVal("Localização");
+                        document.getElementById('clan-tag').innerText = "🏷️ " + getVal("Tag");
+                        document.getElementById('clan-freq').innerText = "🕒 " + getVal("Frequência de Guerras");
+                        document.getElementById('clan-desc').innerText = getVal("Descrição");
+                        document.getElementById('last-update').innerText = "Última atualização: " + getVal("Última Atualização");
                     }
-                    renderizarMembros();
-                }
-            })
-            .catch(error => {
-                document.getElementById('loading').innerText = 'Erro ao carregar dados da API.';
-                console.error('Erro:', error);
-            });
+
+                    // 2. Processar Membros do Clash
+                    const rawMembros = data["Membros"];
+                    if (rawMembros && rawMembros.length > 1) {
+                        const cab = rawMembros[0];
+                        const mapIndex = (nome) => cab.indexOf(nome);
+
+                        globalMembrosData = [];
+                        for (let i = 1; i < rawMembros.length; i++) {
+                            let m = rawMembros[i];
+                            globalMembrosData.push({
+                                nome: m[mapIndex("Nome")],
+                                fotoCV: m[mapIndex("Foto CV")],
+                                tag: m[mapIndex("Tag")],
+                                cargo: m[mapIndex("Cargo")],
+                                xp: Number(m[mapIndex("Nível Exp")]) || 0,
+                                trofeus: Number(m[mapIndex("Troféus")]) || 0,
+                                doadas: Number(m[mapIndex("Doadas")]) || 0,
+                                recebidas: Number(m[mapIndex("Recebidas")]) || 0,
+                                cv: Number(m[mapIndex("Nível CV")]) || 0
+                            });
+                        }
+                        renderizarMembros();
+                        popularSelectMembros();
+                    }
+
+                    // 3. Processar Cadastros do WhatsApp
+                    const rawCadastro = data["Cadastro Membros"];
+                    globalCadastroData = [];
+                    if (rawCadastro && rawCadastro.length > 1) {
+                        const cabC = rawCadastro[0];
+                        const idx = (nome) => cabC.indexOf(nome);
+                        for (let i = 1; i < rawCadastro.length; i++) {
+                            let c = rawCadastro[i];
+                            globalCadastroData.push({
+                                linhaPlanilha: i + 1,
+                                nomeReal: c[idx("Nome Real")],
+                                telefone: c[idx("Número de Telefone")],
+                                tagClash: c[idx("Tag do Clash")],
+                                nomeClash: c[idx("Nome no Clash")],
+                                status: c[idx("Status")]
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading').innerText = 'Erro ao carregar dados da API.';
+                    console.error('Erro:', error);
+                });
+        }
 
         function renderizarMembros() {
             const criterio = document.getElementById('sort-select').value;
-            
             globalMembrosData.sort((a, b) => {
                 if (criterio === 'trofeus') return b.trofeus - a.trofeus;
                 if (criterio === 'cv') return b.cv - a.cv;
@@ -496,9 +668,7 @@
                 if (criterio === 'xp') return b.xp - a.xp;
                 if (criterio === 'cargo') {
                     const pesos = { "leader": 3, "coLeader": 2, "elder": 1, "member": 0 };
-                    let pesoA = pesos[a.cargo] !== undefined ? pesos[a.cargo] : -1;
-                    let pesoB = pesos[b.cargo] !== undefined ? pesos[b.cargo] : -1;
-                    return pesoB - pesoA;
+                    return (pesos[b.cargo] || 0) - (pesos[a.cargo] || 0);
                 }
                 return 0;
             });
@@ -524,6 +694,140 @@
                 membrosListDiv.appendChild(card);
             });
         }
+
+        function popularSelectMembros() {
+            const select = document.getElementById('campo-membro-clash');
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+            globalMembrosData.forEach(m => {
+                let opt = document.createElement('option');
+                opt.value = m.tag;
+                opt.text = `${m.nome} (${m.tag})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderizarWhatsappMembros() {
+            const container = document.getElementById('whatsapp-members-list');
+            container.innerHTML = '';
+
+            if (globalCadastroData.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhuma vila cadastrada ainda.</p>';
+                return;
+            }
+
+            globalCadastroData.forEach(cad => {
+                let membroClash = globalMembrosData.find(m => m.tag === cad.tagClash);
+                let fotoUrl = membroClash ? membroClash.fotoCV : '';
+                let nomeExibicao = membroClash ? membroClash.nome : (cad.nomeClash || 'Desconhecido');
+
+                let telLimpo = String(cad.telefone || '').replace(/\D/g, '');
+                let ultimos4 = telLimpo.length >= 4 ? telLimpo.slice(-4) : telLimpo;
+                let telMascarado = `...${ultimos4}`;
+
+                let card = document.createElement('div');
+                card.className = 'whatsapp-card';
+                card.innerHTML = `
+                    <div class="whatsapp-card-info">
+                        ${fotoUrl ? `<img src="${fotoUrl}" class="member-avatar" alt="CV">` : '<div style="width:42px;height:42px"></div>'}
+                        <div class="whatsapp-details">
+                            <h4>${cad.nomeReal} <span style="font-size:11px; color: var(--accent-blue)">(${nomeExibicao})</span></h4>
+                            <p>📱 ${telMascarado} | Status: ${cad.status || 'Ativo'}</p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-icon" onclick='editarCadastro(${JSON.stringify(cad)})'>✏️</button>
+                        <button class="btn-icon delete" onclick="excluirCadastro(${cad.linhaPlanilha})">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function abrirModalCadastro() {
+            document.getElementById('modal-title').innerText = "Cadastrar Vila";
+            document.getElementById('edit-index').value = "";
+            document.getElementById('form-cadastro').reset();
+            document.getElementById('modal-cadastro').style.display = 'flex';
+        }
+
+        function editarCadastro(cad) {
+            document.getElementById('modal-title').innerText = "Editar Cadastro";
+            document.getElementById('edit-index').value = cad.linhaPlanilha;
+            document.getElementById('campo-nome-real').value = cad.nomeReal;
+            document.getElementById('campo-telefone').value = cad.telefone;
+            document.getElementById('campo-membro-clash').value = cad.tagClash;
+            document.getElementById('campo-status').value = cad.status || 'Ativo';
+            document.getElementById('modal-cadastro').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-cadastro').style.display = 'none';
+        }
+
+        function salvarCadastro(event) {
+            event.preventDefault();
+            let linha = document.getElementById('edit-index').value;
+            let nomeReal = document.getElementById('campo-nome-real').value;
+            let telefone = document.getElementById('campo-telefone').value;
+            let tagClash = document.getElementById('campo-membro-clash').value;
+            let status = document.getElementById('campo-status').value;
+
+            let membroObj = globalMembrosData.find(m => m.tag === tagClash);
+            let nomeClash = membroObj ? membroObj.nome : "";
+
+            let payload = {
+                acao: linha ? "editar" : "cadastrar",
+                linha: linha,
+                nomeReal: nomeReal,
+                telefone: telefone,
+                tagClash: tagClash,
+                nomeClash: nomeClash,
+                status: status
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    fecharModal();
+                    carregarDados();
+                } else {
+                    alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro de conexão ao salvar.");
+            });
+        }
+
+        function excluirCadastro(linha) {
+            if(!confirm("Tem certeza que deseja excluir este cadastro?")) return;
+
+            let payload = {
+                acao: "excluir",
+                linha: linha
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    carregarDados();
+                } else {
+                    alert("Erro ao excluir.");
+                }
+            })
+            .catch(err => alert("Erro de conexão."));
+        }
+
+        carregarDados();
     </script>
 </body>
 </html>
