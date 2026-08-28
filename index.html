@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Invictos BR - Painel do Clã</title>
     <style>
         :root {
@@ -33,9 +33,31 @@
             max-width: 480px;
             min-height: 100vh;
             background-color: var(--bg-color);
+            padding-top: 24px;
             padding-bottom: 90px;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             position: relative;
+            box-sizing: border-box;
+        }
+
+        /* Faixa de Segurança Superior (Notch / Status Bar) */
+        .safe-area-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 24px;
+            background-color: #0b0d13;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            z-index: 1001;
+            text-transform: uppercase;
         }
 
         /* Header do Clã */
@@ -759,6 +781,9 @@
 </head>
 <body>
 
+    <!-- Faixa de segurança superior para evitar corte por notch/câmera/horas -->
+    <div class="safe-area-banner">Invictos BR • Painel Oficial</div>
+
     <div class="container">
         <div id="loading" class="loading">Carregando dados do clã...</div>
         
@@ -843,16 +868,8 @@
                     </div>
                 </div>
 
-                <!-- Subconteúdo 3: Meu Time -->
+                <!-- Subconteúdo 3: Meu Time (Filtros Removidos) -->
                 <div id="sub-meu-time" class="war-sub-content">
-                    <div class="filters-section" style="padding: 0 0 15px 0;">
-                        <select id="filter-ataques-time" class="filter-select" onchange="renderizarMeuTime()">
-                            <option value="geral">📊 Dados Gerais (Padrão)</option>
-                            <option value="falta_tudo">❌ Falta os 2 Ataques</option>
-                            <option value="falta_segundo">⚠️ Falta o 2º Ataque</option>
-                            <option value="completou">✅ Atacou 2 Vezes</option>
-                        </select>
-                    </div>
                     <div id="meu-time-content-box">
                         <p style="text-align: center; color: var(--text-secondary);">Carregando ataques do time...</p>
                     </div>
@@ -870,8 +887,8 @@
             </div>
         </div>
 
-        <!-- ABA 4: ADVERTÊNCIAS -->
-        <div id="tab-advertencias" class="tab-content" style="display: none;">
+        <!-- ABA 4: ADVERTÊNCIAS (Visível apenas para Admin) -->
+        <div id="tab-advertencias" class="tab-content admin-only btn-admin-control" style="display: none;">
             <div class="header" style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
                 <h1 style="margin: 0 0 5px 0; font-size: 20px; color: var(--accent-blue); display: flex; align-items: center; justify-content: center; gap: 8px;"><span>⚠️</span> Controle de Advertências</h1>
                 <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Gerenciamento de infrações, punições e inatividade</p>
@@ -917,7 +934,7 @@
 
                 <div class="version-card">
                     <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                    <span style="font-weight: bold; color: var(--accent-blue);">1.0.0</span>
+                    <span style="font-weight: bold; color: var(--accent-blue);">1.1.2</span>
                 </div>
             </div>
         </div>
@@ -933,7 +950,8 @@
             <button class="nav-item" onclick="mudarAba('whatsapp', this)">
                 <span>💬</span> WhatsApp
             </button>
-            <button class="nav-item" onclick="mudarAba('advertencias', this)">
+            <!-- Botão de Advertências na barra inferior adaptado para aparecer apenas para administradores -->
+            <button id="nav-item-advertencias" class="nav-item admin-only btn-admin-control" onclick="mudarAba('advertencias', this)">
                 <span>⚠️</span> Advertências
             </button>
             <button class="nav-item" onclick="mudarAba('mais', this)">
@@ -953,6 +971,10 @@
                 </div>
                 <div class="form-group">
                     <input type="password" id="login-senha" required placeholder="Senha">
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 8px; justify-content: flex-start; margin-top: 8px;">
+                    <input type="checkbox" id="login-lembrar" style="width: auto; cursor: pointer;">
+                    <label for="login-lembrar" style="margin-bottom: 0; cursor: pointer; color: var(--text-color);">Lembrar senha neste dispositivo</label>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="fecharModalLogin()">Cancelar</button>
@@ -1061,7 +1083,12 @@
         let globalMembrosData = [];
         let globalCadastroData = [];
         let globalGuerraData = [];
-        let globalPrevisaoData = [];
+        let globalPrevisaoData = {
+            mediaNossoCla: "",
+            mediaRival: "",
+            textoInicio1: "",
+            textoInicio2: "",
+        };
         let globalEventosData = [];
         let globalGuerraJogadoresData = [];
         let globalAdvertenciasData = [];
@@ -1085,11 +1112,22 @@
             if (isAdminLogado) {
                 if (confirm("Deseja sair do modo Administrador?")) {
                     isAdminLogado = false;
+                    localStorage.removeItem('invictos_admin_tel');
+                    localStorage.removeItem('invictos_admin_pass');
+                    
+                    if (document.getElementById('tab-advertencias').style.display === 'block') {
+                        mudarAba('meu-cla', document.querySelector('.nav-item'));
+                    }
                     atualizarInterfaceAdmin();
                 }
             } else {
-                document.getElementById('login-telefone').value = '';
-                document.getElementById('login-senha').value = '';
+                let salvoTel = localStorage.getItem('invictos_admin_tel') || '';
+                let salvoPass = localStorage.getItem('invictos_admin_pass') || '';
+                
+                document.getElementById('login-telefone').value = salvoTel;
+                document.getElementById('login-senha').value = salvoPass;
+                document.getElementById('login-lembrar').checked = (salvoTel !== '');
+                
                 document.getElementById('modal-login').style.display = 'flex';
             }
         }
@@ -1098,6 +1136,7 @@
             event.preventDefault();
             let telefoneInformado = String(document.getElementById('login-telefone').value).trim().replace(/\D/g, '');
             let senhaInformada = String(document.getElementById('login-senha').value).trim();
+            let lembrar = document.getElementById('login-lembrar').checked;
 
             let adminEncontrado = globalLoginData.find(adm => {
                 let telPlanilha = String(adm.telefone || '').trim().replace(/\D/g, '');
@@ -1107,6 +1146,15 @@
 
             if (adminEncontrado) {
                 isAdminLogado = true;
+                
+                if (lembrar) {
+                    localStorage.setItem('invictos_admin_tel', document.getElementById('login-telefone').value);
+                    localStorage.setItem('invictos_admin_pass', senhaInformada);
+                } else {
+                    localStorage.removeItem('invictos_admin_tel');
+                    localStorage.removeItem('invictos_admin_pass');
+                }
+
                 fecharModalLogin();
                 atualizarInterfaceAdmin();
                 alert("Login efetuado com sucesso! Modo Administrador ativado.");
@@ -1143,6 +1191,10 @@
         }
 
         function mudarAba(nomeAba, elementoBotao) {
+            if (nomeAba === 'advertencias' && !isAdminLogado) {
+                return;
+            }
+
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.style.display = 'none';
             });
@@ -1155,7 +1207,7 @@
             } else if (nomeAba === 'guerra') {
                 document.getElementById('tab-guerra').style.display = 'block';
                 renderizarGuerraAtual();
-            } else if (nomeAba === 'advertencias') {
+            } else if (nomeAba === 'advertencias' && isAdminLogado) {
                 document.getElementById('tab-advertencias').style.display = 'block';
                 renderizarEstatisticasRanking();
                 renderizarAdvertencias();
@@ -1199,6 +1251,26 @@
             });
         }
 
+        function formatarUltimaAtualizacao(dataString) {
+            if (!dataString) return '--';
+            
+            if (isNaN(dataString) && !dataString.includes('T') && !dataString.includes('-') && dataString.includes(':')) {
+                return dataString;
+            }
+
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) return dataString;
+
+            return data.toLocaleString('pt-BR', {
+                timeZone: 'America/Sao_Paulo',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         function carregarDados(callbackSuccess = null) {
             fetch(WEB_APP_URL)
                 .then(response => response.json())
@@ -1231,7 +1303,9 @@
                         document.getElementById('clan-tag').innerText = "🏷️ " + getVal("Tag");
                         document.getElementById('clan-freq').innerText = "🕒 " + getVal("Frequência de Guerras");
                         document.getElementById('clan-desc').innerText = getVal("Descrição");
-                        document.getElementById('last-update').innerText = "Última atualização: " + getVal("Última Atualização");
+                        
+                        let dataBrutaAtualizacao = getVal("Última Atualização");
+                        document.getElementById('last-update').innerText = "Última atualização: " + formatarUltimaAtualizacao(dataBrutaAtualizacao);
                     }
 
                     // 2. Processar Cadastros do WhatsApp
@@ -1306,7 +1380,24 @@
                         }
                     }
 
-                    // 4.1 Processar Guerra - Jogadores (Meu Time)
+                    // 4.1 Processar Eventos da Guerra (Aba "Eventos Guerra")
+                    const rawEventosGuerra = data["Eventos Guerra"];
+                    globalEventosData = [];
+                    if (rawEventosGuerra && rawEventosGuerra.length > 1) {
+                        const cabEv = rawEventosGuerra[0];
+                        const iev = (nome) => cabEv.indexOf(nome);
+                        for (let i = 1; i < rawEventosGuerra.length; i++) {
+                            let ev = rawEventosGuerra[i];
+                            globalEventosData.push({
+                                tipo: ev[iev("Tipo")] || "",
+                                atacante: ev[iev("Atacante")] || "",
+                                fotoCV: ev[iev("Foto CV")] || "",
+                                detalhes: ev[iev("Detalhes")] || ""
+                            });
+                        }
+                    }
+
+                    // 4.2 Processar Guerra - Jogadores (Meu Time) corrigido
                     const rawGuerraJogadores = data["Guerra - Jogadores"];
                     globalGuerraJogadoresData = [];
                     if (rawGuerraJogadores && rawGuerraJogadores.length > 1) {
@@ -1314,45 +1405,81 @@
                         const igj = (nome) => cabGJ.indexOf(nome);
                         for (let i = 1; i < rawGuerraJogadores.length; i++) {
                             let gj = rawGuerraJogadores[i];
+                            
+                            let valAtq1Estrelas = gj[igj("1º Ataque (Estrelas)")];
+                            let valAtq1Porc = gj[igj("1º Ataque (%)")];
+                            let valAtq2Estrelas = gj[igj("2º Ataque (Estrelas)")];
+                            let valAtq2Porc = gj[igj("2º Ataque (%)")];
+
+                            let atacou1 = (valAtq1Estrelas !== "" && valAtq1Estrelas !== undefined && valAtq1Estrelas !== null && valAtq1Estrelas !== 0 && valAtq1Estrelas !== "0") || 
+                                          (valAtq1Porc !== "" && valAtq1Porc !== undefined && valAtq1Porc !== null && valAtq1Porc !== 0 && valAtq1Porc !== "0");
+
+                            let atacou2 = (valAtq2Estrelas !== "" && valAtq2Estrelas !== undefined && valAtq2Estrelas !== null && valAtq2Estrelas !== 0 && valAtq2Estrelas !== "0") || 
+                                          (valAtq2Porc !== "" && valAtq2Porc !== undefined && valAtq2Porc !== null && valAtq2Porc !== 0 && valAtq2Porc !== "0");
+
+                            let qtdAtaquesRealizados = (atacou1 ? 1 : 0) + (atacou2 ? 1 : 0);
+
                             globalGuerraJogadoresData.push({
                                 posicao: gj[igj("Posição")] || "",
                                 fotoCV: gj[igj("Foto CV")] || "",
                                 nome: gj[igj("Nome")] || "",
                                 tag: gj[igj("Tag")] || "",
                                 nivelCV: gj[igj("Nível CV")] || "",
-                                ataques: gj[igj("Ataques")] !== undefined && gj[igj("Ataques")] !== "" ? Number(gj[igj("Ataques")]) : 0,
-                                estrelas: gj[igj("Estrelas")] || "0",
-                                destruicaoMedia: gj[igj("Destruição Média")] || "0"
+                                ataque1Estrelas: valAtq1Estrelas !== "" && valAtq1Estrelas !== undefined ? valAtq1Estrelas : "0",
+                                ataque1Porcentagem: valAtq1Porc !== "" && valAtq1Porc !== undefined ? valAtq1Porc : "0",
+                                ataque2Estrelas: valAtq2Estrelas !== "" && valAtq2Estrelas !== undefined ? valAtq2Estrelas : "0",
+                                ataque2Porcentagem: valAtq2Porc !== "" && valAtq2Porc !== undefined ? valAtq2Porc : "0",
+                                totalEstrelasFeitas: gj[igj("Total Estrelas Feitas")] || "0",
+                                ataqueHeroico: gj[igj("Ataque Heróico?")] || "Não",
+                                qtdDefesas: gj[igj("Qtd Defesas")] || "0",
+                                totalEstrelasRecebidas: gj[igj("Total Estrelas Recebidas")] || "0",
+                                mediaDestruicaoSofrida: gj[igj("Média Destruição Sofrida (%)")] || "0",
+                                defesaHeroica: gj[igj("Defesa Heróica?")] || "Não",
+                                ataquesCalculados: qtdAtaquesRealizados
                             });
                         }
                     }
 
                     // 5. Processar Previsão da Guerra
                     const rawPrevisao = data["Previsão Guerra"];
-                    globalPrevisaoData = [];
-                    if (rawPrevisao && rawPrevisao.length > 0) {
-                        for (let i = 0; i < rawPrevisao.length; i++) {
-                            globalPrevisaoData.push(rawPrevisao[i]);
-                        }
-                    }
+                    globalPrevisaoData = {
+                        mediaNossoCla: "",
+                        mediaRival: "",
+                        textoInicio1: "",
+                        textoInicio2: "",
+                    };
 
-                    // 5.1 Processar Aba Eventos
-                    const rawEventos = data["Eventos"];
-                    globalEventosData = [];
-                    if (rawEventos && rawEventos.length > 0) {
-                        for (let i = 0; i < rawEventos.length; i++) {
-                            globalEventosData.push(rawEventos[i]);
+                    if (rawPrevisao && rawPrevisao.length > 0) {
+                        if (rawPrevisao[5]) {
+                            const valNosso = rawPrevisao[2][1];
+                            const valRival = rawPrevisao[2][2];
+
+                            globalPrevisaoData.mediaNossoCla = typeof valNosso === 'number' 
+                                ? (valNosso * 100).toFixed(0) + '%' 
+                                : (valNosso || "");
+                                
+                            globalPrevisaoData.mediaRival = typeof valRival === 'number' 
+                                ? (valRival * 100).toFixed(0) + '%' 
+                                : (valRival || "");
+                        }
+                        
+                        if (rawPrevisao[6] && rawPrevisao[6][1]) {
+                            globalPrevisaoData.textoInicio1 = rawPrevisao[6][1];
+                        }
+                        
+                        if (rawPrevisao[7] && rawPrevisao[7][1]) {
+                            globalPrevisaoData.textoInicio2 = rawPrevisao[7][1];
                         }
                     }
 
                     // 6. Processar Advertências
-                    const rawAdvertencias = data["Advertências"];
+                    const rawAdvertências = data["Advertências"];
                     globalAdvertenciasData = [];
-                    if (rawAdvertencias && rawAdvertencias.length > 1) {
-                        const cabA = rawAdvertencias[0];
+                    if (rawAdvertências && rawAdvertências.length > 1) {
+                        const cabA = rawAdvertências[0];
                         const idA = (nome) => cabA.indexOf(nome);
-                        for (let i = 1; i < rawAdvertencias.length; i++) {
-                            let adv = rawAdvertencias[i];
+                        for (let i = 1; i < rawAdvertências.length; i++) {
+                            let adv = rawAdvertências[i];
                             globalAdvertenciasData.push({
                                 idOcorrencia: adv[idA("ID Ocorrência")],
                                 tagMembro: adv[idA("Tag do Membro")],
@@ -1378,6 +1505,20 @@
                                 telefone: linhaLog[idxL("Telefone")],
                                 senha: linhaLog[idxL("Senha")]
                             });
+                        }
+                    }
+
+                    let salvoTel = localStorage.getItem('invictos_admin_tel') || '';
+                    let salvoPass = localStorage.getItem('invictos_admin_pass') || '';
+                    if (salvoTel && salvoPass && !isAdminLogado) {
+                        let telLimpo = salvoTel.replace(/\D/g, '');
+                        let adminEncontrado = globalLoginData.find(adm => {
+                            let tP = String(adm.telefone || '').trim().replace(/\D/g, '');
+                            let sP = String(adm.senha || '').trim();
+                            return tP === telLimpo && sP === salvoPass;
+                        });
+                        if (adminEncontrado) {
+                            isAdminLogado = true;
                         }
                     }
 
@@ -1534,13 +1675,13 @@
             }
 
             let g = globalGuerraData[0];
-            let textoPrevisao = "Previsão indisponível no momento.";
-            if (globalPrevisaoData && globalPrevisaoData.length > 2) {
-                let linhaAlvo = globalPrevisaoData[2];
-                if (Array.isArray(linhaAlvo)) {
-                    textoPrevisao = linhaAlvo[1] !== undefined && linhaAlvo[1] !== "" ? linhaAlvo[1] : textoPrevisao;
-                }
-            }
+            
+            let mediaNosso = globalPrevisaoData.mediaNossoCla ? `Média CVs (Nosso): ${globalPrevisaoData.mediaNossoCla}` : '';
+            let mediaRival = globalPrevisaoData.mediaRival ? `Média CVs (Rival): ${globalPrevisaoData.mediaRival}` : '';
+            let infoExtra1 = globalPrevisaoData.textoInicio1 ? `Previsão Início da War
+              <div style="margin-bottom: 4px; font-size: 13px; color: var(--text-color);">${globalPrevisaoData.textoInicio1}</div>` : '';
+            let infoExtra2 = globalPrevisaoData.textoInicio2 ? `Previsão Atual <div style="margin-bottom: 8px; font-size: 13px; color: var(--text-color);">${globalPrevisaoData.textoInicio2}</div>` : '';
+            let textoPrevisao = globalPrevisaoData.previsaoAtual || "";
 
             box.innerHTML = `
                 <div class="war-scoreboard">
@@ -1588,6 +1729,11 @@
 
                 <div class="war-prediction-card">
                     <div class="war-prediction-title">🔮 Previsão da Guerra</div>
+                    <div style="font-size: 12px; color: var(--accent-blue); margin-bottom: 8px; font-weight: bold;">
+                        ${mediaNosso} | ${mediaRival}
+                    </div>
+                    ${infoExtra1}
+                    ${infoExtra2}
                     <div class="war-prediction-result">${textoPrevisao}</div>
                 </div>
             `;
@@ -1605,56 +1751,61 @@
                 return;
             }
 
-            let html = '<div class="war-details-card">';
-            globalEventosData.forEach((evento, idx) => {
-                let texto = Array.isArray(evento) ? evento.join(' - ') : String(evento);
+            let html = '';
+            globalEventosData.forEach((evento) => {
                 html += `
-                    <div class="war-detail-row">
-                        <span class="war-detail-label">Evento ${idx + 1}:</span>
-                        <span class="war-detail-val" style="font-weight: normal; font-size: 12px;">${texto}</span>
+                    <div class="member-card" style="align-items: flex-start; margin-bottom: 10px;">
+                        ${evento.fotoCV ? `<img src="${evento.fotoCV}" class="member-avatar" alt="CV" style="margin-top: 4px;">` : '<div style="width:42px;height:42px"></div>'}
+                        <div class="member-info">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <p class="member-name">${evento.atacante || 'Atacante'}</p>
+                                <span class="warning-badge badge-leve">${evento.tipo || 'Evento'}</span>
+                            </div>
+                            <p class="member-role" style="margin-top: 4px; color: var(--text-color);">${evento.detalhes || ''}</p>
+                        </div>
                     </div>
                 `;
             });
-            html += '</div>';
             box.innerHTML = html;
         }
 
         function renderizarMeuTime() {
             const box = document.getElementById('meu-time-content-box');
-            const filtroStatus = document.getElementById('filter-ataques-time').value;
 
             if (!globalGuerraJogadoresData || globalGuerraJogadoresData.length === 0) {
                 box.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhum dado de jogador da guerra disponível.</p>';
                 return;
             }
 
-            let filtrados = globalGuerraJogadoresData.filter(j => {
-                if (filtroStatus === 'falta_tudo') return j.ataques === 0;
-                if (filtroStatus === 'falta_segundo') return j.ataques === 1;
-                if (filtroStatus === 'completou') return j.ataques >= 2;
-                return true;
-            });
-
-            if (filtrados.length === 0) {
-                box.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum jogador encontrado com este filtro.</p>';
-                return;
-            }
-
             let html = '';
-            filtrados.forEach((j) => {
+            globalGuerraJogadoresData.forEach((j) => {
+                let badgeHeroico = j.ataqueHeroico === 'Sim' || j.ataqueHeroico === true ? '<span class="warning-badge badge-media" style="margin-left: 4px;">⚡ Heróico</span>' : '';
+                let badgeDefesaHeroica = j.defesaHeroica === 'Sim' || j.defesaHeroica === true ? '<span class="warning-badge badge-grave" style="margin-left: 4px;">🛡️ Def. Heróica</span>' : '';
+
                 html += `
-                    <div class="member-card">
-                        <div class="member-pos">${j.posicao || '--'}</div>
-                        ${j.fotoCV ? `<img src="${j.fotoCV}" class="member-avatar" alt="CV">` : '<div style="width:42px;height:42px"></div>'}
-                        <div class="member-info">
-                            <p class="member-name">${j.nome || 'Jogador'}</p>
-                            <p class="member-role">CV ${j.nivelCV || '--'} • Tag: ${j.tag || '--'}</p>
-                            <div class="member-extra-details">⚔️ Ataques: ${j.ataques} / 2</div>
+                    <div class="member-card" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                        <div style="display: flex; align-items: center;">
+                            <div class="member-pos">${j.posicao || '--'}</div>
+                            ${j.fotoCV ? `<img src="${j.fotoCV}" class="member-avatar" alt="CV">` : '<div style="width:42px;height:42px"></div>'}
+                            <div class="member-info">
+                                <p class="member-name">${j.nome || 'Jogador'} ${badgeHeroico}</p>
+                                <p class="member-role">CV ${j.nivelCV || '--'} • Tag: ${j.tag || '--'}</p>
+                            </div>
+                            <div class="member-stats-group">
+                                <div class="member-stats-column">
+                                    <div class="member-stat-box">⭐ ${j.totalEstrelasFeitas}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="member-stats-group">
-                            <div class="member-stats-column">
-                                <div class="member-stat-box">⭐ ${j.estrelas}</div>
-                                <span style="font-size: 11px; color: var(--text-secondary);">${j.destruicaoMedia}%</span>
+                        
+                        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; font-size: 12px; color: var(--text-secondary);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>⚔️ 1º Ataque: <strong>⭐ ${j.ataque1Estrelas}</strong> (${j.ataque1Porcentagem}%)</span>
+                                <span>⚔️ 2º Ataque: <strong>⭐ ${j.ataque2Estrelas}</strong> (${j.ataque2Porcentagem}%)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 4px; margin-top: 4px;">
+                                <span>🛡️ Defesas: <strong>${j.qtdDefesas}</strong> (⭐ ${j.totalEstrelasRecebidas} recebidas)</span>
+                                <span>📉 Média Sofrida: <strong>${j.mediaDestruicaoSofrida}%</strong> ${badgeDefesaHeroica}</span>
                             </div>
                         </div>
                     </div>
@@ -2007,3 +2158,5 @@
 
         carregarDados();
     </script>
+</body>
+</html>
