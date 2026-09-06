@@ -217,6 +217,28 @@
             cursor: pointer;
         }
 
+        /* Barra de Pesquisa de Membros */
+        .search-bar-container {
+            display: flex;
+            gap: 8px;
+            margin: 0 10px 15px 10px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-blue);
+        }
+
         .member-card {
             display: flex;
             align-items: center;
@@ -299,42 +321,6 @@
             font-size: 16px;
         }
 
-        /* Submenu Guerra Atual */
-        .war-submenu {
-            display: flex;
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 10px;
-        }
-
-        .war-sub-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            padding: 12px 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .war-sub-btn.active {
-            color: var(--accent-blue);
-            border-bottom-color: var(--accent-blue);
-        }
-
-        .war-sub-content {
-            display: none;
-            padding: 15px;
-        }
-
-        .war-sub-content.active {
-            display: block;
-        }
-
         /* Aba WhatsApp Específicos */
         .whatsapp-container {
             padding: 15px;
@@ -410,225 +396,6 @@
         .btn-icon.delete { color: var(--accent-red); }
         .btn-icon.whatsapp { color: var(--accent-green); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
 
-        /* Aba Guerra Atual Estilos */
-        .war-container {
-            padding: 0;
-        }
-
-        .war-scoreboard {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .war-state-chip {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.15);
-            color: var(--accent-blue);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .war-countdown-box {
-            font-size: 13px;
-            color: var(--accent-yellow);
-            font-weight: bold;
-            margin-bottom: 12px;
-            background: rgba(234, 179, 8, 0.1);
-            padding: 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(234, 179, 8, 0.2);
-        }
-
-        .battle-vs {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            gap: 10px;
-        }
-
-        .team-side {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .team-side img {
-            width: 55px;
-            height: 55px;
-            object-fit: contain;
-        }
-
-        .team-side h3 {
-            font-size: 13px;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 130px;
-        }
-
-        .team-score {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .vs-text {
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-secondary);
-        }
-
-        .war-details-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 13px;
-        }
-
-        .war-detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .war-detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .war-detail-label {
-            color: var(--text-secondary);
-        }
-
-        .war-detail-val {
-            font-weight: bold;
-        }
-
-        /* Card Previsão da Guerra */
-        .war-prediction-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: center;
-        }
-
-        .war-prediction-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--accent-yellow);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .war-prediction-result {
-            font-size: 14px;
-            color: var(--text-color);
-            font-weight: 500;
-        }
-
-        /* Estilos da Aba Advertências */
-        .stats-ranking-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            margin: 15px;
-            padding: 12px;
-        }
-
-        .stats-ranking-title {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--accent-yellow);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .ranking-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .ranking-item:last-child { border-bottom: none; }
-
-        .filters-section {
-            padding: 0 15px 15px 15px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .filter-select {
-            flex: 1;
-            background: var(--card-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .warnings-container { padding: 0 15px; }
-
-        .warning-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--accent-red);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-
-        .warning-card.resolvido {
-            border-left-color: var(--accent-green);
-            opacity: 0.8;
-        }
-
-        .warning-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 6px;
-        }
-
-        .warning-member-name { font-size: 14px; font-weight: bold; margin: 0; }
-        .warning-badge {
-            font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;
-        }
-        .badge-grave { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
-        .badge-media { background: rgba(234, 179, 8, 0.2); color: var(--accent-yellow); }
-        .badge-leve { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
-
-        .warning-id { font-size: 11px; color: var(--text-secondary); }
-        .warning-body { font-size: 12px; color: var(--text-secondary); margin: 8px 0; line-height: 1.4; }
-        .warning-footer {
-            display: flex; justify-content: space-between; align-items: center; font-size: 11px;
-            border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;
-        }
-
         /* Modal Formulário Corrigido */
         .modal {
             display: none;
@@ -700,8 +467,8 @@
         .btn-save { background: var(--accent-blue); color: white; }
         .btn-cancel { background: var(--border-color); color: var(--text-color); }
 
-        /* Estilos da Aba Mais */
-        .more-container {
+        /* Estilos da Aba Manutenção (Substituindo Guerra) */
+        .maintenance-container {
             padding: 40px 20px;
             text-align: center;
         }
@@ -725,9 +492,99 @@
             border-radius: 12px;
             padding: 15px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            gap: 4px;
             font-size: 13px;
+            text-align: center;
+        }
+
+        /* Estilos do Menu "Mais" e seus Submenus */
+        .more-container {
+            padding: 15px;
+        }
+
+        .submenu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .submenu-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .submenu-card:hover {
+            background: var(--card-hover);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .submenu-icon {
+            font-size: 28px;
+        }
+
+        .submenu-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .submenu-content-view {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .submenu-header-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 0 15px 0;
+        }
+
+        .submenu-body h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .submenu-body p, .submenu-body li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .submenu-body ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Menu de Navegação Inferior (Abas) */
@@ -839,46 +696,30 @@
                             <option value="xp">Nível de XP</option>
                         </select>
                     </div>
+                    <!-- Barra de pesquisa de membros por nome da vila -->
+                    <div class="search-bar-container">
+                        <input type="text" id="search-member-input" class="search-input" placeholder="Pesquisar pelo nome da vila..." oninput="renderizarMembros()">
+                    </div>
                     <div id="members-list"></div>
                 </div>
             </div>
         </div>
 
-        <!-- ABA 2: GUERRA ATUAL -->
+        <!-- ABA 2: GUERRA ATUAL (Em Manutenção) -->
         <div id="tab-guerra" class="tab-content" style="display: none;">
-            <div class="war-container">
-                <!-- Submenu Superior -->
-                <div class="war-submenu">
-                    <button class="war-sub-btn active" onclick="mudarSubAbaGuerra('menu-atual', this)">Guerra Atual</button>
-                    <button class="war-sub-btn" onclick="mudarSubAbaGuerra('evento-guerra', this)">Evento da Guerra</button>
-                    <button class="war-sub-btn" onclick="mudarSubAbaGuerra('meu-time', this)">Meu Time</button>
-                </div>
-
-                <!-- Subconteúdo 1: Menu Atual -->
-                <div id="sub-menu-atual" class="war-sub-content active">
-                    <div id="war-content-box">
-                        <p style="text-align: center; color: var(--text-secondary);">Carregando dados da guerra...</p>
-                    </div>
-                </div>
-
-                <!-- Subconteúdo 2: Evento da Guerra -->
-                <div id="sub-evento-guerra" class="war-sub-content">
-                    <div id="eventos-content-box">
-                        <p style="text-align: center; color: var(--text-secondary);">Carregando eventos...</p>
-                    </div>
-                </div>
-
-                <!-- Subconteúdo 3: Meu Time (Filtros Removidos) -->
-                <div id="sub-meu-time" class="war-sub-content">
-                    <div id="meu-time-content-box">
-                        <p style="text-align: center; color: var(--text-secondary);">Carregando ataques do time...</p>
-                    </div>
+            <div class="maintenance-container">
+                <div class="maintenance-card">
+                    <div class="maintenance-icon">🛠️</div>
+                    <h2 style="margin: 0 0 10px 0; font-size: 20px; color: var(--accent-yellow);">Em Manutenção</h2>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        A aba de Guerra Atual está temporariamente em manutenção e indisponível no momento.
+                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- ABA 3: WHATSAPP (Cadastros) -->
-        <div id="tab-whatsapp" class="tab-content" style="display: none;">
+        <!-- ABA 3: WHATSAPP (Cadastros) - Visível apenas para Admin logado -->
+        <div id="tab-whatsapp" class="tab-content admin-only btn-admin-control" style="display: none;">
             <div class="whatsapp-container">
                 <button class="action-button admin-only btn-admin-control" onclick="abrirModalCadastro()">
                     <span>➕</span> Cadastrar Nova Vila
@@ -899,18 +740,18 @@
             </button>
 
             <!-- Painel de Ranking de Punições -->
-            <div class="stats-ranking-card">
-                <div class="stats-ranking-title">🏆 Top Punições no Clã</div>
+            <div class="stats-ranking-card" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; margin: 15px; padding: 12px;">
+                <div style="font-size: 13px; font-weight: bold; color: var(--accent-yellow); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">🏆 Top Punições no Clã</div>
                 <div id="ranking-list"></div>
             </div>
 
-            <div class="filters-section">
-                <select id="filter-status-inativo" class="filter-select" onchange="renderizarAdvertencias()">
+            <div class="filters-section" style="padding: 0 15px 15px 15px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <select id="filter-status-inativo" class="filter-select" style="flex: 1; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; cursor: pointer;" onchange="renderizarAdvertencias()">
                     <option value="todos">Status Clã (Ativo/Inativo)</option>
                     <option value="Ativo">Apenas Ativos</option>
                     <option value="Inativo">Apenas Inativos</option>
                 </select>
-                <select id="filter-gravidade" class="filter-select" onchange="renderizarAdvertencias()">
+                <select id="filter-gravidade" class="filter-select" style="flex: 1; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; cursor: pointer;" onchange="renderizarAdvertencias()">
                     <option value="todas">Infrações (Todas)</option>
                     <option value="Grave">Grave</option>
                     <option value="Média">Média</option>
@@ -918,23 +759,64 @@
                 </select>
             </div>
 
-            <div class="warnings-container" id="warnings-list"></div>
+            <div class="warnings-container" id="warnings-list" style="padding: 0 15px;"></div>
         </div>
 
-        <!-- ABA 5: MAIS (Em Manutenção / Versão) -->
+        <!-- ABA 5: MAIS (Com Submenus) -->
         <div id="tab-mais" class="tab-content" style="display: none;">
             <div class="more-container">
-                <div class="maintenance-card">
-                    <div class="maintenance-icon">🛠️</div>
-                    <h2 style="margin: 0 0 10px 0; font-size: 20px; color: var(--accent-yellow);">Em Manutenção</h2>
-                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
-                        Esta seção está sendo desenvolvida para trazer novas estatísticas e recursos para o clã.
-                    </p>
+                <!-- Visão Principal de Submenus -->
+                <div id="more-menu-grid" class="submenu-grid">
+                    <div class="submenu-card" onclick="abrirSubmenu('cwl')">
+                        <span class="submenu-icon">🛡️</span>
+                        <span class="submenu-title">CWL</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('escalacao')">
+                        <span class="submenu-icon">📋</span>
+                        <span class="submenu-title">Escalação da Guerra</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('recap')">
+                        <span class="submenu-icon">📊</span>
+                        <span class="submenu-title">War Recap</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('ranking')">
+                        <span class="submenu-icon">🏆</span>
+                        <span class="submenu-title">Ranking</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('dicas')">
+                        <span class="submenu-icon">💡</span>
+                        <span class="submenu-title">Dicas de Ataques</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('layouts')">
+                        <span class="submenu-icon">🗺️</span>
+                        <span class="submenu-title">Layouts de Guerra</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('regras')">
+                        <span class="submenu-icon">📜</span>
+                        <span class="submenu-title">Regras do Clã</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('bilhete')">
+                        <span class="submenu-icon">🎟️</span>
+                        <span class="submenu-title">Bilhete Dourado</span>
+                    </div>
                 </div>
 
-                <div class="version-card">
-                    <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                    <span style="font-weight: bold; color: var(--accent-blue);">1.1.2</span>
+                <!-- Views Individuais dos Submenus -->
+                <div id="submenu-view" style="display: none;">
+                    <button class="submenu-header-back" onclick="voltarMenuMais()">
+                        <span>←</span> Voltar aos menus
+                    </button>
+                    <div id="submenu-body-content" class="submenu-content-view"></div>
+                </div>
+
+                <div class="version-card" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <span style="color: var(--text-secondary);">Versão do Sistema</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.12.3</span>
+                    </div>
+                    <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+                        Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -947,7 +829,8 @@
             <button class="nav-item" onclick="mudarAba('guerra', this)">
                 <span>⚔️</span> Guerra Atual
             </button>
-            <button class="nav-item" onclick="mudarAba('whatsapp', this)">
+            <!-- Botão do WhatsApp na barra inferior adaptado para aparecer apenas para administradores -->
+            <button id="nav-item-whatsapp" class="nav-item admin-only btn-admin-control" onclick="mudarAba('whatsapp', this)">
                 <span>💬</span> WhatsApp
             </button>
             <!-- Botão de Advertências na barra inferior adaptado para aparecer apenas para administradores -->
@@ -1082,18 +965,8 @@
 
         let globalMembrosData = [];
         let globalCadastroData = [];
-        let globalGuerraData = [];
-        let globalPrevisaoData = {
-            mediaNossoCla: "",
-            mediaRival: "",
-            textoInicio1: "",
-            textoInicio2: "",
-        };
-        let globalEventosData = [];
-        let globalGuerraJogadoresData = [];
         let globalAdvertenciasData = [];
         let globalLoginData = [];
-        let warInterval = null;
 
         function sincronizarPlanilha() {
             const iconEl = document.getElementById('sync-icon');
@@ -1115,7 +988,7 @@
                     localStorage.removeItem('invictos_admin_tel');
                     localStorage.removeItem('invictos_admin_pass');
                     
-                    if (document.getElementById('tab-advertencias').style.display === 'block') {
+                    if (document.getElementById('tab-advertencias').style.display === 'block' || document.getElementById('tab-whatsapp').style.display === 'block') {
                         mudarAba('meu-cla', document.querySelector('.nav-item'));
                     }
                     atualizarInterfaceAdmin();
@@ -1191,7 +1064,7 @@
         }
 
         function mudarAba(nomeAba, elementoBotao) {
-            if (nomeAba === 'advertencias' && !isAdminLogado) {
+            if ((nomeAba === 'advertencias' || nomeAba === 'whatsapp') && !isAdminLogado) {
                 return;
             }
 
@@ -1201,54 +1074,138 @@
 
             if (nomeAba === 'meu-cla') {
                 document.getElementById('tab-meu-cla').style.display = 'block';
-            } else if (nomeAba === 'whatsapp') {
+            } else if (nomeAba === 'whatsapp' && isAdminLogado) {
                 document.getElementById('tab-whatsapp').style.display = 'block';
                 renderizarWhatsappMembros();
             } else if (nomeAba === 'guerra') {
                 document.getElementById('tab-guerra').style.display = 'block';
-                renderizarGuerraAtual();
             } else if (nomeAba === 'advertencias' && isAdminLogado) {
                 document.getElementById('tab-advertencias').style.display = 'block';
                 renderizarEstatisticasRanking();
                 renderizarAdvertencias();
             } else if (nomeAba === 'mais') {
                 document.getElementById('tab-mais').style.display = 'block';
+                voltarMenuMais(); // Restaura a visão geral dos submenus ao entrar em "Mais"
             }
 
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             if (elementoBotao) elementoBotao.classList.add('active');
         }
 
-        function mudarSubAbaGuerra(subAbaId, elementoBotao) {
-            document.querySelectorAll('.war-sub-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.war-sub-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+        // Funções para controle dos submenus da aba "Mais"
+        function abrirSubmenu(tipo) {
+            const grid = document.getElementById('more-menu-grid');
+            const view = document.getElementById('submenu-view');
+            const bodyContent = document.getElementById('submenu-body-content');
 
-            document.getElementById('sub-' + subAbaId).classList.add('active');
-            elementoBotao.classList.add('active');
+            grid.style.display = 'none';
+            view.style.display = 'block';
 
-            if (subAbaId === 'evento-guerra') {
-                renderizarEventosGuerra();
-            } else if (subAbaId === 'meu-time') {
-                renderizarMeuTime();
+            let titulo = '';
+            let conteudoHtml = '';
+
+            switch(tipo) {
+                case 'cwl':
+                    titulo = 'Liga de Guerra de Clãs (CWL)';
+                    conteudoHtml = `
+                        <h3>🛡️ Informações da CWL</h3>
+                        <p>Acompanhe aqui as orientações de escalação, bônus de medalhas e alinhamento de ataques para a Liga de Guerra.</p>
+                        <ul>
+                            <li><strong>Escalação:</strong> Definida pelos líderes com base na força dos CVs e desempenho recente.</li>
+                            <li><strong>Bônus de Medalhas:</strong> Prioridade para quem completou todos os ataques e ajudou o clã.</li>
+                            <li><strong>Atentados:</strong> Sem ataques em dias de CWL sem aviso prévio resultam em punição direta.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'escalacao':
+                    titulo = 'Escalação da Guerra';
+                    conteudoHtml = `
+                        <h3>📋 Critérios de Escalação para Guerras</h3>
+                        <p>Diretrizes adotadas pela liderança para definir quem vai para o campo de batalha:</p>
+                        <ul>
+                            <li><strong>Heróis e Tropas:</strong> O status dos heróis precisa estar 100% disponíveis (exceto Rei/Rainha em melhoria se autorizado em guerras farm).</li>
+                            <li><strong>Bandeira Verde:</strong> Apenas membros com perfil ativo e bandeira verde no perfil do jogo entram na seleção.</li>
+                            <li><strong>Ordem por CV:</strong> Priorizamos centros de vila mais altos nas posições de topo do mapa, seguidos por alinhamento equilibrado de CVs inferiores.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'recap':
+                    titulo = 'War Recap (Resumo de Guerras)';
+                    conteudoHtml = `
+                        <h3>📊 Histórico e Desempenho Recente</h3>
+                        <p>Acompanhe o balanço das últimas confrontações do clã:</p>
+                        <ul>
+                            <li><strong>Taxa de Destruição Média:</strong> Mantemos uma média de destruição consistente acima de 85% nas últimas guerras.</li>
+                            <li><strong>Erros Comuns:</strong> Atenção redobrada na limpeza inicial de tropas de castelo e aproveitamento do tempo de ataque.</li>
+                            <li>Consulte o placar geral no topo da aba "Meu Clã" para verificar vitórias e sequência atualizadas.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'ranking':
+                    titulo = 'Ranking Interno';
+                    conteudoHtml = `
+                        <h3>🏆 Destaques do Clã</h3>
+                        <p>Nossos melhores guerreiros se destacam nas categorias principais:</p>
+                        <ul>
+                            <li><strong>Top Troféus:</strong> Os maiores pontuadores da temporada atual.</li>
+                            <li><strong>Maiores Doadores:</strong> Os membros que mais apoiam com tropas para defesa e ataque.</li>
+                            <li><strong>Consistência:</strong> Membros ativos que cumprem todas as metas semanais.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'dicas':
+                    titulo = 'Dicas de Ataques';
+                    conteudoHtml = `
+                        <h3>💡 Estratégias e Estruturas de Ataque</h3>
+                        <p>Guia rápido com estratégias recomendadas para os principais Centros de Vila:</p>
+                        <ul>
+                            <li><strong>Hybrid (Dragões / Corredores/Mineiros):</strong> Excelente para CVs intermediários e altos.</li>
+                            <li><strong>Lalo (LavaLoon):</strong> Potente nas mãos de jogadores precisos em CVs avançados.</li>
+                            <li><strong>Super Archer Blimp / Spammer:</strong> Ideal para eliminar o centro de vilas inimigas logo de início.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'layouts':
+                    titulo = 'Layouts de Guerra';
+                    conteudoHtml = `
+                        <h3>🗺️ Bases Recomendadas</h3>
+                        <p>Proteja seu espólio e dificulte o triple inimigo nas guerras:</p>
+                        <ul>
+                            <li><strong>Bases Anti-3 Estrelas:</strong> Estruturas focadas em espalhar defesas e esconder o centro de vila.</li>
+                            <li>Solicite links atualizados de layout diretamente com os Líderes e Colega-Líderes no chat ou WhatsApp.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'regras':
+                    titulo = 'Regras do Clã';
+                    conteudoHtml = `
+                        <h3>📜 Diretrizes do Invictos BR</h3>
+                        <ul>
+                            <li><strong>Respeito Mútuo:</strong> Brincadeiras saudáveis são bem-vindas, falta de respeito resulta em expulsão imediata.</li>
+                            <li><strong>Doações:</strong> Mantenha a proporção de doadas e recebidas sempre equilibrada.</li>
+                            <li><strong>Guerra:</strong> Se colocou a bandeira verde em guerras normais, os dois ataques são obrigatórios!</li>
+                        </ul>
+                    `;
+                    break;
+                case 'bilhete':
+                    titulo = 'Bilhete Dourado';
+                    conteudoHtml = `
+                        <h3>🎟️ Sorteios e Vantagens</h3>
+                        <p>Fique por dentro das regras para concorrer ao Bilhete Dourado mensal:</p>
+                        <ul>
+                            <li><strong>Requisitos:</strong> Atividade constante no clã, doações expressivas e cumprimento de metas em guerras.</li>
+                            <li>O sorteio é realizado ao final de cada temporada entre os membros elegíveis.</li>
+                        </ul>
+                    `;
+                    break;
             }
+
+            bodyContent.innerHTML = `<h3>${titulo}</h3>` + conteudoHtml;
         }
 
-        function formatarDataBrasil(dataString) {
-            if (!dataString) return '--';
-            const data = new Date(dataString);
-            if (isNaN(data.getTime())) return dataString; 
-            return data.toLocaleString('pt-BR', {
-                timeZone: 'America/Sao_Paulo',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+        function voltarMenuMais() {
+            document.getElementById('more-menu-grid').style.display = 'grid';
+            document.getElementById('submenu-view').style.display = 'none';
         }
 
         function formatarUltimaAtualizacao(dataString) {
@@ -1353,125 +1310,6 @@
                         popularSelectMembrosAdvertencia();
                     }
 
-                    // 4. Processar Guerra Atual
-                    const rawGuerra = data["Guerra Atual"];
-                    globalGuerraData = [];
-                    if (rawGuerra && rawGuerra.length > 1) {
-                        const cabG = rawGuerra[0];
-                        const ig = (nome) => cabG.indexOf(nome);
-                        for (let i = 1; i < rawGuerra.length; i++) {
-                            let g = rawGuerra[i];
-                            globalGuerraData.push({
-                                estado: g[ig("Estado")],
-                                tamanho: g[ig("Tamanho")],
-                                nossoEmblema: g[ig("Nosso Emblema")],
-                                nomeCla: g[ig("Nome Clã")],
-                                nossasEstrelas: g[ig("Nossas Estrelas")],
-                                nossaDestruicao: g[ig("Nossa Destruição (%)")],
-                                nossosAtaques: g[ig("Nossos Ataques")],
-                                emblemaOponente: g[ig("Emblema Oponente")],
-                                nomeOponente: g[ig("Nome Oponente")],
-                                estrelasOponente: g[ig("Estrelas Oponente")],
-                                destruicaoOponente: g[ig("Destruição Oponente (%)")],
-                                ataquesOponente: g[ig("Ataques Oponente")],
-                                inicio: g[ig("Início")],
-                                fim: g[ig("Fim")]
-                            });
-                        }
-                    }
-
-                    // 4.1 Processar Eventos da Guerra (Aba "Eventos Guerra")
-                    const rawEventosGuerra = data["Eventos Guerra"];
-                    globalEventosData = [];
-                    if (rawEventosGuerra && rawEventosGuerra.length > 1) {
-                        const cabEv = rawEventosGuerra[0];
-                        const iev = (nome) => cabEv.indexOf(nome);
-                        for (let i = 1; i < rawEventosGuerra.length; i++) {
-                            let ev = rawEventosGuerra[i];
-                            globalEventosData.push({
-                                tipo: ev[iev("Tipo")] || "",
-                                atacante: ev[iev("Atacante")] || "",
-                                fotoCV: ev[iev("Foto CV")] || "",
-                                detalhes: ev[iev("Detalhes")] || ""
-                            });
-                        }
-                    }
-
-                    // 4.2 Processar Guerra - Jogadores (Meu Time) corrigido
-                    const rawGuerraJogadores = data["Guerra - Jogadores"];
-                    globalGuerraJogadoresData = [];
-                    if (rawGuerraJogadores && rawGuerraJogadores.length > 1) {
-                        const cabGJ = rawGuerraJogadores[0];
-                        const igj = (nome) => cabGJ.indexOf(nome);
-                        for (let i = 1; i < rawGuerraJogadores.length; i++) {
-                            let gj = rawGuerraJogadores[i];
-                            
-                            let valAtq1Estrelas = gj[igj("1º Ataque (Estrelas)")];
-                            let valAtq1Porc = gj[igj("1º Ataque (%)")];
-                            let valAtq2Estrelas = gj[igj("2º Ataque (Estrelas)")];
-                            let valAtq2Porc = gj[igj("2º Ataque (%)")];
-
-                            let atacou1 = (valAtq1Estrelas !== "" && valAtq1Estrelas !== undefined && valAtq1Estrelas !== null && valAtq1Estrelas !== 0 && valAtq1Estrelas !== "0") || 
-                                          (valAtq1Porc !== "" && valAtq1Porc !== undefined && valAtq1Porc !== null && valAtq1Porc !== 0 && valAtq1Porc !== "0");
-
-                            let atacou2 = (valAtq2Estrelas !== "" && valAtq2Estrelas !== undefined && valAtq2Estrelas !== null && valAtq2Estrelas !== 0 && valAtq2Estrelas !== "0") || 
-                                          (valAtq2Porc !== "" && valAtq2Porc !== undefined && valAtq2Porc !== null && valAtq2Porc !== 0 && valAtq2Porc !== "0");
-
-                            let qtdAtaquesRealizados = (atacou1 ? 1 : 0) + (atacou2 ? 1 : 0);
-
-                            globalGuerraJogadoresData.push({
-                                posicao: gj[igj("Posição")] || "",
-                                fotoCV: gj[igj("Foto CV")] || "",
-                                nome: gj[igj("Nome")] || "",
-                                tag: gj[igj("Tag")] || "",
-                                nivelCV: gj[igj("Nível CV")] || "",
-                                ataque1Estrelas: valAtq1Estrelas !== "" && valAtq1Estrelas !== undefined ? valAtq1Estrelas : "0",
-                                ataque1Porcentagem: valAtq1Porc !== "" && valAtq1Porc !== undefined ? valAtq1Porc : "0",
-                                ataque2Estrelas: valAtq2Estrelas !== "" && valAtq2Estrelas !== undefined ? valAtq2Estrelas : "0",
-                                ataque2Porcentagem: valAtq2Porc !== "" && valAtq2Porc !== undefined ? valAtq2Porc : "0",
-                                totalEstrelasFeitas: gj[igj("Total Estrelas Feitas")] || "0",
-                                ataqueHeroico: gj[igj("Ataque Heróico?")] || "Não",
-                                qtdDefesas: gj[igj("Qtd Defesas")] || "0",
-                                totalEstrelasRecebidas: gj[igj("Total Estrelas Recebidas")] || "0",
-                                mediaDestruicaoSofrida: gj[igj("Média Destruição Sofrida (%)")] || "0",
-                                defesaHeroica: gj[igj("Defesa Heróica?")] || "Não",
-                                ataquesCalculados: qtdAtaquesRealizados
-                            });
-                        }
-                    }
-
-                    // 5. Processar Previsão da Guerra
-                    const rawPrevisao = data["Previsão Guerra"];
-                    globalPrevisaoData = {
-                        mediaNossoCla: "",
-                        mediaRival: "",
-                        textoInicio1: "",
-                        textoInicio2: "",
-                    };
-
-                    if (rawPrevisao && rawPrevisao.length > 0) {
-                        if (rawPrevisao[5]) {
-                            const valNosso = rawPrevisao[2][1];
-                            const valRival = rawPrevisao[2][2];
-
-                            globalPrevisaoData.mediaNossoCla = typeof valNosso === 'number' 
-                                ? (valNosso * 100).toFixed(0) + '%' 
-                                : (valNosso || "");
-                                
-                            globalPrevisaoData.mediaRival = typeof valRival === 'number' 
-                                ? (valRival * 100).toFixed(0) + '%' 
-                                : (valRival || "");
-                        }
-                        
-                        if (rawPrevisao[6] && rawPrevisao[6][1]) {
-                            globalPrevisaoData.textoInicio1 = rawPrevisao[6][1];
-                        }
-                        
-                        if (rawPrevisao[7] && rawPrevisao[7][1]) {
-                            globalPrevisaoData.textoInicio2 = rawPrevisao[7][1];
-                        }
-                    }
-
                     // 6. Processar Advertências
                     const rawAdvertências = data["Advertências"];
                     globalAdvertenciasData = [];
@@ -1534,7 +1372,13 @@
 
         function renderizarMembros() {
             const criterio = document.getElementById('sort-select').value;
-            globalMembrosData.sort((a, b) => {
+            const termoBusca = document.getElementById('search-member-input').value.toLowerCase().trim();
+
+            let membrosFiltrados = globalMembrosData.filter(m => {
+                return m.nome.toLowerCase().includes(termoBusca);
+            });
+
+            membrosFiltrados.sort((a, b) => {
                 if (criterio === 'trofeus') return b.trofeus - a.trofeus;
                 if (criterio === 'cv') return b.cv - a.cv;
                 if (criterio === 'doadas') return b.doadas - a.doadas;
@@ -1550,7 +1394,12 @@
             const membrosListDiv = document.getElementById('members-list');
             membrosListDiv.innerHTML = '';
 
-            globalMembrosData.forEach((m, index) => {
+            if (membrosFiltrados.length === 0) {
+                membrosListDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum membro encontrado.</p>';
+                return;
+            }
+
+            membrosFiltrados.forEach((m, index) => {
                 let cadastroMatch = globalCadastroData.find(c => c.tagClash === m.tag);
                 let btnWhatsappHtml = '';
                 
@@ -1663,200 +1512,6 @@
                 `;
                 container.appendChild(card);
             });
-        }
-
-        function renderizarGuerraAtual() {
-            if (warInterval) clearInterval(warInterval);
-
-            const box = document.getElementById('war-content-box');
-            if (!globalGuerraData || globalGuerraData.length === 0) {
-                box.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhum dado de guerra encontrado.</p>';
-                return;
-            }
-
-            let g = globalGuerraData[0];
-            
-            let mediaNosso = globalPrevisaoData.mediaNossoCla ? `Média CVs (Nosso): ${globalPrevisaoData.mediaNossoCla}` : '';
-            let mediaRival = globalPrevisaoData.mediaRival ? `Média CVs (Rival): ${globalPrevisaoData.mediaRival}` : '';
-            let infoExtra1 = globalPrevisaoData.textoInicio1 ? `Previsão Início da War
-              <div style="margin-bottom: 4px; font-size: 13px; color: var(--text-color);">${globalPrevisaoData.textoInicio1}</div>` : '';
-            let infoExtra2 = globalPrevisaoData.textoInicio2 ? `Previsão Atual <div style="margin-bottom: 8px; font-size: 13px; color: var(--text-color);">${globalPrevisaoData.textoInicio2}</div>` : '';
-            let textoPrevisao = globalPrevisaoData.previsaoAtual || "";
-
-            box.innerHTML = `
-                <div class="war-scoreboard">
-                    <div class="war-state-chip" id="war-state-text">Estado: ${g.estado || 'Indefinido'}</div>
-                    <div class="war-countdown-box" id="war-countdown-text">Calculando tempo...</div>
-                    <div class="battle-vs">
-                        <div class="team-side">
-                            <img src="${g.nossoEmblema || ''}" alt="Nosso Clã">
-                            <h3>${g.nomeCla || 'Nosso Clã'}</h3>
-                            <div class="team-score">⭐ ${g.nossasEstrelas || 0}</div>
-                            <span style="font-size: 11px; color: var(--text-secondary);">${g.nossaDestruicao || 0}%</span>
-                        </div>
-                        <div class="vs-text">VS</div>
-                        <div class="team-side">
-                            <img src="${g.emblemaOponente || ''}" alt="Oponente">
-                            <h3>${g.nomeOponente || 'Oponente'}</h3>
-                            <div class="team-score">⭐ ${g.estrelasOponente || 0}</div>
-                            <span style="font-size: 11px; color: var(--text-secondary);">${g.destruicaoOponente || 0}%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="war-details-card">
-                    <div class="war-detail-row">
-                        <span class="war-detail-label">Tamanho da Guerra:</span>
-                        <span class="war-detail-val">${g.tamanho || '--'}</span>
-                    </div>
-                    <div class="war-detail-row">
-                        <span class="war-detail-label">Nossos Ataques:</span>
-                        <span class="war-detail-val">${g.nossosAtaques || '--'}</span>
-                    </div>
-                    <div class="war-detail-row">
-                        <span class="war-detail-label">Ataques Oponente:</span>
-                        <span class="war-detail-val">${g.ataquesOponente || '--'}</span>
-                    </div>
-                    <div class="war-detail-row">
-                        <span class="war-detail-label">Início:</span>
-                        <span class="war-detail-val">${formatarDataBrasil(g.inicio)}</span>
-                    </div>
-                    <div class="war-detail-row">
-                        <span class="war-detail-label">Fim:</span>
-                        <span class="war-detail-val">${formatarDataBrasil(g.fim)}</span>
-                    </div>
-                </div>
-
-                <div class="war-prediction-card">
-                    <div class="war-prediction-title">🔮 Previsão da Guerra</div>
-                    <div style="font-size: 12px; color: var(--accent-blue); margin-bottom: 8px; font-weight: bold;">
-                        ${mediaNosso} | ${mediaRival}
-                    </div>
-                    ${infoExtra1}
-                    ${infoExtra2}
-                    <div class="war-prediction-result">${textoPrevisao}</div>
-                </div>
-            `;
-
-            atualizarContadorTempo(g.inicio, g.fim, g.estado);
-            warInterval = setInterval(() => {
-                atualizarContadorTempo(g.inicio, g.fim, g.estado);
-            }, 1000);
-        }
-
-        function renderizarEventosGuerra() {
-            const box = document.getElementById('eventos-content-box');
-            if (!globalEventosData || globalEventosData.length === 0) {
-                box.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhum evento registrado.</p>';
-                return;
-            }
-
-            let html = '';
-            globalEventosData.forEach((evento) => {
-                html += `
-                    <div class="member-card" style="align-items: flex-start; margin-bottom: 10px;">
-                        ${evento.fotoCV ? `<img src="${evento.fotoCV}" class="member-avatar" alt="CV" style="margin-top: 4px;">` : '<div style="width:42px;height:42px"></div>'}
-                        <div class="member-info">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <p class="member-name">${evento.atacante || 'Atacante'}</p>
-                                <span class="warning-badge badge-leve">${evento.tipo || 'Evento'}</span>
-                            </div>
-                            <p class="member-role" style="margin-top: 4px; color: var(--text-color);">${evento.detalhes || ''}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            box.innerHTML = html;
-        }
-
-        function renderizarMeuTime() {
-            const box = document.getElementById('meu-time-content-box');
-
-            if (!globalGuerraJogadoresData || globalGuerraJogadoresData.length === 0) {
-                box.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhum dado de jogador da guerra disponível.</p>';
-                return;
-            }
-
-            let html = '';
-            globalGuerraJogadoresData.forEach((j) => {
-                let badgeHeroico = j.ataqueHeroico === 'Sim' || j.ataqueHeroico === true ? '<span class="warning-badge badge-media" style="margin-left: 4px;">⚡ Heróico</span>' : '';
-                let badgeDefesaHeroica = j.defesaHeroica === 'Sim' || j.defesaHeroica === true ? '<span class="warning-badge badge-grave" style="margin-left: 4px;">🛡️ Def. Heróica</span>' : '';
-
-                html += `
-                    <div class="member-card" style="flex-direction: column; align-items: stretch; gap: 8px;">
-                        <div style="display: flex; align-items: center;">
-                            <div class="member-pos">${j.posicao || '--'}</div>
-                            ${j.fotoCV ? `<img src="${j.fotoCV}" class="member-avatar" alt="CV">` : '<div style="width:42px;height:42px"></div>'}
-                            <div class="member-info">
-                                <p class="member-name">${j.nome || 'Jogador'} ${badgeHeroico}</p>
-                                <p class="member-role">CV ${j.nivelCV || '--'} • Tag: ${j.tag || '--'}</p>
-                            </div>
-                            <div class="member-stats-group">
-                                <div class="member-stats-column">
-                                    <div class="member-stat-box">⭐ ${j.totalEstrelasFeitas}</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; font-size: 12px; color: var(--text-secondary);">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span>⚔️ 1º Ataque: <strong>⭐ ${j.ataque1Estrelas}</strong> (${j.ataque1Porcentagem}%)</span>
-                                <span>⚔️ 2º Ataque: <strong>⭐ ${j.ataque2Estrelas}</strong> (${j.ataque2Porcentagem}%)</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 4px; margin-top: 4px;">
-                                <span>🛡️ Defesas: <strong>${j.qtdDefesas}</strong> (⭐ ${j.totalEstrelasRecebidas} recebidas)</span>
-                                <span>📉 Média Sofrida: <strong>${j.mediaDestruicaoSofrida}%</strong> ${badgeDefesaHeroica}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            box.innerHTML = html;
-        }
-
-        function atualizarContadorTempo(inicioStr, fimStr, estadoPlanilha) {
-            const countdownEl = document.getElementById('war-countdown-text');
-            const stateEl = document.getElementById('war-state-text');
-            if (!countdownEl) return;
-
-            const agora = new Date().getTime();
-            const inicio = new Date(inicioStr).getTime();
-            const fim = new Date(fimStr).getTime();
-
-            if (isNaN(inicio) || isNaN(fim)) {
-                countdownEl.innerText = "Horário inválido";
-                return;
-            }
-
-            let diff = 0;
-            let textoStatus = "";
-
-            if (agora < inicio) {
-                diff = inicio - agora;
-                textoStatus = "⏳ Começa em: " + formatarMilisegundos(diff);
-                if(stateEl) stateEl.innerText = "Estado: Preparação";
-            } else if (agora >= inicio && agora <= fim) {
-                diff = fim - agora;
-                textoStatus = "⚔️ Termina em: " + formatarMilisegundos(diff);
-                if(stateEl) stateEl.innerText = "Estado: Em Guerra";
-            } else {
-                textoStatus = "🏁 Guerra Encerrada";
-                if(stateEl) stateEl.innerText = "Estado: Encerrada";
-            }
-
-            countdownEl.innerText = textoStatus;
-        }
-
-        function formatarMilisegundos(ms) {
-            let segundos = Math.floor((ms / 1000) % 60);
-            let minutos = Math.floor((ms / (1000 * 60)) % 60);
-            let horas = Math.floor((ms / (1000 * 60 * 60)) % 24);
-            let dias = Math.floor(ms / (1000 * 60 * 60 * 24));
-
-            let resultado = "";
-            if (dias > 0) resultado += `${dias}d `;
-            resultado += `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`;
-            return resultado;
         }
 
         function abrirModalCadastro() {
@@ -2078,6 +1733,12 @@
                 let stats = contagemMembros[nome];
                 let item = document.createElement('div');
                 item.className = 'ranking-item';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.fontSize = '12px';
+                item.style.padding = '4px 0';
+                item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
                 item.innerHTML = `
                     <span>#${index + 1} <strong>${nome}</strong></span>
                     <span style="color: var(--text-secondary);">
@@ -2130,19 +1791,30 @@
 
                 let card = document.createElement('div');
                 card.className = `warning-card ${cardStatusClass}`;
+                card.style.background = 'var(--card-bg)';
+                card.style.border = '1px solid var(--border-color)';
+                card.style.borderLeft = '4px solid var(--accent-red)';
+                card.style.borderRadius = '10px';
+                card.style.padding = '12px';
+                card.style.marginBottom = '10px';
+                if (isResolvido) {
+                    card.style.borderLeftColor = 'var(--accent-green)';
+                    card.style.opacity = '0.8';
+                }
+
                 card.innerHTML = `
-                    <div class="warning-header">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
                         <div>
-                            <p class="warning-member-name">${adv.nomeClash || 'Membro'}</p>
-                            <span class="warning-id">ID: #${adv.idOcorrencia || '--'} | Tag: ${adv.tagMembro || '--'}</span>
+                            <p style="font-size: 14px; font-weight: bold; margin: 0;">${adv.nomeClash || 'Membro'}</p>
+                            <span style="font-size: 11px; color: var(--text-secondary);">ID: #${adv.idOcorrencia || '--'} | Tag: ${adv.tagMembro || '--'}</span>
                         </div>
-                        <span class="warning-badge ${badgeClass}">${adv.nivelInfracao || 'Geral'}</span>
+                        <span class="warning-badge ${badgeClass}" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${adv.nivelInfracao || 'Geral'}</span>
                     </div>
-                    <div class="warning-body">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0; line-height: 1.4;">
                         <strong>Motivo:</strong> ${adv.motivo || 'Não informado'}<br>
                         <span style="font-size: 11px; color: var(--text-secondary);">📅 ${formatarDataSimples(adv.data)} | Clã: <strong>${statusMembro}</strong></span>
                     </div>
-                    <div class="warning-footer">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;">
                         <span style="color: var(--accent-yellow);">⚡ ${adv.punicao || 'Nenhuma'}</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-weight: bold; color: ${isResolvido ? 'var(--accent-green)' : 'var(--accent-red)'};">
