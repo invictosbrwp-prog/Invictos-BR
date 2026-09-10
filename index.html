@@ -812,7 +812,7 @@
                 <div class="version-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                        <span style="font-weight: bold; color: var(--accent-blue);">1.12.3</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.16.4</span>
                     </div>
                     <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                         Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
@@ -902,6 +902,29 @@
         </div>
     </div>
 
+    <!-- MODAL DE ADICIONAR GANHADOR DO BILHETE DOURADO -->
+    <div id="modal-bilhete" class="modal">
+        <div class="modal-content">
+            <h3>🎟️ Adicionar Ganhador - Bilhete Dourado</h3>
+            <form id="form-bilhete" onsubmit="salvarBilheteGanhador(event)">
+                <div class="form-group">
+                    <label>Membro Ganhador</label>
+                    <select id="campo-bilhete-membro" required>
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mês / Temporada</label>
+                    <input type="text" id="campo-bilhete-mes" required placeholder="Ex: Março/2026">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalBilhete()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL DE CADASTRO / EDIÇÃO DE ADVERTÊNCIA -->
     <div id="modal-advertencia" class="modal">
         <div class="modal-content">
@@ -959,6 +982,25 @@
         </div>
     </div>
 
+    <!-- MODAL DE ADICIONAR MEMBRO NA ESCALAÇÃO -->
+    <div id="modal-escalacao" class="modal">
+        <div class="modal-content">
+            <h3>📋 Adicionar Membro à Escalação</h3>
+            <form id="form-escalacao" onsubmit="salvarEscalacaoMembro(event)">
+                <div class="form-group">
+                    <label>Selecionar Membro do Clã</label>
+                    <select id="campo-escalacao-membro" required onchange="preencherDadosEscalacao()">
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalEscalacao()">Cancelar</button>
+                    <button type="submit" class="btn-save">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzPGEPkHBprwFUiDkhNkZ4MKT_colxtYCX8wSpvwUBRLmjo-FIEOGO9qX3z5BPYxbDE/exec';
         let isAdminLogado = false;
@@ -967,6 +1009,19 @@
         let globalCadastroData = [];
         let globalAdvertenciasData = [];
         let globalLoginData = [];
+        let globalBilheteData = [];
+        let globalEscalacaoData = [];
+        let globalFormatoGuerra = "15x15";
+        let globalDataGuerra = "";
+        let globalHoraGuerra = "";
+
+        function formatarDataMes(dataString) {
+            if (!dataString) return '--';
+            if (!dataString.includes('T') && !dataString.includes('-')) return dataString;
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) return dataString;
+            return data.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' });
+        }
 
         function sincronizarPlanilha() {
             const iconEl = document.getElementById('sync-icon');
@@ -1061,6 +1116,14 @@
             renderizarMembros();
             renderizarWhatsappMembros();
             renderizarAdvertencias();
+            
+            if (document.getElementById('submenu-view').style.display === 'block') {
+                if (document.getElementById('submenu-body-content').dataset.currentSub === 'bilhete') {
+                    abrirSubmenu('bilhete');
+                } else if (document.getElementById('submenu-body-content').dataset.currentSub === 'escalacao') {
+                    abrirSubmenu('escalacao');
+                }
+            }
         }
 
         function mudarAba(nomeAba, elementoBotao) {
@@ -1085,18 +1148,18 @@
                 renderizarAdvertencias();
             } else if (nomeAba === 'mais') {
                 document.getElementById('tab-mais').style.display = 'block';
-                voltarMenuMais(); // Restaura a visão geral dos submenus ao entrar em "Mais"
+                voltarMenuMais();
             }
 
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             if (elementoBotao) elementoBotao.classList.add('active');
         }
 
-        // Funções para controle dos submenus da aba "Mais"
         function abrirSubmenu(tipo) {
             const grid = document.getElementById('more-menu-grid');
             const view = document.getElementById('submenu-view');
             const bodyContent = document.getElementById('submenu-body-content');
+            bodyContent.dataset.currentSub = tipo;
 
             grid.style.display = 'none';
             view.style.display = 'block';
@@ -1119,14 +1182,100 @@
                     break;
                 case 'escalacao':
                     titulo = 'Escalação da Guerra';
+                    
+                    let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
+                        let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
+                        let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
+                        let cvX = mX ? mX.cv : 0;
+                        let cvY = mY ? mY.cv : 0;
+                        if(cvY !== cvX) return cvY - cvX;
+                        let trofX = mX ? mX.trofeus : 0;
+                        let trofY = mY ? mY.trofeus : 0;
+                        return trofY - trofX;
+                    });
+
+                    let escalacaoItensHtml = '';
+                    if (listaEscaladosOrdenada.length === 0) {
+                        escalacaoItensHtml = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 15px;">Nenhum membro escalado para esta guerra.</p>';
+                    } else {
+                        listaEscaladosOrdenada.forEach((esc, idx) => {
+                            let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || {
+                                fotoCV: 'https://cdn.jsdelivr.net/gh/clashofclans-api/assets@master/other/town-hall-1.png',
+                                cv: '--',
+                                trofeus: '--',
+                                cargo: 'Membro'
+                            };
+
+                            let botaoRemoverHtml = isAdminLogado ? `
+                                <button class="btn-icon delete" onclick="removerEscalacao('${esc.tag || esc.nome}')" title="Remover">🗑️</button>
+                            ` : '';
+
+                            escalacaoItensHtml += `
+                                <div style="display: flex; align-items: center; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
+                                    <div style="font-size: 12px; font-weight: bold; color: var(--accent-yellow); width: 22px; text-align: center;">#${idx + 1}</div>
+                                    <img src="${membroInfo.fotoCV}" class="member-avatar" alt="CV" style="width: 36px; height: 36px; margin: 0 8px;">
+                                    <div style="flex-grow: 1;">
+                                        <div style="font-size: 13px; font-weight: bold; color: var(--text-color);">${esc.nome}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">CV ${membroInfo.cv} • 🏆 ${membroInfo.trofeus}</div>
+                                    </div>
+                                    ${botaoRemoverHtml}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    let formatoSeletorDisabled = !isAdminLogado ? 'disabled' : '';
+                    let botaoAdicionarEscalacao = isAdminLogado ? `
+                        <button class="action-button" onclick="abrirModalEscalacao()" style="margin: 12px 0;">
+                            <span>➕</span> Adicionar Membro
+                        </button>
+                    ` : '';
+
+                    let botaoEnviarWpp = isAdminLogado ? `
+                        <button class="action-button" onclick="enviarEscalacaoWhatsApp()" style="background: var(--accent-green); margin-top: 10px;">
+                            <span>💬</span> Enviar Escalação para o WhatsApp
+                        </button>
+                    ` : '';
+
                     conteudoHtml = `
-                        <h3>📋 Critérios de Escalação para Guerras</h3>
-                        <p>Diretrizes adotadas pela liderança para definir quem vai para o campo de batalha:</p>
-                        <ul>
-                            <li><strong>Heróis e Tropas:</strong> O status dos heróis precisa estar 100% disponíveis (exceto Rei/Rainha em melhoria se autorizado em guerras farm).</li>
-                            <li><strong>Bandeira Verde:</strong> Apenas membros com perfil ativo e bandeira verde no perfil do jogo entram na seleção.</li>
-                            <li><strong>Ordem por CV:</strong> Priorizamos centros de vila mais altos nas posições de topo do mapa, seguidos por alinhamento equilibrado de CVs inferiores.</li>
-                        </ul>
+                        <h3>📋 Gerenciamento de Escalação</h3>
+                        <p>Defina o formato da guerra atual e alinhe os melhores guerreiros por ordem decrescente de Centro de Vila (CV).</p>
+                        
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Formato da Guerra</label>
+                            <select id="select-formato-guerra" class="sort-select" style="width: 100%; padding: 10px;" onchange="atualizarFormatoGuerra(this.value)" ${formatoSeletorDisabled}>
+                                <option value="5x5" ${globalFormatoGuerra === '5x5' ? 'selected' : ''}>5 x 5</option>
+                                <option value="10x10" ${globalFormatoGuerra === '10x10' ? 'selected' : ''}>10 x 10</option>
+                                <option value="15x15" ${globalFormatoGuerra === '15x15' ? 'selected' : ''}>15 x 15</option>
+                                <option value="20x20" ${globalFormatoGuerra === '20x20' ? 'selected' : ''}>20 x 20</option>
+                                <option value="25x25" ${globalFormatoGuerra === '25x25' ? 'selected' : ''}>25 x 25</option>
+                                <option value="30x30" ${globalFormatoGuerra === '30x30' ? 'selected' : ''}>30 x 30</option>
+                                <option value="40x40" ${globalFormatoGuerra === '40x40' ? 'selected' : ''}>40 x 40</option>
+                                <option value="50x50" ${globalFormatoGuerra === '50x50' ? 'selected' : ''}>50 x 50</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Data da Guerra</label>
+                                <input type="date" id="input-data-guerra" value="${globalDataGuerra}" onchange="atualizarDataGuerra(this.value)" ${formatoSeletorDisabled}>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Horário</label>
+                                <input type="time" id="input-hora-guerra" value="${globalHoraGuerra}" onchange="atualizarHoraGuerra(this.value)" ${formatoSeletorDisabled}>
+                            </div>
+                        </div>
+
+                        ${botaoAdicionarEscalacao}
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 8px 0;">
+                            <h4 style="color: var(--accent-blue); margin: 0;">Membros Escalados (${listaEscaladosOrdenada.length})</h4>
+                        </div>
+                        <div style="max-height: 350px; overflow-y: auto;">
+                            ${escalacaoItensHtml}
+                        </div>
+
+                        ${botaoEnviarWpp}
                     `;
                     break;
                 case 'recap':
@@ -1179,23 +1328,129 @@
                 case 'regras':
                     titulo = 'Regras do Clã';
                     conteudoHtml = `
-                        <h3>📜 Diretrizes do Invictos BR</h3>
+                        <h3>📜 Diretrizes do Clã</h3>
+                        <p>Bem vindo ao 〽️ Invictos BR! 🔰</p>
+                        <p>Queremos players que acrescentem e ajudem os outros membros, fazendo com que o clã cresça, se você não quer ajudar e não faz nada em prol do clã, então você certamente não precisa de um, sendo assim será retirado!</p>
                         <ul>
-                            <li><strong>Respeito Mútuo:</strong> Brincadeiras saudáveis são bem-vindas, falta de respeito resulta em expulsão imediata.</li>
-                            <li><strong>Doações:</strong> Mantenha a proporção de doadas e recebidas sempre equilibrada.</li>
-                            <li><strong>Guerra:</strong> Se colocou a bandeira verde em guerras normais, os dois ataques são obrigatórios!</li>
+                            <li><strong>Respeito:</strong> Respeite os membros no chat, temos membros mais novos, mais velhos, homens e mulheres, portanto pense antes de falar qualquer besteira!</li>
+                            <li><strong>Participação em Guerras:</strong> Se você não quiser ir para uma determinada guerra, votem no nosso grupo do Whatsapp. Mas lembro que o clã é de guerra, fique fora apenas se tiver os heróis upando ou outros casos específicos.</li>
+                            <li><strong>Novatos:</strong> Novos jogadores ficam de fora da primeira guerra. Estamos vendo sua atividade no clã para ver se é um jogador ativo. Se não houver atividade, você não irá para guerra, pois corremos sério risco de perder por falta do seu ataque.</li>
                         </ul>
+                        <h4 style="color: var(--accent-blue); margin: 12px 0 6px 0;">Regras básicas:</h4>
+                        <ol style="padding-left: 20px; margin: 0 0 12px 0;">
+                            <li>Ser participativo</li>
+                            <li>Fazer todos ataques nas guerras</li>
+                            <li>Não ofender ninguém</li>
+                            <li>Pergunte no chat sempre que tiver dúvidas</li>
+                            <li>Players que ficarem mais de 15 dias sem jogar será retirado do clã, podendo voltar quando retornar a atividade.</li>
+                        </ol>
+                        <h4 style="color: var(--accent-blue); margin: 12px 0 6px 0;">Regras para guerra:</h4>
+                        <p>Guerras 3 vezes por semana, sempre votem na enquete no grupo do whatsapp.</p>
+                        <p><strong>HORÁRIOS de GUERRA:</strong> DOMINGOS, TERÇAS e QUINTAS começando às 18:00h horário de Brasília.<br>
+                        <strong>PESQUISA:</strong> SEG, QUA e SAB as 18:00h.</p>
+                        <ul>
+                            <li><strong>PRIMEIRO ATAQUE:</strong> Deve-se OBRIGATORIAMENTE atacar o oponente de mesma posição. En alguns casos os lideres podem decidir o seu ataque em outro, de acordo com a estratégia, então mandaremos mensagem se o ataque for diferente de ser no seu espelho.<br>
+                            Você preferencialmente deve fazer seu 1º ataque nas 12 primeiras horas de guerra, assim teremos uma boa estratégia para o segundo ataque. <strong>IMPORTANTE:</strong> Caso não faça nas primeiras 12 horas, outro jogador pode atacar seu espelho mediante autorização de um líder.</li>
+                            <li><strong>SEGUNDO ATAQUE:</strong> Aguardar permissão dos líderes para atacar vila QUE JÁ RECEBEU ATAQUE E NÃO OBTEVE-SE 100% , ou no final da guerra (faltando 3 ~ 2 horas para o encerramento da guerra).</li>
+                        </ul>
+                        <p>⚠️ <strong>É terminantemente PROIBIDO</strong> deixar layout de guerra de zuera, qualquer tipo de mensagem, troll e todas variáveis possíveis, antes da guerra. Caso desrespeitada, será punido com advertência.</p>
+                        <p><strong>Fazer os DOIS ataques na guerra. A qualquer custo...</strong></p>
                     `;
                     break;
                 case 'bilhete':
-                    titulo = 'Bilhete Dourado';
+                    titulo = 'Sorteio Mensal do Bilhete Dourado';
+                    
+                    let contagemGanhadores = {};
+                    globalBilheteData.forEach(item => {
+                        let nome = item.membro || 'Desconhecido';
+                        contagemGanhadores[nome] = (contagemGanhadores[nome] || 0) + 1;
+                    });
+                    let topGanhadores = Object.keys(contagemGanhadores)
+                        .map(nome => ({ nome, total: contagemGanhadores[nome] }))
+                        .sort((a, b) => b.total - a.total)
+                        .slice(0, 3);
+
+                    let topHtml = '';
+                    if (topGanhadores.length === 0) {
+                        topHtml = '<p style="font-size: 12px; color: var(--text-secondary);">Nenhum registro encontrado.</p>';
+                    } else {
+                        topHtml = `<table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 15px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
+                                    <th style="padding: 6px;">Pos</th>
+                                    <th style="padding: 6px;">Membro</th>
+                                    <th style="padding: 6px; text-align: right;">Bilhetes</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                        topGanhadores.forEach((g, idx) => {
+                            topHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 6px; font-weight: bold; color: var(--accent-yellow);">#${idx + 1}</td>
+                                <td style="padding: 6px;">${g.nome}</td>
+                                <td style="padding: 6px; text-align: right; font-weight: bold; color: var(--accent-green);">${g.total}x</td>
+                            </tr>`;
+                        });
+                        topHtml += `</tbody></table>`;
+                    }
+
+                    let historicoHtml = '';
+                    if (globalBilheteData.length === 0) {
+                        historicoHtml = '<p style="font-size: 12px; color: var(--text-secondary);">Nenhum histórico cadastrado.</p>';
+                    } else {
+                        historicoHtml = `<table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
+                                    <th style="padding: 6px;">Mês / Temporada</th>
+                                    <th style="padding: 6px;">Ganhador</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                        globalBilheteData.slice().reverse().forEach(h => {
+                            historicoHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 6px; color: var(--accent-blue);">${formatarDataMes(h.mes)}</td>
+                                <td style="padding: 6px; font-weight: bold;">${h.membro}</td>
+                            </tr>`;
+                        });
+                        historicoHtml += `</tbody></table>`;
+                    }
+
+                    let botaoAdicionarHtml = isAdminLogado ? `
+                        <button class="action-button" onclick="abrirModalBilhete()" style="margin: 15px 0 10px 0;">
+                            <span>➕</span> Adicionar Novo Ganhador
+                        </button>
+                    ` : '';
+
                     conteudoHtml = `
-                        <h3>🎟️ Sorteios e Vantagens</h3>
-                        <p>Fique por dentro das regras para concorrer ao Bilhete Dourado mensal:</p>
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <img src="https://image.jimcdn.com/app/cms/image/transf/none/path/s8203c0343ee3fe52/image/ib20e7021e0f87b69/version/1708819737/image.jpg" alt="Bilhete Dourado" style="max-width: 100%; height: auto; border-radius: 8px;">
+                        </div>
+                        <p>Prepare-se para ter a chance de ganhar um Bilhete Dourado do Clash of Clans todo mês!</p>
+                        
+                        ${botaoAdicionarHtml}
+
+                        <h4 style="color: var(--accent-yellow); margin: 15px 0 8px 0;">🏆 Top 3 Ganhadores</h4>
+                        ${topHtml}
+
+                        <h4 style="color: var(--accent-blue); margin: 16px 0 6px 0;">O que é o Bilhete Dourado?</h4>
+                        <p>O Bilhete Dourado do Clash of Clans é um item especial que concede ao jogador diversos benefícios, como:</p>
                         <ul>
-                            <li><strong>Requisitos:</strong> Atividade constante no clã, doações expressivas e cumprimento de metas em guerras.</li>
-                            <li>O sorteio é realizado ao final de cada temporada entre os membros elegíveis.</li>
+                            <li><strong>Recompensas exclusivas da Temporada:</strong> Obtenha skins de heróis, recursos, acelerações e muito mais!</li>
+                            <li><strong>Aumento no Banco da Temporada:</strong> Armazene mais recursos do que nunca!</li>
+                            <li><strong>Desafios e Missões Extras:</strong> Complete desafios para ganhar recompensas ainda mais incríveis!</li>
                         </ul>
+                        <h4 style="color: var(--accent-blue); margin: 12px 0 6px 0;">Como participar do sorteio?</h4>
+                        <p>Para participar do sorteio do Bilhete Dourado, você precisa:</p>
+                        <ul>
+                            <li>Ser membro do clã "Invictos BR"</li>
+                            <li>Participar do grupo do WhatsApp do clã</li>
+                        </ul>
+                        <h4 style="color: var(--accent-blue); margin: 12px 0 6px 0;">Como será realizado o sorteio?</h4>
+                        <p>O sorteio será realizado ao vivo no canal do YouTube "Clash Invictos" no primeiro dia de cada Temporada. Durante o sorteio, um número aleatório será gerado, e o membro do clã que estiver com o número correspondente no grupo do WhatsApp será o vencedor.</p>
+                        <p><strong>Boa sorte!</strong></p>
+                        <p>Não perca essa chance de turbinar seu progresso no Clash of Clans!</p>
+
+                        <h4 style="color: var(--accent-blue); margin: 20px 0 8px 0;">📅 Histórico de Ganhadores</h4>
+                        ${historicoHtml}
                     `;
                     break;
             }
@@ -1241,7 +1496,6 @@
                         document.getElementById('tab-meu-cla').style.display = 'block';
                     }
 
-                    // 1. Processar Clã
                     const clanData = data["Clã"];
                     if (clanData && clanData.length > 1) {
                         const cabecalhos = clanData[0];
@@ -1265,7 +1519,6 @@
                         document.getElementById('last-update').innerText = "Última atualização: " + formatarUltimaAtualizacao(dataBrutaAtualizacao);
                     }
 
-                    // 2. Processar Cadastros do WhatsApp
                     const rawCadastro = data["Cadastro Membros"];
                     globalCadastroData = [];
                     if (rawCadastro && rawCadastro.length > 1) {
@@ -1284,7 +1537,6 @@
                         }
                     }
 
-                    // 3. Processar Membros do Clash
                     const rawMembros = data["Membros"];
                     if (rawMembros && rawMembros.length > 1) {
                         const cab = rawMembros[0];
@@ -1308,9 +1560,42 @@
                         renderizarMembros();
                         popularSelectMembros();
                         popularSelectMembrosAdvertencia();
+                        popularSelectMembrosBilhete();
+                        popularSelectMembrosEscalacao();
                     }
 
-                    // 6. Processar Advertências
+                    const rawBilhete = data["Bilhete"];
+                    globalBilheteData = [];
+                    if (rawBilhete && rawBilhete.length > 1) {
+                        const cabB = rawBilhete[0];
+                        const idxB = (nome) => cabB.indexOf(nome);
+                        for (let i = 1; i < rawBilhete.length; i++) {
+                            let b = rawBilhete[i];
+                            globalBilheteData.push({
+                                mes: b[idxB("Mês")],
+                                membro: b[idxB("Membro")]
+                            });
+                        }
+                    }
+
+                    const rawEscalacao = data["Escala"] || data["Escalação"];
+                    globalEscalacaoData = [];
+                    if (rawEscalacao && rawEscalacao.length > 1) {
+                        const cabE = rawEscalacao[0];
+                        const idxE = (nome) => cabE.indexOf(nome);
+                        for (let i = 1; i < rawEscalacao.length; i++) {
+                            let e = rawEscalacao[i];
+                            let nomeVal = e[idxE("Nome")] || e[idxE("Membro")] || "";
+                            let tagVal = e[idxE("Tag")] || "";
+                            if (nomeVal || tagVal) {
+                                globalEscalacaoData.push({
+                                    nome: nomeVal,
+                                    tag: tagVal
+                                });
+                            }
+                        }
+                    }
+
                     const rawAdvertências = data["Advertências"];
                     globalAdvertenciasData = [];
                     if (rawAdvertências && rawAdvertências.length > 1) {
@@ -1331,7 +1616,6 @@
                         }
                     }
 
-                    // 7. Processar Aba Login
                     const rawLogin = data["Login"];
                     globalLoginData = [];
                     if (rawLogin && rawLogin.length > 1) {
@@ -1462,6 +1746,207 @@
                 opt.value = c.tagClash;
                 opt.text = `${c.nomeClash || c.nomeReal} (${c.tagClash})`;
                 select.appendChild(opt);
+            });
+        }
+
+        function popularSelectMembrosBilhete() {
+            const select = document.getElementById('campo-bilhete-membro');
+            if(!select) return;
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+            globalMembrosData.forEach(m => {
+                let opt = document.createElement('option');
+                opt.value = m.nome;
+                opt.text = m.nome;
+                select.appendChild(opt);
+            });
+        }
+
+        function popularSelectMembrosEscalacao() {
+            const select = document.getElementById('campo-escalacao-membro');
+            if(!select) return;
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+            
+            let tagsEscaladas = globalEscalacaoData.map(e => e.tag);
+            let nomesEscalados = globalEscalacaoData.map(e => e.nome);
+
+            globalMembrosData.forEach(m => {
+                if (!tagsEscaladas.includes(m.tag) && !nomesEscalados.includes(m.nome)) {
+                    let opt = document.createElement('option');
+                    opt.value = m.tag;
+                    opt.text = `${m.nome} (CV ${m.cv})`;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function abrirModalEscalacao() {
+            if (!isAdminLogado) return;
+            popularSelectMembrosEscalacao();
+            document.getElementById('form-escalacao').reset();
+            document.getElementById('modal-escalacao').style.display = 'flex';
+        }
+
+        function fecharModalEscalacao() {
+            document.getElementById('modal-escalacao').style.display = 'none';
+        }
+
+        function salvarEscalacaoMembro(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let tagMembro = document.getElementById('campo-escalacao-membro').value;
+            let membroObj = globalMembrosData.find(m => m.tag === tagMembro);
+            if(!membroObj) return;
+
+            let payload = {
+                acao: "cadastrar_escala",
+                tag: membroObj.tag,
+                nome: membroObj.nome
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    fecharModalEscalacao();
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao adicionar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro de conexão.");
+            });
+        }
+
+        function removerEscalacao(tagOuNome) {
+            if (!isAdminLogado) return;
+            if (!confirm("Deseja remover este membro da escalação?")) return;
+
+            let payload = {
+                acao: "excluir_escala",
+                tag: tagOuNome
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao remover.");
+                }
+            })
+            .catch(err => alert("Erro de conexão."));
+        }
+
+        function atualizarFormatoGuerra(formato) {
+            if (!isAdminLogado) return;
+            globalFormatoGuerra = formato;
+        }
+
+        function atualizarDataGuerra(data) {
+            if (!isAdminLogado) return;
+            globalDataGuerra = data;
+        }
+
+        function atualizarHoraGuerra(hora) {
+            if (!isAdminLogado) return;
+            globalHoraGuerra = hora;
+        }
+
+        function enviarEscalacaoWhatsApp() {
+            if (!isAdminLogado) return;
+
+            let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
+                let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
+                let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
+                let cvX = mX ? mX.cv : 0;
+                let cvY = mY ? mY.cv : 0;
+                if(cvY !== cvX) return cvY - cvX;
+                let trofX = mX ? mX.trofeus : 0;
+                let trofY = mY ? mY.trofeus : 0;
+                return trofY - trofX;
+            });
+
+            if (listaEscaladosOrdenada.length === 0) {
+                alert("Não há membros escalados para enviar.");
+                return;
+            }
+
+            let dataFormatada = globalDataGuerra ? new Date(globalDataGuerra + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada';
+            let horaFormatada = globalHoraGuerra || 'Não informada';
+
+            let textoMsg = `⚔️ *ESCALAÇÃO DE GUERRA - INVICTOS BR* ⚔️\n\n`;
+            textoMsg += `📌 *Formato:* ${globalFormatoGuerra}\n`;
+            textoMsg += `📅 *Data:* ${dataFormatada}\n`;
+            textoMsg += `🕒 *Horário:* ${horaFormatada}\n\n`;
+            textoMsg += `📋 *Lista de Convocados:*\n`;
+
+            listaEscaladosOrdenada.forEach((esc, idx) => {
+                let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || { cv: '--' };
+                textoMsg += `${idx + 1}. ${esc.nome} (CV ${membroInfo.cv})\n`;
+            });
+
+            textoMsg += `\nPreparem suas tropas e bons ataques! 🔰`;
+
+            let numeroDestino = "5577991282136";
+            let urlWpp = `https://wa.me/${numeroDestino}?text=` + encodeURIComponent(textoMsg);
+            window.open(urlWpp, '_blank');
+        }
+
+        function abrirModalBilhete() {
+            if (!isAdminLogado) return;
+            document.getElementById('form-bilhete').reset();
+            document.getElementById('modal-bilhete').style.display = 'flex';
+        }
+
+        function fecharModalBilhete() {
+            document.getElementById('modal-bilhete').style.display = 'none';
+        }
+
+        function salvarBilheteGanhador(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let membro = document.getElementById('campo-bilhete-membro').value;
+            let mes = document.getElementById('campo-bilhete-mes').value;
+
+            let payload = {
+                acao: "cadastrar_bilhete",
+                membro: membro,
+                mes: mes
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    fecharModalBilhete();
+                    carregarDados(() => {
+                        abrirSubmenu('bilhete');
+                    });
+                } else {
+                    alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro de conexão.");
             });
         }
 
