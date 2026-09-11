@@ -793,7 +793,7 @@
                 <div class="version-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                        <span style="font-weight: bold; color: var(--accent-blue);">1.18.9</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.20.1</span>
                     </div>
                     <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                         Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
@@ -1187,6 +1187,14 @@
                     break;
                 case 'escalacao':
                     titulo = 'Escalação da Guerra';
+                    
+                    let limiteTitulares = 15;
+                    let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+                    if (matchFormato) {
+                        limiteTitulares = parseInt(matchFormato[1], 10);
+                    }
+
+                    // Ordena por CV decrescente, depois Troféus decrescentes para quem for Titular ordenado por CV
                     let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
                         let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
                         let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
@@ -1198,11 +1206,30 @@
                         return trofY - trofX;
                     });
 
-                    let escalacaoItensHtml = '';
-                    if (listaEscaladosOrdenada.length === 0) {
-                        escalacaoItensHtml = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 15px;">Nenhum membro escalado para esta guerra.</p>';
-                    } else {
-                        listaEscaladosOrdenada.forEach((esc, idx) => {
+                    // Separa com base estrita no status explícito salvo ("Escalado" / "Titular" vs "Reserva")
+                    let titularesLista = [];
+                    let reservasLista = [];
+
+                    listaEscaladosOrdenada.forEach(esc => {
+                        let st = String(esc.status || '').trim().toLowerCase();
+                        if (st === 'reserva') {
+                            reservasLista.push(esc);
+                        } else {
+                            // Se estiver como escalado/titular, respeita, mas valida o limite de titulares se necessário
+                            if (titularesLista.length < limiteTitulares) {
+                                titularesLista.push(esc);
+                            } else {
+                                // Se estourou o limite e por acaso sobrou, joga para reserva automaticamente
+                                esc.status = 'Reserva';
+                                reservasLista.push(esc);
+                            }
+                        }
+                    });
+
+                    let renderizarBlocoMembros = (lista, tituloBloco, corBadge, isReservaBloco) => {
+                        if (lista.length === 0) return '';
+                        let htmlBloco = `<h4 style="color: ${corBadge}; margin: 15px 0 8px 0;">${tituloBloco} (${lista.length})</h4>`;
+                        lista.forEach((esc, idx) => {
                             let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || {
                                 fotoCV: 'https://cdn.jsdelivr.net/gh/clashofclans-api/assets@master/other/town-hall-1.png',
                                 cv: '--',
@@ -1214,18 +1241,39 @@
                                 <button class="btn-icon delete" onclick="removerEscalacao('${esc.tag || esc.nome}')" title="Remover">🗑️</button>
                             ` : '';
 
-                            escalacaoItensHtml += `
+                            // Botão dinâmico: se estiver na reserva, permite promover se não atingiu o limite de titulares. Se for titular, permite mover para reserva.
+                            let botaoTrocarStatusHtml = '';
+                            if (isAdminLogado) {
+                                if (isReservaBloco) {
+                                    botaoTrocarStatusHtml = `<button class="btn-icon" onclick="alternarStatusEscalacao('${esc.tag || esc.nome}', 'Escalado')" title="Promover a Titular">⬆️ Titular</button>`;
+                                } else {
+                                    botaoTrocarStatusHtml = `<button class="btn-icon" onclick="alternarStatusEscalacao('${esc.tag || esc.nome}', 'Reserva')" title="Mover para Reserva">⬇️ Reserva</button>`;
+                                }
+                            }
+
+                            htmlBloco += `
                                 <div style="display: flex; align-items: center; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
-                                    <div style="font-size: 12px; font-weight: bold; color: var(--accent-yellow); width: 22px; text-align: center;">#${idx + 1}</div>
+                                    <div style="font-size: 12px; font-weight: bold; color: ${corBadge}; width: 26px; text-align: center;">#${idx + 1}</div>
                                     <img src="${membroInfo.fotoCV}" class="member-avatar" alt="CV" style="width: 36px; height: 36px; margin: 0 8px;">
                                     <div style="flex-grow: 1;">
                                         <div style="font-size: 13px; font-weight: bold; color: var(--text-color);">${esc.nome}</div>
                                         <div style="font-size: 11px; color: var(--text-secondary);">CV ${membroInfo.cv} • 🏆 ${membroInfo.trofeus}</div>
                                     </div>
-                                    ${botaoRemoverHtml}
+                                    <div style="display: flex; gap: 4px;">
+                                        ${botaoTrocarStatusHtml}
+                                        ${botaoRemoverHtml}
+                                    </div>
                                 </div>
                             `;
                         });
+                        return htmlBloco;
+                    };
+
+                    let itensTitularesHtml = renderizarBlocoMembros(titularesLista, "Titulares da Guerra", "var(--accent-yellow)", false);
+                    let itensReservasHtml = renderizarBlocoMembros(reservasLista, "Reservas de Guerra", "var(--accent-blue)", true);
+
+                    if (listaEscaladosOrdenada.length === 0) {
+                        itensTitularesHtml = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 15px;">Nenhum membro escalado para esta guerra.</p>';
                     }
 
                     let formatoSeletorDisabled = !isAdminLogado ? 'disabled' : '';
@@ -1278,11 +1326,9 @@
 
                         ${bsoEscalacaoBotoes}
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 8px 0;">
-                            <h4 style="color: var(--accent-blue); margin: 0;">Membros Escalados (${listaEscaladosOrdenada.length})</h4>
-                        </div>
-                        <div style="max-height: 350px; overflow-y: auto;">
-                            ${escalacaoItensHtml}
+                        <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                            ${itensTitularesHtml}
+                            ${itensReservasHtml}
                         </div>
 
                         ${botaoEnviarWpp}
@@ -1766,10 +1812,12 @@
                             let e = rawEscalacao[i];
                             let tagVal = e[idxE("Tag do Membro")] || "";
                             let nomeVal = e[idxE("Nome no Clash")] || "";
+                            let statusVal = e[idxE("Status")] || "Escalado";
                             if (tagVal || nomeVal) {
                                 globalEscalacaoData.push({
                                     tag: tagVal,
-                                    nome: nomeVal
+                                    nome: nomeVal,
+                                    status: statusVal
                                 });
                             }
                         }
@@ -1992,11 +2040,29 @@
                 return;
             }
 
+            let limiteTitulares = 15;
+            let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+            if (matchFormato) {
+                limiteTitulares = parseInt(matchFormato[1], 10);
+            }
+
+            // Conta quantos titulares já existem atualmente
+            let countTitularesAtuais = globalEscalacaoData.filter(e => String(e.status || '').toLowerCase() !== 'reserva').length;
+
             let novosMembros = [];
             checkboxes.forEach(chk => {
+                // Regra solicitada: Se o formato de guerra estiver preenchido (ou por limite), novos membros adicionados vão direto para a reserva caso o limite de titulares já esteja atingido.
+                let statusInicial = "Escalado";
+                if (countTitularesAtuais >= limiteTitulares) {
+                    statusInicial = "Reserva";
+                } else {
+                    countTitularesAtuais++;
+                }
+
                 novosMembros.push({
                     tag: chk.value,
-                    nome: chk.dataset.nome
+                    nome: chk.dataset.nome,
+                    status: statusInicial
                 });
             });
 
@@ -2024,6 +2090,50 @@
                 console.error(err);
                 alert("Erro de conexão.");
             });
+        }
+
+        function alternarStatusEscalacao(tagOuNome, novoStatus) {
+            if (!isAdminLogado) return;
+
+            // Validação de limite para impedir que coloque como titular se estiver no limite
+            if (novoStatus === 'Escalado' || novoStatus === 'Titular') {
+                let limiteTitulares = 15;
+                let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+                if (matchFormato) {
+                    limiteTitulares = parseInt(matchFormato[1], 10);
+                }
+                let titularesAtuais = globalEscalacaoData.filter(e => {
+                    let st = String(e.status || '').toLowerCase();
+                    return st !== 'reserva' && (e.tag !== tagOuNome && e.nome !== tagOuNome);
+                }).length;
+
+                if (titularesAtuais >= limiteTitulares) {
+                    alert(`Não é possível mover para Titular: o limite de ${limiteTitulares} vagas para este formato de guerra (${globalFormatoGuerra}) já foi atingido.`);
+                    return;
+                }
+            }
+
+            let payload = {
+                acao: "alternar_status_escala",
+                tag: tagOuNome,
+                status: novoStatus
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao alternar status.");
+                }
+            })
+            .catch(err => alert("Erro de conexão."));
         }
 
         function removerEscalacao(tagOuNome) {
@@ -2080,6 +2190,7 @@
         function atualizarFormatoGuerra(formato) {
             if (!isAdminLogado) return;
             globalFormatoGuerra = formato;
+            abrirSubmenu('escalacao');
         }
 
         function atualizarDataGuerra(data) {
@@ -2136,6 +2247,28 @@
                 return;
             }
 
+            let limiteTitulares = 15;
+            let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+            if (matchFormato) {
+                limiteTitulares = parseInt(matchFormato[1], 10);
+            }
+
+            let titularesLista = [];
+            let reservasLista = [];
+
+            listaEscaladosOrdenada.forEach(esc => {
+                let st = String(esc.status || '').trim().toLowerCase();
+                if (st === 'reserva') {
+                    reservasLista.push(esc);
+                } else {
+                    if (titularesLista.length < limiteTitulares) {
+                        titularesLista.push(esc);
+                    } else {
+                        reservasLista.push(esc);
+                    }
+                }
+            });
+
             let dataFormatada = globalDataGuerra ? new Date(globalDataGuerra + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada';
             let horaFormatada = globalHoraGuerra || 'Não informada';
 
@@ -2143,12 +2276,20 @@
             textoMsg += `📌 *Formato:* ${globalFormatoGuerra}\n`;
             textoMsg += `📅 *Data:* ${dataFormatada}\n`;
             textoMsg += `🕒 *Horário:* ${horaFormatada}\n\n`;
-            textoMsg += `📋 *Lista de Convocados:*\n`;
-
-            listaEscaladosOrdenada.forEach((esc, idx) => {
+            
+            textoMsg += `🌟 *TITULARES:*\n`;
+            titularesLista.forEach((esc, idx) => {
                 let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || { cv: '--' };
                 textoMsg += `${idx + 1}. ${esc.nome} (CV ${membroInfo.cv})\n`;
             });
+
+            if (reservasLista.length > 0) {
+                textoMsg += `\n🛡️ *RESERVAS:*\n`;
+                reservasLista.forEach((esc, idx) => {
+                    let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || { cv: '--' };
+                    textoMsg += `${idx + 1}. ${esc.nome} (CV ${membroInfo.cv})\n`;
+                });
+            }
 
             textoMsg += `\nPreparem suas tropas e bons ataques! 🔰`;
 
@@ -2265,10 +2406,16 @@
             document.getElementById('edit-index').value = cad.linhaPlanilha;
             document.getElementById('campo-nome-real').value = cad.nomeReal;
             document.getElementById('campo-telefone').value = cad.telefone;
+            document.getElementById('campo-status').value = cad.status || "Ativo";
             
             popularSelectMembros(cad.tagClash);
-            document.getElementById('campo-membro-clash').value = cad.tagClash;
-            document.getElementById('campo-status').value = cad.status || 'Ativo';
+            let selectMembro = document.getElementById('campo-membro-clash');
+            let opt = document.createElement('option');
+            opt.value = cad.tagClash;
+            opt.text = `${cad.nomeClash} (${cad.tagClash})`;
+            opt.selected = true;
+            selectMembro.appendChild(opt);
+
             document.getElementById('modal-cadastro').style.display = 'flex';
         }
 
@@ -2279,18 +2426,19 @@
         function salvarCadastro(event) {
             event.preventDefault();
             if (!isAdminLogado) return;
-            
+
             let linha = document.getElementById('edit-index').value;
             let nomeReal = document.getElementById('campo-nome-real').value;
             let telefone = document.getElementById('campo-telefone').value;
-            let tagClash = document.getElementById('campo-membro-clash').value;
+            let selectMembro = document.getElementById('campo-membro-clash');
+            let tagClash = selectMembro.value;
+            let optSelecionada = selectMembro.options[selectMembro.selectedIndex];
+            let nomeClash = optSelecionada ? optSelecionada.text.split(' (')[0] : '';
             let status = document.getElementById('campo-status').value;
 
-            let membroObj = globalMembrosData.find(m => m.tag === tagClash);
-            let nomeClash = membroObj ? membroObj.nome : "";
-
+            let acaoStr = linha ? "editar" : "cadastrar";
             let payload = {
-                acao: linha ? "editar" : "cadastrar",
+                acao: acaoStr,
                 linha: linha,
                 nomeReal: nomeReal,
                 telefone: telefone,
@@ -2305,21 +2453,24 @@
             })
             .then(res => res.json())
             .then(res => {
-                if(res.sucesso) {
+                if (res.sucesso) {
                     fecharModal();
                     carregarDados();
                 } else {
-                    alert("Erro ao salvar.");
+                    alert("Erro ao salvar cadastro.");
                 }
             })
             .catch(err => alert("Erro de conexão."));
         }
 
-        function excluirCadastro(linha) {
+        function excluirCadastro(linhaPlanilha) {
             if (!isAdminLogado) return;
-            if(!confirm("Tem certeza que deseja excluir?")) return;
+            if (!confirm("Tem certeza que deseja excluir este cadastro?")) return;
 
-            let payload = { acao: "excluir", linha: linha };
+            let payload = {
+                acao: "excluir",
+                linha: linhaPlanilha
+            };
 
             fetch(WEB_APP_URL, {
                 method: 'POST',
@@ -2327,62 +2478,22 @@
             })
             .then(res => res.json())
             .then(res => {
-                if(res.sucesso) carregarDados();
-            });
-        }
-
-        // Funções para Advertências (Mantidas por integridade do painel)
-        function renderizarEstatisticasRanking() {
-            const rankingDiv = document.getElementById('ranking-list');
-            if(!rankingDiv) return;
-            let contagem = {};
-            globalAdvertenciasData.forEach(adv => {
-                let nome = adv.nomeClash || adv.tagMembro;
-                contagem[nome] = (contagem[nome] || 0) + 1;
-            });
-            let ordenados = Object.keys(contagem).map(k => ({ nome: k, total: contagem[k] })).sort((a,b) => b.total - a.total).slice(0, 3);
-            if (ordenados.length === 0) {
-                rankingDiv.innerHTML = '<span style="font-size:12px; color:var(--text-secondary);">Nenhuma punição registrada.</span>';
-                return;
-            }
-            let html = '';
-            ordenados.forEach((item, idx) => {
-                html += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>#${idx+1} ${item.nome}</span><strong style="color:var(--accent-red);">${item.total} punição(ões)</strong></div>`;
-            });
-            rankingDiv.innerHTML = html;
-        }
-
-        function renderizarAdvertencias() {
-            const container = document.getElementById('warnings-list');
-            if(!container) return;
-            container.innerHTML = '';
-            if (globalAdvertenciasData.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:20px;">Nenhuma advertência registrada.</p>';
-                return;
-            }
-            globalAdvertenciasData.forEach(adv => {
-                let card = document.createElement('div');
-                card.style.background = 'var(--card-bg)';
-                card.style.border = '1px solid var(--border-color)';
-                card.style.borderRadius = '10px';
-                card.style.padding = '12px';
-                card.style.marginBottom = '10px';
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <span style="font-weight:bold; font-size:13px; color:var(--accent-red);">⚠️ ${adv.nivelInfracao || 'Infração'}</span>
-                        <span style="font-size:11px; color:var(--text-secondary);">${adv.data || '--'}</span>
-                    </div>
-                    <div style="font-size:13px; font-weight:bold; margin-bottom:4px;">${adv.nomeClash} <span style="font-size:11px; color:var(--text-secondary);">(${adv.tagMembro})</span></div>
-                    <p style="font-size:12px; color:var(--text-secondary); margin:4px 0;"><strong>Motivo:</strong> ${adv.motivo}</p>
-                    <p style="font-size:12px; color:var(--text-secondary); margin:4px 0;"><strong>Punição:</strong> ${adv.punicao} (${adv.statusPunicao})</p>
-                `;
-                container.appendChild(card);
-            });
+                if (res.sucesso) {
+                    carregarDados();
+                } else {
+                    alert("Erro ao excluir.");
+                }
+            })
+            .catch(err => alert("Erro de conexão."));
         }
 
         function abrirModalAdvertencia() {
             if (!isAdminLogado) return;
+            document.getElementById('modal-title-text').innerText = "Aplicar Advertência";
             document.getElementById('form-advertencia').reset();
+            document.getElementById('edit-id-ocorrencia').value = "";
+            document.getElementById('grupo-select-membro').style.display = 'block';
+            document.getElementById('campo-data').value = new Date().toISOString().split('T')[0];
             document.getElementById('modal-advertencia').style.display = 'flex';
         }
 
@@ -2393,6 +2504,7 @@
         function salvarAdvertencia(event) {
             event.preventDefault();
             if (!isAdminLogado) return;
+
             let tagMembro = document.getElementById('campo-tag').value;
             let nomeClash = document.getElementById('campo-nome-clash').value;
             let nivelInfracao = document.getElementById('campo-nivel').value;
@@ -2420,10 +2532,91 @@
             .then(res => {
                 if (res.sucesso) {
                     fecharModalAdvertencia();
-                    carregarDados();
+                    carregarDados(() => {
+                        mudarAba('advertencias', document.getElementById('nav-item-advertencias'));
+                    });
                 } else {
-                    alert("Erro ao registrar advertência.");
+                    alert("Erro ao salvar advertência.");
                 }
+            })
+            .catch(err => alert("Erro de conexão."));
+        }
+
+        function renderizarEstatisticasRanking() {
+            const rankingListDiv = document.getElementById('ranking-list');
+            rankingListDiv.innerHTML = '';
+
+            let contagemPunicoes = {};
+            globalAdvertenciasData.forEach(adv => {
+                let nome = adv.nomeClash || adv.tagMembro || 'Desconhecido';
+                contagemPunicoes[nome] = (contagemPunicoes[nome] || 0) + 1;
+            });
+
+            let rankingOrdenado = Object.keys(contagemPunicoes)
+                .map(nome => ({ nome, total: contagemPunicoes[nome] }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 3);
+
+            if (rankingOrdenado.length === 0) {
+                rankingListDiv.innerHTML = '<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Nenhuma punição registrada.</p>';
+                return;
+            }
+
+            rankingOrdenado.forEach((r, idx) => {
+                let cor = idx === 0 ? 'var(--accent-red)' : (idx === 1 ? 'var(--accent-yellow)' : 'var(--text-secondary)');
+                let item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.fontSize = '12px';
+                item.style.marginBottom = '4px';
+                item.innerHTML = `<span><strong style="color: ${cor};">#${idx + 1}</strong> ${r.nome}</span> <span style="font-weight: bold; color: var(--text-color);">${r.total}x</span>`;
+                rankingListDiv.appendChild(item);
+            });
+        }
+
+        function renderizarAdvertencias() {
+            const container = document.getElementById('warnings-list');
+            container.innerHTML = '';
+
+            let filtroStatusInativo = document.getElementById('filter-status-inativo').value;
+            let filtroGravidade = document.getElementById('filter-gravidade').value;
+
+            let filtrados = globalAdvertenciasData.filter(adv => {
+                let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
+                let statusClã = cadastroMatch ? cadastroMatch.status : 'Ativo';
+
+                if (filtroStatusInativo !== 'todos' && statusClã !== filtroStatusInativo) return false;
+                if (filtroGravidade !== 'todas' && adv.nivelInfracao !== filtroGravidade) return false;
+                return true;
+            });
+
+            if (filtrados.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px; font-size: 13px;">Nenhuma advertência encontrada com os filtros selecionados.</p>';
+                return;
+            }
+
+            filtrados.reverse().forEach(adv => {
+                let card = document.createElement('div');
+                card.style.background = 'var(--card-bg)';
+                card.style.border = '1px solid var(--border-color)';
+                card.style.borderRadius = '10px';
+                card.style.padding = '12px';
+                card.style.marginBottom = '10px';
+
+                let corGravidade = adv.nivelInfracao === 'Grave' ? 'var(--accent-red)' : (adv.nivelInfracao === 'Média' ? 'var(--accent-yellow)' : 'var(--accent-blue)');
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                        <div>
+                            <h4 style="margin: 0; font-size: 14px; color: var(--text-color);">${adv.nomeClash || 'Membro'} <span style="font-size: 11px; color: var(--text-secondary);">(${adv.tagMembro})</span></h4>
+                            <span style="display: inline-block; background: ${corGravidade}15; color: ${corGravidade}; border: 1px solid ${corGravidade}30; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-top: 4px;">Infração: ${adv.nivelInfracao}</span>
+                        </div>
+                        <span style="font-size: 11px; color: var(--text-secondary);">${adv.data || ''}</span>
+                    </div>
+                    <p style="margin: 6px 0; font-size: 12px; color: var(--text-secondary);"><strong>Motivo:</strong> ${adv.motivo || 'Não informado'}</p>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: var(--text-color);"><strong>Punição:</strong> ${adv.punicao} (${adv.statusPunicao})</p>
+                `;
+                container.appendChild(card);
             });
         }
 
