@@ -793,7 +793,7 @@
                 <div class="version-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                        <span style="font-weight: bold; color: var(--accent-blue);">1.17.9</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.18.9</span>
                     </div>
                     <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                         Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
@@ -840,6 +840,44 @@
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="fecharModalLogin()">Cancelar</button>
                     <button type="submit" class="btn-save">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE LAYOUTS DE GUERRA -->
+    <div id="modal-layout" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title-layout">Cadastrar Layout de Guerra</h3>
+            <form id="form-layout" onsubmit="salvarLayoutGuerra(event)">
+                <input type="hidden" id="edit-id-layout" value="">
+                <div class="form-group">
+                    <label>Centro de Vila (CV)</label>
+                    <select id="campo-layout-cv" required>
+                        <option value="">Selecione o CV...</option>
+                        <option value="CV17">CV 17</option>
+                        <option value="CV16">CV 16</option>
+                        <option value="CV15">CV 15</option>
+                        <option value="CV14">CV 14</option>
+                        <option value="CV13">CV 13</option>
+                        <option value="CV12">CV 12</option>
+                        <option value="CV11">CV 11</option>
+                        <option value="CV10">CV 10</option>
+                        <option value="CV9">CV 9</option>
+                        <option value="CV8">CV 8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Link do Layout (Link do Clash of Clans)</label>
+                    <input type="url" id="campo-layout-link" required placeholder="https://link.clashofclans.com/pt?action=OpenLayout&id=...">
+                </div>
+                <div class="form-group">
+                    <label>Foto (URL da Imagem ou Descrição)</label>
+                    <input type="text" id="campo-layout-foto" required placeholder="URL da imagem da base...">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalLayout()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
                 </div>
             </form>
         </div>
@@ -985,17 +1023,11 @@
         let globalLoginData = [];
         let globalBilheteData = [];
         let globalEscalacaoData = [];
+        let globalLayoutsData = [];
         let globalFormatoGuerra = "15x15";
         let globalDataGuerra = "";
         let globalHoraGuerra = "";
-
-        function formatarDataMes(dataString) {
-            if (!dataString) return '--';
-            if (!dataString.includes('T') && !dataString.includes('-')) return dataString;
-            const data = new Date(dataString);
-            if (isNaN(data.getTime())) return dataString;
-            return data.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' });
-        }
+        let cvSelecionadoLayout = "CV15";
 
         function sincronizarPlanilha() {
             const iconEl = document.getElementById('sync-icon');
@@ -1092,10 +1124,9 @@
             renderizarAdvertencias();
             
             if (document.getElementById('submenu-view').style.display === 'block') {
-                if (document.getElementById('submenu-body-content').dataset.currentSub === 'bilhete') {
-                    abrirSubmenu('bilhete');
-                } else if (document.getElementById('submenu-body-content').dataset.currentSub === 'escalacao') {
-                    abrirSubmenu('escalacao');
+                let subAtual = document.getElementById('submenu-body-content').dataset.currentSub;
+                if (subAtual === 'bilhete' || subAtual === 'escalacao' || subAtual === 'layouts') {
+                    abrirSubmenu(subAtual);
                 }
             }
         }
@@ -1156,7 +1187,6 @@
                     break;
                 case 'escalacao':
                     titulo = 'Escalação da Guerra';
-                    
                     let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
                         let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
                         let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
@@ -1221,8 +1251,6 @@
 
                     conteudoHtml = `
                         <h3>📋 Gerenciamento de Escalação</h3>
-                        <p>Defina o formato da guerra atual e alinhe os melhores guerreiros por ordem decrescente de Centro de Vila (CV).</p>
-                        
                         <div class="form-group" style="margin-top: 15px;">
                             <label>Formato da Guerra</label>
                             <select id="select-formato-guerra" class="sort-select" style="width: 100%; padding: 10px;" onchange="atualizarFormatoGuerra(this.value)" ${formatoSeletorDisabled}>
@@ -1295,9 +1323,62 @@
                     break;
                 case 'layouts':
                     titulo = 'Layouts de Guerra';
+                    
+                    let cvsDisponiveis = ["CV17", "CV16", "CV15", "CV14", "CV13", "CV12", "CV11", "CV10", "CV9", "CV8"];
+                    let botoesCvHtml = '';
+                    cvsDisponiveis.forEach(cv => {
+                        let activeClass = cv === cvSelecionadoLayout ? 'background: var(--accent-blue); color: white;' : 'background: var(--card-bg); color: var(--text-secondary);';
+                        botoesCvHtml += `<button onclick="mudarCvLayout('${cv}')" style="padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; ${activeClass}">${cv}</button>`;
+                    });
+
+                    let layoutsFiltrados = globalLayoutsData.filter(l => String(l.cv).toUpperCase().replace(/\s+/g, '') === cvSelecionadoLayout.toUpperCase());
+                    let layoutsCardsHtml = '';
+
+                    if (layoutsFiltrados.length === 0) {
+                        layoutsCardsHtml = `<p style="text-align: center; color: var(--text-secondary); padding: 25px; font-size: 13px;">Nenhum layout cadastrado para o ${cvSelecionadoLayout}.</p>`;
+                    } else {
+                        layoutsFiltrados.forEach(layout => {
+                            let botaoAdminLayout = isAdminLogado ? `
+                                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                                    <button class="btn-icon" onclick='abrirModalLayoutEdicao(${JSON.stringify(layout)})' style="flex: 1;">✏️ Editar</button>
+                                    <button class="btn-icon delete" onclick="excluirLayout('${layout.id}')" style="flex: 1;">🗑️ Excluir</button>
+                                </div>
+                            ` : '';
+
+                            layoutsCardsHtml += `
+                                <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 12px; text-align: center;">
+                                    <a href="${layout.link}" target="_blank" title="Abrir link do layout">
+                                        <img src="${layout.foto}" alt="Layout ${layout.cv}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                                    </a>
+                                    <div style="font-size: 13px; font-weight: bold; color: var(--text-color); margin-bottom: 8px;">Base ${layout.cv}</div>
+                                    <a href="${layout.link}" target="_blank" class="action-button" style="margin: 0; padding: 8px; font-size: 13px; text-decoration: none;">
+                                        <span>🔗</span> Copiar Layout
+                                    </a>
+                                    ${botaoAdminLayout}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    let btnAddLayoutAdmin = isAdminLogado ? `
+                        <button class="action-button" onclick="abrirModalLayoutNovo()" style="margin-bottom: 15px;">
+                            <span>➕</span> Cadastrar Novo Layout
+                        </button>
+                    ` : '';
+
                     conteudoHtml = `
-                        <h3>🗺️ Bases Recomendadas</h3>
-                        <p>Proteja seu espólio e dificulte o triple inimigo nas guerras.</p>
+                        <h3>🗺️ Layouts de Guerra</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Selecione o seu Centro de Vila para ver as melhores bases de guerra disponíveis:</p>
+                        
+                        <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px;">
+                            ${botoesCvHtml}
+                        </div>
+
+                        ${btnAddLayoutAdmin}
+
+                        <div id="lista-layouts-container">
+                            ${layoutsCardsHtml}
+                        </div>
                     `;
                     break;
                 case 'regras':
@@ -1337,7 +1418,6 @@
                     break;
                 case 'bilhete':
                     titulo = 'Sorteio Mensal do Bilhete Dourado';
-                    
                     let contagemGanhadores = {};
                     globalBilheteData.forEach(item => {
                         let nome = item.membro || 'Desconhecido';
@@ -1371,7 +1451,6 @@
                         topHtml += `</tbody></table>`;
                     }
 
-                    // 10 últimos ganhadores em ordem por mês (assumindo formato ou inserção)
                     let ultimos10Html = '';
                     let ultimos10Lista = [...globalBilheteData].slice(-10).reverse();
                     if (ultimos10Lista.length === 0) {
@@ -1454,6 +1533,100 @@
             }
         }
 
+        function mudarCvLayout(cv) {
+            cvSelecionadoLayout = cv;
+            abrirSubmenu('layouts');
+        }
+
+        function abrirModalLayoutNovo() {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title-layout').innerText = "Cadastrar Layout de Guerra";
+            document.getElementById('edit-id-layout').value = "";
+            document.getElementById('form-layout').reset();
+            document.getElementById('campo-layout-cv').value = cvSelecionadoLayout;
+            document.getElementById('modal-layout').style.display = 'flex';
+        }
+
+        function abrirModalLayoutEdicao(layout) {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title-layout').innerText = "Editar Layout de Guerra";
+            document.getElementById('edit-id-layout').value = layout.id;
+            document.getElementById('campo-layout-cv').value = layout.cv;
+            document.getElementById('campo-layout-link').value = layout.link;
+            document.getElementById('campo-layout-foto').value = layout.foto;
+            document.getElementById('modal-layout').style.display = 'flex';
+        }
+
+        function fecharModalLayout() {
+            document.getElementById('modal-layout').style.display = 'none';
+        }
+
+        function salvarLayoutGuerra(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let id = document.getElementById('edit-id-layout').value;
+            let cv = document.getElementById('campo-layout-cv').value;
+            let link = document.getElementById('campo-layout-link').value;
+            let foto = document.getElementById('campo-layout-foto').value;
+
+            let acaoStr = id ? "editar_layout" : "cadastrar_layout";
+            let payload = {
+                acao: acaoStr,
+                id: id,
+                cv: cv,
+                link: link,
+                foto: foto
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.sucesso) {
+                    fecharModalLayout();
+                    cvSelecionadoLayout = cv;
+                    carregarDados(() => {
+                        abrirSubmenu('layouts');
+                    });
+                } else {
+                    alert("Erro ao salvar layout.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro de conexão.");
+            });
+        }
+
+        function excluirLayout(id) {
+            if (!isAdminLogado) return;
+            if (!confirm("Tem certeza que deseja excluir este layout?")) return;
+
+            let payload = {
+                acao: "excluir_layout",
+                id: id
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('layouts');
+                    });
+                } else {
+                    alert("Erro ao excluir layout.");
+                }
+            })
+            .catch(err => alert("Erro de conexão."));
+        }
+
         function voltarMenuMais() {
             document.getElementById('more-menu-grid').style.display = 'grid';
             document.getElementById('submenu-view').style.display = 'none';
@@ -1508,6 +1681,22 @@
                         document.getElementById('clan-freq').innerText = "🕒 " + getVal("Frequência de Guerras");
                         document.getElementById('clan-desc').innerText = getVal("Descrição");
                         document.getElementById('last-update').innerText = "Última atualização: " + formatarUltimaAtualizacao(getVal("Última Atualização"));
+                    }
+
+                    const rawLayouts = data["Layouts de Guerra"];
+                    globalLayoutsData = [];
+                    if (rawLayouts && rawLayouts.length > 1) {
+                        const cabLay = rawLayouts[0];
+                        const idxLay = (nome) => cabLay.indexOf(nome);
+                        for (let i = 1; i < rawLayouts.length; i++) {
+                            let lay = rawLayouts[i];
+                            globalLayoutsData.push({
+                                id: lay[idxLay("ID")],
+                                cv: lay[idxLay("CV (Centro de Vila)")],
+                                link: lay[idxLay("Link do Layout")],
+                                foto: lay[idxLay("Foto (URL ou Descrição)")]
+                            });
+                        }
                     }
 
                     const rawCadastro = data["Cadastro Membros"];
@@ -2142,35 +2331,58 @@
             });
         }
 
+        // Funções para Advertências (Mantidas por integridade do painel)
+        function renderizarEstatisticasRanking() {
+            const rankingDiv = document.getElementById('ranking-list');
+            if(!rankingDiv) return;
+            let contagem = {};
+            globalAdvertenciasData.forEach(adv => {
+                let nome = adv.nomeClash || adv.tagMembro;
+                contagem[nome] = (contagem[nome] || 0) + 1;
+            });
+            let ordenados = Object.keys(contagem).map(k => ({ nome: k, total: contagem[k] })).sort((a,b) => b.total - a.total).slice(0, 3);
+            if (ordenados.length === 0) {
+                rankingDiv.innerHTML = '<span style="font-size:12px; color:var(--text-secondary);">Nenhuma punição registrada.</span>';
+                return;
+            }
+            let html = '';
+            ordenados.forEach((item, idx) => {
+                html += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>#${idx+1} ${item.nome}</span><strong style="color:var(--accent-red);">${item.total} punição(ões)</strong></div>`;
+            });
+            rankingDiv.innerHTML = html;
+        }
+
+        function renderizarAdvertencias() {
+            const container = document.getElementById('warnings-list');
+            if(!container) return;
+            container.innerHTML = '';
+            if (globalAdvertenciasData.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:20px;">Nenhuma advertência registrada.</p>';
+                return;
+            }
+            globalAdvertenciasData.forEach(adv => {
+                let card = document.createElement('div');
+                card.style.background = 'var(--card-bg)';
+                card.style.border = '1px solid var(--border-color)';
+                card.style.borderRadius = '10px';
+                card.style.padding = '12px';
+                card.style.marginBottom = '10px';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-weight:bold; font-size:13px; color:var(--accent-red);">⚠️ ${adv.nivelInfracao || 'Infração'}</span>
+                        <span style="font-size:11px; color:var(--text-secondary);">${adv.data || '--'}</span>
+                    </div>
+                    <div style="font-size:13px; font-weight:bold; margin-bottom:4px;">${adv.nomeClash} <span style="font-size:11px; color:var(--text-secondary);">(${adv.tagMembro})</span></div>
+                    <p style="font-size:12px; color:var(--text-secondary); margin:4px 0;"><strong>Motivo:</strong> ${adv.motivo}</p>
+                    <p style="font-size:12px; color:var(--text-secondary); margin:4px 0;"><strong>Punição:</strong> ${adv.punicao} (${adv.statusPunicao})</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
         function abrirModalAdvertencia() {
             if (!isAdminLogado) return;
             document.getElementById('form-advertencia').reset();
-            document.getElementById('edit-id-ocorrencia').value = "";
-            document.getElementById('modal-title-text').innerText = "Aplicar Advertência";
-            document.getElementById('grupo-select-membro').style.display = 'block';
-            document.getElementById('grupo-nivel').style.display = 'block';
-            document.getElementById('grupo-data').style.display = 'block';
-            document.getElementById('grupo-motivo').style.display = 'block';
-            document.getElementById('campo-data').value = new Date().toISOString().split('T')[0];
-            document.getElementById('modal-advertencia').style.display = 'flex';
-        }
-
-        function abrirModalEditarStatus(idOcorrencia) {
-            if (!isAdminLogado) return;
-            let adv = globalAdvertenciasData.find(a => String(a.idOcorrencia) === String(idOcorrencia));
-            if (!adv) return;
-
-            document.getElementById('form-advertencia').reset();
-            document.getElementById('edit-id-ocorrencia').value = adv.idOcorrencia;
-            document.getElementById('modal-title-text').innerText = "Editar Status Punição";
-            document.getElementById('grupo-select-membro').style.display = 'none';
-            document.getElementById('grupo-nivel').style.display = 'none';
-            document.getElementById('grupo-data').style.display = 'none';
-            document.getElementById('grupo-motivo').style.display = 'none';
-            document.getElementById('campo-tag').value = adv.tagMembro;
-            document.getElementById('campo-nome-clash').value = adv.nomeClash;
-            document.getElementById('campo-punicao').value = adv.punicao;
-            document.getElementById('campo-status-punicao').value = adv.statusPunicao || 'Pendente';
             document.getElementById('modal-advertencia').style.display = 'flex';
         }
 
@@ -2181,18 +2393,23 @@
         function salvarAdvertencia(event) {
             event.preventDefault();
             if (!isAdminLogado) return;
-            let idOcorrencia = document.getElementById('edit-id-ocorrencia').value;
+            let tagMembro = document.getElementById('campo-tag').value;
+            let nomeClash = document.getElementById('campo-nome-clash').value;
+            let nivelInfracao = document.getElementById('campo-nivel').value;
+            let data = document.getElementById('campo-data').value;
+            let motivo = document.getElementById('campo-motivo').value;
+            let punicao = document.getElementById('campo-punicao').value;
+            let statusPunicao = document.getElementById('campo-status-punicao').value;
 
             let payload = {
-                acao: idOcorrencia ? "editar_advertencia" : "cadastrar_advertencia",
-                idOcorrencia: idOcorrencia,
-                tagMembro: document.getElementById('campo-tag').value,
-                nomeClash: document.getElementById('campo-nome-clash').value,
-                nivelInfracao: document.getElementById('campo-nivel').value,
-                data: document.getElementById('campo-data').value,
-                motivo: document.getElementById('campo-motivo').value,
-                punicao: document.getElementById('campo-punicao').value,
-                statusPunicao: document.getElementById('campo-status-punicao').value
+                acao: "cadastrar_advertencia",
+                tagMembro: tagMembro,
+                nomeClash: nomeClash,
+                nivelInfracao: nivelInfracao,
+                data: data,
+                motivo: motivo,
+                punicao: punicao,
+                statusPunicao: statusPunicao
             };
 
             fetch(WEB_APP_URL, {
@@ -2201,127 +2418,18 @@
             })
             .then(res => res.json())
             .then(res => {
-                if(res.sucesso) {
+                if (res.sucesso) {
                     fecharModalAdvertencia();
                     carregarDados();
-                }
-            });
-        }
-
-        function renderizarEstatisticasRanking() {
-            const rankingList = document.getElementById('ranking-list');
-            rankingList.innerHTML = '';
-            let contagemMembros = {};
-
-            globalAdvertenciasData.forEach(adv => {
-                let nome = adv.nomeClash || 'Desconhecido';
-                if (!contagemMembros[nome]) {
-                    contagemMembros[nome] = { total: 0, pendentes: 0, resolvidos: 0 };
-                }
-                contagemMembros[nome].total++;
-                let status = String(adv.statusPunicao || '').toLowerCase();
-                if (status.includes('pendente')) {
-                    contagemMembros[nome].pendentes++;
                 } else {
-                    contagemMembros[nome].resolvidos++;
+                    alert("Erro ao registrar advertência.");
                 }
             });
-
-            let ordenados = Object.keys(contagemMembros).sort((a, b) => contagemMembros[b].total - contagemMembros[a].total);
-            if (ordenados.length === 0) {
-                rankingList.innerHTML = '<span style="font-size:11px; color: var(--text-secondary)">Nenhuma advertência registrada.</span>';
-                return;
-            }
-
-            ordenados.slice(0, 5).forEach((nome, index) => {
-                let stats = contagemMembros[nome];
-                let item = document.createElement('div');
-                item.style.display = 'flex';
-                item.style.justifyContent = 'space-between';
-                item.style.alignItems = 'center';
-                item.style.fontSize = '12px';
-                item.style.padding = '4px 0';
-                item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-                item.innerHTML = `
-                    <span>#${index + 1} <strong>${nome}</strong></span>
-                    <span style="color: var(--text-secondary);">
-                        Total: <strong style="color: var(--accent-red);">${stats.total}</strong> 
-                        (⏳ ${stats.pendentes} | ✅ ${stats.resolvidos})
-                    </span>
-                `;
-                rankingList.appendChild(item);
-            });
         }
 
-        function formatarDataSimples(dataString) {
-            if (!dataString) return '--';
-            const data = new Date(dataString);
-            if (isNaN(data.getTime())) return dataString;
-            return data.toLocaleDateString('pt-BR');
-        }
-
-        function renderizarAdvertencias() {
-            const container = document.getElementById('warnings-list');
-            container.innerHTML = '';
-
-            const filtroStatusInativo = document.getElementById('filter-status-inativo').value;
-            const filtroGravidade = document.getElementById('filter-gravidade').value;
-
-            let filtrados = globalAdvertenciasData.filter(adv => {
-                let cadastroMatch = globalCadastroData.find(c => c.tagMembro === adv.tagMembro);
-                let statusMembro = cadastroMatch ? cadastroMatch.status : "Ativo";
-
-                if (filtroStatusInativo !== "todos" && statusMembro !== filtroStatusInativo) return false;
-                if (filtroGravidade !== "todas" && adv.nivelInfracao !== filtroGravidade) return false;
-                return true;
-            });
-
-            if (filtrados.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhuma advertência encontrada.</p>';
-                return;
-            }
-
-            filtrados.forEach(adv => {
-                let cadastroMatch = globalCadastroData.find(c => c.tagMembro === adv.tagMembro);
-                let statusMembro = cadastroMatch ? cadastroMatch.status : "Ativo";
-                let isResolvido = String(adv.statusPunicao).toLowerCase().includes('resolvido') || String(adv.statusPunicao).toLowerCase().includes('cumprida');
-
-                let card = document.createElement('div');
-                card.style.background = 'var(--card-bg)';
-                card.style.border = '1px solid var(--border-color)';
-                card.style.borderLeft = '4px solid ' + (isResolvido ? 'var(--accent-green)' : 'var(--accent-red)');
-                card.style.borderRadius = '10px';
-                card.style.padding = '12px';
-                card.style.marginBottom = '10px';
-                if (isResolvido) card.style.opacity = '0.8';
-
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                        <div>
-                            <p style="font-size: 14px; font-weight: bold; margin: 0;">${adv.nomeClash || 'Membro'}</p>
-                            <span style="font-size: 11px; color: var(--text-secondary);">ID: #${adv.idOcorrencia || '--'} | Tag: ${adv.tagMembro || '--'}</span>
-                        </div>
-                        <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; background: rgba(255,255,255,0.05);">${adv.nivelInfracao || 'Geral'}</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0; line-height: 1.4;">
-                        <strong>Motivo:</strong> ${adv.motivo || 'Não informado'}<br>
-                        <span style="font-size: 11px; color: var(--text-secondary);">📅 ${formatarDataSimples(adv.data)} | Clã: <strong>${statusMembro}</strong></span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;">
-                        <span style="color: var(--accent-yellow);">⚡ ${adv.punicao || 'Nenhuma'}</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-weight: bold; color: ${isResolvido ? 'var(--accent-green)' : 'var(--accent-red)'};">
-                                ${adv.statusPunicao || 'Pendente'}
-                            </span>
-                            <button class="btn-icon ${isAdminLogado ? '' : 'admin-only'}" onclick="abrirModalEditarStatus('${adv.idOcorrencia}')">✏️ Status</button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        carregarDados();
+        window.onload = function() {
+            carregarDados();
+        };
     </script>
 </body>
 </html>
