@@ -40,6 +40,97 @@
             box-sizing: border-box;
         }
 
+        /* TELA DE CARREGAMENTO / LOADING MODERNA */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .loader-content {
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        .loader-logo {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .loader-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .loader-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            transition: width 0.2s ease;
+            border-radius: 5px;
+        }
+
+        .progress-percentage {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        /* AVISO DE INTERNET RUIM / LENTA */
+        .network-warning {
+            display: none;
+            margin-top: 15px;
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            color: var(--accent-yellow);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            animation: pulseWarning 1.5s infinite;
+        }
+
+        @keyframes pulseWarning {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
         .safe-area-banner {
             position: absolute;
             top: 0;
@@ -305,13 +396,6 @@
             font-size: 12px;
             font-weight: bold;
             white-space: nowrap;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: var(--text-secondary);
-            font-size: 16px;
         }
 
         .whatsapp-container {
@@ -625,11 +709,27 @@
 </head>
 <body>
 
+    <!-- TELA DE CARREGAMENTO FUNCIONAL 0 A 100% COM AVISO DE INTERNET -->
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="loader-logo">🛡️</div>
+            <div class="loader-title">Invictos BR</div>
+            <div class="loader-subtitle" id="loader-status-text">Sincronizando dados da API...</div>
+            
+            <div class="progress-bar-container">
+                <div id="progress-bar-fill" class="progress-bar-fill"></div>
+            </div>
+            <div id="progress-percentage" class="progress-percentage">0%</div>
+
+            <div id="network-warning" class="network-warning">
+                ⚠️ Sua conexão parece estar lenta ou instável. O carregamento pode demorar um pouco mais...
+            </div>
+        </div>
+    </div>
+
     <div class="safe-area-banner">Invictos BR • Painel Oficial</div>
 
     <div class="container">
-        <div id="loading" class="loading">Carregando dados do clã...</div>
-        
         <!-- ABA 1: MEU CLÃ -->
         <div id="tab-meu-cla" class="tab-content" style="display: none;">
             <div id="app">
@@ -1029,6 +1129,62 @@
         let globalHoraGuerra = "";
         let cvSelecionadoLayout = "CV15";
 
+        // Variáveis de Controle do Loading
+        let progressInterval = null;
+        let currentProgress = 0;
+        let networkTimer = null;
+
+        function iniciarProgressoLoading() {
+            currentProgress = 0;
+            const fillEl = document.getElementById('progress-bar-fill');
+            const percEl = document.getElementById('progress-percentage');
+            const warningEl = document.getElementById('network-warning');
+
+            warningEl.style.display = 'none';
+
+            // Se a requisição demorar mais de 3.5 segundos, exibe o aviso de internet lenta
+            networkTimer = setTimeout(() => {
+                warningEl.style.display = 'block';
+            }, 3500);
+
+            if (progressInterval) clearInterval(progressInterval);
+
+            progressInterval = setInterval(() => {
+                if (currentProgress < 90) {
+                    // Sobe de forma fluida até 90% aguardando a resposta da API
+                    let incremento = Math.floor(Math.random() * 8) + 2;
+                    currentProgress += incremento;
+                    if (currentProgress > 90) currentProgress = 90;
+                    
+                    fillEl.style.width = currentProgress + '%';
+                    percEl.innerText = currentProgress + '%';
+                }
+            }, 180);
+        }
+
+        function finalizarProgressoLoading(callback) {
+            if (networkTimer) clearTimeout(networkTimer);
+            if (progressInterval) clearInterval(progressInterval);
+
+            currentProgress = 100;
+            const fillEl = document.getElementById('progress-bar-fill');
+            const percEl = document.getElementById('progress-percentage');
+            const warningEl = document.getElementById('network-warning');
+            const loadingScreen = document.getElementById('loading-screen');
+
+            fillEl.style.width = '100%';
+            percEl.innerText = '100%';
+            warningEl.style.display = 'none';
+
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    if (callback) callback();
+                }, 400);
+            }, 300);
+        }
+
         function sincronizarPlanilha() {
             const iconEl = document.getElementById('sync-icon');
             const textEl = document.getElementById('sync-text');
@@ -1194,7 +1350,6 @@
                         limiteTitulares = parseInt(matchFormato[1], 10);
                     }
 
-                    // Ordena por CV decrescente, depois Troféus decrescentes para quem for Titular ordenado por CV
                     let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
                         let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
                         let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
@@ -1206,7 +1361,6 @@
                         return trofY - trofX;
                     });
 
-                    // Separa com base estrita no status explícito salvo ("Escalado" / "Titular" vs "Reserva")
                     let titularesLista = [];
                     let reservasLista = [];
 
@@ -1215,11 +1369,9 @@
                         if (st === 'reserva') {
                             reservasLista.push(esc);
                         } else {
-                            // Se estiver como escalado/titular, respeita, mas valida o limite de titulares se necessário
                             if (titularesLista.length < limiteTitulares) {
                                 titularesLista.push(esc);
                             } else {
-                                // Se estourou o limite e por acaso sobrou, joga para reserva automaticamente
                                 esc.status = 'Reserva';
                                 reservasLista.push(esc);
                             }
@@ -1241,7 +1393,6 @@
                                 <button class="btn-icon delete" onclick="removerEscalacao('${esc.tag || esc.nome}')" title="Remover">🗑️</button>
                             ` : '';
 
-                            // Botão dinâmico: se estiver na reserva, permite promover se não atingiu o limite de titulares. Se for titular, permite mover para reserva.
                             let botaoTrocarStatusHtml = '';
                             if (isAdminLogado) {
                                 if (isReservaBloco) {
@@ -1696,10 +1847,11 @@
         }
 
         function carregarDados(callbackSuccess = null) {
+            iniciarProgressoLoading();
+
             fetch(WEB_APP_URL)
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('loading').style.display = 'none';
                     if (document.getElementById('tab-meu-cla').style.display === 'none' &&
                         document.getElementById('tab-guerra').style.display === 'none' &&
                         document.getElementById('tab-whatsapp').style.display === 'none' &&
@@ -1882,10 +2034,16 @@
                     }
 
                     atualizarInterfaceAdmin();
-                    if (callbackSuccess) callbackSuccess();
+                    finalizarProgressoLoading(() => {
+                        if (callbackSuccess) callbackSuccess();
+                    });
                 })
                 .catch(error => {
-                    document.getElementById('loading').innerText = 'Erro ao carregar dados da API.';
+                    if (networkTimer) clearTimeout(networkTimer);
+                    if (progressInterval) clearInterval(progressInterval);
+                    document.getElementById('loader-status-text').innerText = 'Erro ao carregar dados da API.';
+                    document.getElementById('network-warning').style.display = 'block';
+                    document.getElementById('network-warning').innerText = '⚠️ Erro de conexão com a API. Verifique sua internet ou tente recarregar a página.';
                     console.error('Erro:', error);
                     if (callbackSuccess) callbackSuccess();
                 });
@@ -2046,12 +2204,10 @@
                 limiteTitulares = parseInt(matchFormato[1], 10);
             }
 
-            // Conta quantos titulares já existem atualmente
             let countTitularesAtuais = globalEscalacaoData.filter(e => String(e.status || '').toLowerCase() !== 'reserva').length;
 
             let novosMembros = [];
             checkboxes.forEach(chk => {
-                // Regra solicitada: Se o formato de guerra estiver preenchido (ou por limite), novos membros adicionados vão direto para a reserva caso o limite de titulares já esteja atingido.
                 let statusInicial = "Escalado";
                 if (countTitularesAtuais >= limiteTitulares) {
                     statusInicial = "Reserva";
@@ -2095,7 +2251,6 @@
         function alternarStatusEscalacao(tagOuNome, novoStatus) {
             if (!isAdminLogado) return;
 
-            // Validação de limite para impedir que coloque como titular se estiver no limite
             if (novoStatus === 'Escalado' || novoStatus === 'Titular') {
                 let limiteTitulares = 15;
                 let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
@@ -2272,7 +2427,7 @@
             let dataFormatada = globalDataGuerra ? new Date(globalDataGuerra + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada';
             let horaFormatada = globalHoraGuerra || 'Não informada';
 
-            let textoMsg = `⚔️ *ESCALAÇÃO DE GUERRA - INVICTOS BR* ⚔️\n\n`;
+            let textoMsg = `⚔️ *ESCALAÇÃO DE GUERRA - INVICTOS BR* \n\n`;
             textoMsg += `📌 *Formato:* ${globalFormatoGuerra}\n`;
             textoMsg += `📅 *Data:* ${dataFormatada}\n`;
             textoMsg += `🕒 *Horário:* ${horaFormatada}\n\n`;
@@ -2614,12 +2769,13 @@
                         <span style="font-size: 11px; color: var(--text-secondary);">${adv.data || ''}</span>
                     </div>
                     <p style="margin: 6px 0; font-size: 12px; color: var(--text-secondary);"><strong>Motivo:</strong> ${adv.motivo || 'Não informado'}</p>
-                    <p style="margin: 0 0 8px 0; font-size: 12px; color: var(--text-color);"><strong>Punição:</strong> ${adv.punicao} (${adv.statusPunicao})</p>
+                    <p style="margin: 6px 0; font-size: 12px; color: var(--text-color);"><strong>Punição:</strong> ${adv.punicao || 'Não informada'} | <span style="color: var(--accent-yellow);">${adv.statusPunicao || 'Pendente'}</span></p>
                 `;
                 container.appendChild(card);
             });
         }
 
+        // Inicializa o carregamento dos dados ao abrir a página
         window.onload = function() {
             carregarDados();
         };
