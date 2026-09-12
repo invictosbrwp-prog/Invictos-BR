@@ -10,12 +10,12 @@
             --card-bg: #1a1d28;
             --card-hover: #222634;
             --text-color: #ffffff;
-            --text-secondary: #94a3b8;
+            --text-secondary: #cbd5e1; /* Texto secundário mais destacado/nítido */
             --accent-green: #22c55e;
-            --accent-blue: #3b82f6;
+            --accent-blue: #38bdf8; /* Azul mais brilhante para destaque */
             --accent-red: #ef4444;
-            --accent-yellow: #eab308;
-            --border-color: #2a2e3d;
+            --accent-yellow: #facc15; /* Amarelo mais destacado */
+            --border-color: #33384a; /* Bordas mais visíveis */
         }
 
         body {
@@ -56,6 +56,35 @@
             transition: opacity 0.4s ease;
             padding: 20px;
             box-sizing: border-box;
+        }
+
+        /* INDICADOR DE CARREGAMENTO ESPECÍFICO PARA AÇÕES / BOTÕES */
+        .action-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 20, 28, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        }
+
+        .action-loading-box {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-blue);
+            padding: 20px 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .loader-content {
@@ -361,6 +390,7 @@
             font-size: 14px;
             font-weight: bold;
             margin: 0;
+            color: var(--text-color);
         }
 
         .member-role {
@@ -396,6 +426,7 @@
             font-size: 12px;
             font-weight: bold;
             white-space: nowrap;
+            color: var(--accent-yellow);
         }
 
         .whatsapp-container {
@@ -442,6 +473,7 @@
         .whatsapp-details h4 {
             margin: 0 0 4px 0;
             font-size: 14px;
+            color: var(--text-color);
         }
 
         .whatsapp-details p {
@@ -727,6 +759,14 @@
         </div>
     </div>
 
+    <!-- OVERLAY DE CARREGAMENTO PARA AÇÕES ESPECÍFICAS (ANTIDUPLICAÇÃO) -->
+    <div id="action-loading-overlay" class="action-loading-overlay">
+        <div class="action-loading-box">
+            <div class="spin" style="font-size: 20px;">🔄</div>
+            <span id="action-loading-text">Salvando e sincronizando dados...</span>
+        </div>
+    </div>
+
     <div class="safe-area-banner">Invictos BR • Painel Oficial</div>
 
     <div class="container">
@@ -893,7 +933,7 @@
                 <div class="version-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                        <span style="font-weight: bold; color: var(--accent-blue);">1.20.1</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.20.9</span>
                     </div>
                     <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                         Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
@@ -1102,7 +1142,7 @@
     <div id="modal-escalacao" class="modal">
         <div class="modal-content">
             <h3>📋 Adicionar Membros à Escalação</h3>
-            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Selecione um ou mais membros para adicionar de uma só vez:</p>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Selecione um ou mais membros (com WhatsApp cadastrado) para adicionar de uma só vez:</p>
             <div id="lista-checkboxes-escalacao" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 12px; background: var(--bg-color);">
                 <!-- Preenchido via JS -->
             </div>
@@ -1134,6 +1174,29 @@
         let currentProgress = 0;
         let networkTimer = null;
 
+        // FUNÇÃO AUXILIAR PARA FORMATAR CORRETAMENTE A DATA / MÊS DO BILHETE (EVITA 2026-03-01T03:00:00.000Z)
+        function formatarMesAnoBilhete(valor) {
+            if (!valor) return 'Março/2026';
+            let strVal = String(valor).trim();
+            if (strVal.includes('T') || (strVal.includes('-') && strVal.length >= 10)) {
+                let d = new Date(strVal);
+                if (!isNaN(d.getTime())) {
+                    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                    return `${meses[d.getUTCMonth()]} / ${d.getUTCFullYear()}`;
+                }
+            }
+            return strVal;
+        }
+
+        function mostrarCarregamentoAcao(texto = "Salvando e sincronizando dados...") {
+            document.getElementById('action-loading-text').innerText = texto;
+            document.getElementById('action-loading-overlay').style.display = 'flex';
+        }
+
+        function esconderCarregamentoAcao() {
+            document.getElementById('action-loading-overlay').style.display = 'none';
+        }
+
         function iniciarProgressoLoading() {
             currentProgress = 0;
             const fillEl = document.getElementById('progress-bar-fill');
@@ -1142,7 +1205,6 @@
 
             warningEl.style.display = 'none';
 
-            // Se a requisição demorar mais de 3.5 segundos, exibe o aviso de internet lenta
             networkTimer = setTimeout(() => {
                 warningEl.style.display = 'block';
             }, 3500);
@@ -1151,7 +1213,6 @@
 
             progressInterval = setInterval(() => {
                 if (currentProgress < 90) {
-                    // Sobe de forma fluida até 90% aguardando a resposta da API
                     let incremento = Math.floor(Math.random() * 8) + 2;
                     currentProgress += incremento;
                     if (currentProgress > 90) currentProgress = 90;
@@ -1548,9 +1609,14 @@
                                         <img src="${layout.foto}" alt="Layout ${layout.cv}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); cursor: pointer;">
                                     </a>
                                     <div style="font-size: 13px; font-weight: bold; color: var(--text-color); margin-bottom: 8px;">Base ${layout.cv}</div>
-                                    <a href="${layout.link}" target="_blank" class="action-button" style="margin: 0; padding: 8px; font-size: 13px; text-decoration: none;">
-                                        <span>🔗</span> Copiar Layout
-                                    </a>
+                                    <div style="display: flex; gap: 6px; margin-bottom: 4px;">
+                                        <a href="${layout.link}" target="_blank" class="action-button" style="margin: 0; padding: 8px; font-size: 13px; text-decoration: none; flex: 1;">
+                                            <span>🔗</span> Copiar
+                                        </a>
+                                        <button class="action-button" onclick="compartilharLayout('${layout.link}', '${layout.cv}')" style="background: var(--accent-green); margin: 0; padding: 8px; font-size: 13px; flex: 1;">
+                                            <span>💬</span> Compartilhar
+                                        </button>
+                                    </div>
                                     ${botaoAdminLayout}
                                 </div>
                             `;
@@ -1587,7 +1653,7 @@
                         
                         <p><strong>Respeito:</strong> Respeite os membros no chat, temos membros mais novos, mais velhos, homens e mulheres, portanto pense antes de falar qualquer besteira!</p>
                         
-                        <p><strong>Participação em Guerras:</strong> Se você não quiser ir para uma determinada guerra, votem no nosso grupo do Whatsapp. Mas lembro que o clã é de guerra, fique fora apenas se tiver os heróis upando ou outros casos específicos.</p>
+                        <p><strong>Participação em Guerras:</strong> Se você não quiser ir para uma determinada guerra, votem no nosso grupo do Whatsapp. Mais lembro que o clã é de guerra, fique fora apenas se tiver os heróis upando ou outros casos específicos.</p>
                         
                         <p><strong>Novatos:</strong> Novos jogadores ficam de fora da primeira guerra. Estamos vendo sua atividade no clã para ver se é um jogador ativo. Se não houver atividade, você não irá para guerra, pois corremos sério risco de perder por falta do seu ataque.</p>
                         
@@ -1641,7 +1707,7 @@
                         topGanhadores.forEach((g, idx) => {
                             topHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 <td style="padding: 6px; font-weight: bold; color: var(--accent-yellow);">#${idx + 1}</td>
-                                <td style="padding: 6px;">${g.nome}</td>
+                                <td style="padding: 6px; color: var(--text-color);">${g.nome}</td>
                                 <td style="padding: 6px; text-align: right; font-weight: bold; color: var(--accent-green);">${g.total}x</td>
                             </tr>`;
                         });
@@ -1662,9 +1728,10 @@
                             </thead>
                             <tbody>`;
                         ultimos10Lista.forEach(item => {
+                            let mesFormatado = formatarMesAnoBilhete(item.mes);
                             ultimos10Html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 6px; color: var(--accent-blue); font-weight: bold;">${item.mes || '--'}</td>
-                                <td style="padding: 6px;">${item.membro || '--'}</td>
+                                <td style="padding: 6px; color: var(--accent-blue); font-weight: bold;">${mesFormatado}</td>
+                                <td style="padding: 6px; color: var(--text-color);">${item.membro || '--'}</td>
                             </tr>`;
                         });
                         ultimos10Html += `</tbody></table>`;
@@ -1735,6 +1802,12 @@
             abrirSubmenu('layouts');
         }
 
+        function compartilharLayout(link, cv) {
+            let texto = `🗺️ *LAYOUT DE GUERRA - ${cv}*\n\nConfira este layout do clã Invictos BR:\n${link}`;
+            let urlWpp = `https://wa.me/?text=` + encodeURIComponent(texto);
+            window.open(urlWpp, '_blank');
+        }
+
         function abrirModalLayoutNovo() {
             if (!isAdminLogado) return;
             document.getElementById('modal-title-layout').innerText = "Cadastrar Layout de Guerra";
@@ -1767,6 +1840,8 @@
             let link = document.getElementById('campo-layout-link').value;
             let foto = document.getElementById('campo-layout-foto').value;
 
+            mostrarCarregamentoAcao("Salvando layout de guerra...");
+
             let acaoStr = id ? "editar_layout" : "cadastrar_layout";
             let payload = {
                 acao: acaoStr,
@@ -1782,6 +1857,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if (res.sucesso) {
                     fecharModalLayout();
                     cvSelecionadoLayout = cv;
@@ -1793,6 +1869,7 @@
                 }
             })
             .catch(err => {
+                esconderCarregamentoAcao();
                 console.error(err);
                 alert("Erro de conexão.");
             });
@@ -1801,6 +1878,8 @@
         function excluirLayout(id) {
             if (!isAdminLogado) return;
             if (!confirm("Tem certeza que deseja excluir este layout?")) return;
+
+            mostrarCarregamentoAcao("Excluindo layout...");
 
             let payload = {
                 acao: "excluir_layout",
@@ -1813,6 +1892,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if (res.sucesso) {
                     carregarDados(() => {
                         abrirSubmenu('layouts');
@@ -1821,7 +1901,10 @@
                     alert("Erro ao excluir layout.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function voltarMenuMais() {
@@ -2101,7 +2184,7 @@
                     <div class="member-info">
                         <p class="member-name">${m.nome}</p>
                         <p class="member-role">${m.cargo} • XP ${m.xp}</p>
-                        <div class="member-extra-details">🟢 ${m.doadas} / 🔴 ${m.recebidas}</div>
+                        <div class="member-extra-details">🟢 Doadas: ${m.doadas} | 🔴 Recebidas: ${m.recebidas}</div>
                     </div>
                     <div class="member-stats-group">
                         ${btnWhatsappHtml}
@@ -2134,6 +2217,7 @@
 
         function popularSelectMembrosAdvertencia() {
             const select = document.getElementById('campo-membro-advertencia');
+            if(!select) return;
             select.innerHTML = '<option value="">Selecione o membro...</option>';
             globalCadastroData.forEach(c => {
                 let opt = document.createElement('option');
@@ -2163,10 +2247,18 @@
             let tagsEscaladas = globalEscalacaoData.map(e => e.tag);
             let nomesEscalados = globalEscalacaoData.map(e => e.nome);
 
-            let disponiveis = globalMembrosData.filter(m => !tagsEscaladas.includes(m.tag) && !nomesEscalados.includes(m.nome));
+            let tagsCadastradasComWpp = globalCadastroData
+                .filter(c => c.telefone && String(c.telefone).trim() !== '')
+                .map(c => c.tagClash);
+
+            let disponiveis = globalMembrosData.filter(m => {
+                let jaEscalado = tagsEscaladas.includes(m.tag) || nomesEscalados.includes(m.nome);
+                let temWhatsappSalvo = tagsCadastradasComWpp.includes(m.tag);
+                return !jaEscalado && temWhatsappSalvo;
+            });
 
             if (disponiveis.length === 0) {
-                containerCheckboxes.innerHTML = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center;">Todos os membros já estão escalados.</p>';
+                containerCheckboxes.innerHTML = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center;">Nenhum membro disponível com WhatsApp cadastrado.</p>';
             } else {
                 disponiveis.forEach(m => {
                     let div = document.createElement('div');
@@ -2197,6 +2289,8 @@
                 alert("Selecione pelo menos um membro.");
                 return;
             }
+
+            mostrarCarregamentoAcao("Salvando escalação...");
 
             let limiteTitulares = 15;
             let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
@@ -2233,6 +2327,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if(res.sucesso) {
                     fecharModalEscalacao();
                     carregarDados(() => {
@@ -2243,6 +2338,7 @@
                 }
             })
             .catch(err => {
+                esconderCarregamentoAcao();
                 console.error(err);
                 alert("Erro de conexão.");
             });
@@ -2268,6 +2364,8 @@
                 }
             }
 
+            mostrarCarregamentoAcao("Atualizando status na escalação...");
+
             let payload = {
                 acao: "alternar_status_escala",
                 tag: tagOuNome,
@@ -2280,6 +2378,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if(res.sucesso) {
                     carregarDados(() => {
                         abrirSubmenu('escalacao');
@@ -2288,12 +2387,17 @@
                     alert("Erro ao alternar status.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function removerEscalacao(tagOuNome) {
             if (!isAdminLogado) return;
             if (!confirm("Deseja remover este membro da escalação?")) return;
+
+            mostrarCarregamentoAcao("Removendo da escalação...");
 
             let payload = {
                 acao: "excluir_escala",
@@ -2306,6 +2410,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if(res.sucesso) {
                     carregarDados(() => {
                         abrirSubmenu('escalacao');
@@ -2314,12 +2419,17 @@
                     alert("Erro ao remover.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function limparTodaEscalacao() {
             if (!isAdminLogado) return;
             if (!confirm("Tem certeza absoluta que deseja limpar toda a escalação da guerra?")) return;
+
+            mostrarCarregamentoAcao("Limpando escalação...");
 
             let payload = {
                 acao: "limpar_escalacao"
@@ -2331,6 +2441,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if(res.sucesso) {
                     carregarDados(() => {
                         abrirSubmenu('escalacao');
@@ -2339,7 +2450,10 @@
                     alert("Erro ao limpar escalação.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function atualizarFormatoGuerra(formato) {
@@ -2361,6 +2475,8 @@
         function salvarConfiguracaoGuerra() {
             if (!isAdminLogado) return;
 
+            mostrarCarregamentoAcao("Salvando configuração de guerra...");
+
             let payload = {
                 acao: "salvar_config_guerra",
                 formato: globalFormatoGuerra,
@@ -2374,13 +2490,17 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if(res.sucesso) {
                     alert("Configurações de guerra salvas com sucesso!");
                 } else {
                     alert("Erro ao salvar configurações.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function enviarEscalacaoWhatsApp() {
@@ -2470,6 +2590,8 @@
             let membro = document.getElementById('campo-bilhete-membro').value;
             let mes = document.getElementById('campo-bilhete-mes').value;
 
+            mostrarCarregamentoAcao("Salvando ganhador do bilhete...");
+
             let payload = {
                 acao: "cadastrar_bilhete",
                 membro: membro,
@@ -2482,6 +2604,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if(res.sucesso) {
                     fecharModalBilhete();
                     carregarDados(() => {
@@ -2492,6 +2615,7 @@
                 }
             })
             .catch(err => {
+                esconderCarregamentoAcao();
                 console.error(err);
                 alert("Erro de conexão.");
             });
@@ -2534,7 +2658,7 @@
                         ${fotoUrl ? `<img src="${fotoUrl}" class="member-avatar" alt="CV">` : '<div style="width:42px;height:42px"></div>'}
                         <div class="whatsapp-details">
                             <h4>${cad.nomeReal} <span style="font-size:11px; color: var(--accent-blue)">(${nomeExibicao})</span></h4>
-                            <p>📱 ${telMascarado} | Status: ${cad.status || 'Ativo'}</p>
+                            <p>📱 ${telMascarado} | Status: <strong style="color: var(--text-color);">${cad.status || 'Ativo'}</strong></p>
                         </div>
                     </div>
                     <div class="card-actions ${isAdminLogado ? '' : 'admin-only'}">
@@ -2591,6 +2715,8 @@
             let nomeClash = optSelecionada ? optSelecionada.text.split(' (')[0] : '';
             let status = document.getElementById('campo-status').value;
 
+            mostrarCarregamentoAcao("Salvando cadastro de membro...");
+
             let acaoStr = linha ? "editar" : "cadastrar";
             let payload = {
                 acao: acaoStr,
@@ -2608,6 +2734,7 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if (res.sucesso) {
                     fecharModal();
                     carregarDados();
@@ -2615,12 +2742,17 @@
                     alert("Erro ao salvar cadastro.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function excluirCadastro(linhaPlanilha) {
             if (!isAdminLogado) return;
             if (!confirm("Tem certeza que deseja excluir este cadastro?")) return;
+
+            mostrarCarregamentoAcao("Excluindo cadastro...");
 
             let payload = {
                 acao: "excluir",
@@ -2633,22 +2765,26 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if (res.sucesso) {
                     carregarDados();
                 } else {
                     alert("Erro ao excluir.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function abrirModalAdvertencia() {
             if (!isAdminLogado) return;
             document.getElementById('modal-title-text').innerText = "Aplicar Advertência";
-            document.getElementById('form-advertencia').reset();
             document.getElementById('edit-id-ocorrencia').value = "";
-            document.getElementById('grupo-select-membro').style.display = 'block';
-            document.getElementById('campo-data').value = new Date().toISOString().split('T')[0];
+            document.getElementById('form-advertencia').reset();
+            popularSelectMembrosAdvertencia();
+            document.getElementById('campo-data').valueAsDate = new Date();
             document.getElementById('modal-advertencia').style.display = 'flex';
         }
 
@@ -2660,19 +2796,26 @@
             event.preventDefault();
             if (!isAdminLogado) return;
 
-            let tagMembro = document.getElementById('campo-tag').value;
+            let tag = document.getElementById('campo-tag').value;
             let nomeClash = document.getElementById('campo-nome-clash').value;
-            let nivelInfracao = document.getElementById('campo-nivel').value;
+            let nivel = document.getElementById('campo-nivel').value;
             let data = document.getElementById('campo-data').value;
             let motivo = document.getElementById('campo-motivo').value;
             let punicao = document.getElementById('campo-punicao').value;
             let statusPunicao = document.getElementById('campo-status-punicao').value;
 
+            if (!tag) {
+                alert("Selecione um membro válido.");
+                return;
+            }
+
+            mostrarCarregamentoAcao("Salvando advertência...");
+
             let payload = {
                 acao: "cadastrar_advertencia",
-                tagMembro: tagMembro,
+                tagMembro: tag,
                 nomeClash: nomeClash,
-                nivelInfracao: nivelInfracao,
+                nivelInfracao: nivel,
                 data: data,
                 motivo: motivo,
                 punicao: punicao,
@@ -2685,30 +2828,62 @@
             })
             .then(res => res.json())
             .then(res => {
+                esconderCarregamentoAcao();
                 if (res.sucesso) {
                     fecharModalAdvertencia();
-                    carregarDados(() => {
-                        mudarAba('advertencias', document.getElementById('nav-item-advertencias'));
-                    });
+                    carregarDados();
                 } else {
                     alert("Erro ao salvar advertência.");
                 }
             })
-            .catch(err => alert("Erro de conexão."));
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function excluirAdvertencia(idOcorrencia) {
+            if (!isAdminLogado) return;
+            if (!confirm("Deseja excluir esta advertência?")) return;
+
+            mostrarCarregamentoAcao("Excluindo advertência...");
+
+            let payload = {
+                acao: "excluir_advertencia",
+                idOcorrencia: idOcorrencia
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    carregarDados();
+                } else {
+                    alert("Erro ao excluir advertência.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
         }
 
         function renderizarEstatisticasRanking() {
             const rankingListDiv = document.getElementById('ranking-list');
-            rankingListDiv.innerHTML = '';
+            if(!rankingListDiv) return;
 
-            let contagemPunicoes = {};
+            let contagem = {};
             globalAdvertenciasData.forEach(adv => {
-                let nome = adv.nomeClash || adv.tagMembro || 'Desconhecido';
-                contagemPunicoes[nome] = (contagemPunicoes[nome] || 0) + 1;
+                let nome = adv.nomeClash || adv.tagMembro;
+                contagem[nome] = (contagem[nome] || 0) + 1;
             });
 
-            let rankingOrdenado = Object.keys(contagemPunicoes)
-                .map(nome => ({ nome, total: contagemPunicoes[nome] }))
+            let rankingOrdenado = Object.keys(contagem)
+                .map(nome => ({ nome, total: contagem[nome] }))
                 .sort((a, b) => b.total - a.total)
                 .slice(0, 3);
 
@@ -2717,68 +2892,71 @@
                 return;
             }
 
-            rankingOrdenado.forEach((r, idx) => {
-                let cor = idx === 0 ? 'var(--accent-red)' : (idx === 1 ? 'var(--accent-yellow)' : 'var(--text-secondary)');
-                let item = document.createElement('div');
-                item.style.display = 'flex';
-                item.style.justifyContent = 'space-between';
-                item.style.fontSize = '12px';
-                item.style.marginBottom = '4px';
-                item.innerHTML = `<span><strong style="color: ${cor};">#${idx + 1}</strong> ${r.nome}</span> <span style="font-weight: bold; color: var(--text-color);">${r.total}x</span>`;
-                rankingListDiv.appendChild(item);
+            let html = '';
+            rankingOrdenado.forEach((item, idx) => {
+                html += `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-color);">
+                    <span>#${idx + 1} ${item.nome}</span>
+                    <strong style="color: var(--accent-red);">${item.total} punição(ões)</strong>
+                </div>`;
             });
+            rankingListDiv.innerHTML = html;
         }
 
         function renderizarAdvertencias() {
-            const container = document.getElementById('warnings-list');
-            container.innerHTML = '';
+            const warningsListDiv = document.getElementById('warnings-list');
+            if(!warningsListDiv) return;
+            warningsListDiv.innerHTML = '';
 
-            let filtroStatusInativo = document.getElementById('filter-status-inativo').value;
-            let filtroGravidade = document.getElementById('filter-gravidade').value;
+            const statusInativoFiltro = document.getElementById('filter-status-inativo').value;
+            const gravidadeFiltro = document.getElementById('filter-gravidade').value;
 
-            let filtrados = globalAdvertenciasData.filter(adv => {
+            let filtradas = globalAdvertenciasData.filter(adv => {
                 let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
-                let statusClã = cadastroMatch ? cadastroMatch.status : 'Ativo';
+                let statusClã = cadastroMatch ? (cadastroMatch.status || 'Ativo') : 'Ativo';
 
-                if (filtroStatusInativo !== 'todos' && statusClã !== filtroStatusInativo) return false;
-                if (filtroGravidade !== 'todas' && adv.nivelInfracao !== filtroGravidade) return false;
+                if (statusInativoFiltro !== 'todos' && statusClã !== statusInativoFiltro) {
+                    return false;
+                }
+                if (gravidadeFiltro !== 'todas' && adv.nivelInfracao !== gravidadeFiltro) {
+                    return false;
+                }
                 return true;
             });
 
-            if (filtrados.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px; font-size: 13px;">Nenhuma advertência encontrada com os filtros selecionados.</p>';
+            if (filtradas.length === 0) {
+                warningsListDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhuma advertência encontrada.</p>';
                 return;
             }
 
-            filtrados.reverse().forEach(adv => {
+            filtradas.forEach(adv => {
+                let corNivel = 'var(--accent-yellow)';
+                if (adv.nivelInfracao === 'Grave') corNivel = 'var(--accent-red)';
+                if (adv.nivelInfracao === 'Leve') corNivel = 'var(--accent-green)';
+
                 let card = document.createElement('div');
-                card.style.background = 'var(--card-bg)';
-                card.style.border = '1px solid var(--border-color)';
-                card.style.borderRadius = '10px';
-                card.style.padding = '12px';
-                card.style.marginBottom = '10px';
-
-                let corGravidade = adv.nivelInfracao === 'Grave' ? 'var(--accent-red)' : (adv.nivelInfracao === 'Média' ? 'var(--accent-yellow)' : 'var(--accent-blue)');
-
+                card.className = 'whatsapp-card';
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                        <div>
-                            <h4 style="margin: 0; font-size: 14px; color: var(--text-color);">${adv.nomeClash || 'Membro'} <span style="font-size: 11px; color: var(--text-secondary);">(${adv.tagMembro})</span></h4>
-                            <span style="display: inline-block; background: ${corGravidade}15; color: ${corGravidade}; border: 1px solid ${corGravidade}30; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-top: 4px;">Infração: ${adv.nivelInfracao}</span>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <h4 style="margin: 0; font-size: 14px; color: var(--text-color);">${adv.nomeClash || adv.tagMembro}</h4>
+                            <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: ${corNivel}; font-weight: bold;">${adv.nivelInfracao || 'Leve'}</span>
                         </div>
-                        <span style="font-size: 11px; color: var(--text-secondary);">${adv.data || ''}</span>
+                        <p style="margin: 2px 0; font-size: 12px; color: var(--text-secondary);"><strong>Motivo:</strong> ${adv.motivo || '--'}</p>
+                        <p style="margin: 2px 0; font-size: 12px; color: var(--text-secondary);"><strong>Punição:</strong> ${adv.punicao || '--'} (${adv.statusPunicao || 'Pendente'})</p>
+                        <p style="margin: 2px 0; font-size: 11px; color: var(--text-secondary);">Data: ${adv.data || '--'}</p>
                     </div>
-                    <p style="margin: 6px 0; font-size: 12px; color: var(--text-secondary);"><strong>Motivo:</strong> ${adv.motivo || 'Não informado'}</p>
-                    <p style="margin: 6px 0; font-size: 12px; color: var(--text-color);"><strong>Punição:</strong> ${adv.punicao || 'Não informada'} | <span style="color: var(--accent-yellow);">${adv.statusPunicao || 'Pendente'}</span></p>
+                    <div class="card-actions ${isAdminLogado ? '' : 'admin-only'}" style="margin-left: 10px;">
+                        <button class="btn-icon delete" onclick="excluirAdvertencia('${adv.idOcorrencia}')" title="Excluir">🗑️</button>
+                    </div>
                 `;
-                container.appendChild(card);
+                warningsListDiv.appendChild(card);
             });
         }
 
-        // Inicializa o carregamento dos dados ao abrir a página
-        window.onload = function() {
+        // Inicialização ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
             carregarDados();
-        };
+        });
     </script>
 </body>
 </html>
