@@ -1046,7 +1046,7 @@
                 <div class="version-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                        <span style="font-weight: bold; color: var(--accent-blue);">1.22.0</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.23.0</span>
                     </div>
                     <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                         Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
@@ -1300,6 +1300,7 @@
         let globalBaseGuerraData = []; 
         let globalEventosGuerraData = [];
         let globalGuerraJogadoresData = [];
+        let globalClaRivalData = []; 
         let rankingAtualGerado = []; 
         
         let globalFormatoGuerra = "15x15";
@@ -1343,7 +1344,11 @@
             
             // Chamar a renderização de conteúdo extra (se aplicável)
             if (aba === 'eventos') renderizarEventosGuerra();
-            if (aba === 'mapa') renderizarMapaGuerra();
+            if (aba === 'mapa') {
+                document.getElementById('btn-mapa-nosso').classList.add('active');
+                document.getElementById('btn-mapa-rival').classList.remove('active');
+                renderizarMapaGuerra('nosso');
+            }
         }
 
         function renderizarGuerra(rawGuerra, rawPrev) {
@@ -1519,8 +1524,10 @@
         
                 <!-- SUB-ABA 3: MAPA DE GUERRA -->
                 <div id="war-mapa-container" style="display: none; padding: 20px;">
-                    <h3 style="margin-top:0; color: var(--accent-yellow);">🗺️ Mapa de Guerra (Nosso Clã)</h3>
-                    <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Acompanhe o desempenho de cada membro e gerencie as autorizações de ataque.</p>
+                    <div style="display: flex; gap: 6px; margin-bottom: 15px;">
+                        <button id="btn-mapa-nosso" class="action-button active" onclick="renderizarMapaGuerra('nosso')" style="flex:1; margin:0; font-size:12px; padding:10px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);">🔰 Nosso Clã</button>
+                        <button id="btn-mapa-rival" class="action-button" onclick="renderizarMapaGuerra('rival')" style="flex:1; margin:0; font-size:12px; padding:10px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-secondary);">⚔️ Clã Rival</button>
+                    </div>
                     <div id="war-mapa-list"></div>
                 </div>
             `;
@@ -1550,63 +1557,118 @@
             container.innerHTML = html;
         }
 
-        function renderizarMapaGuerra() {
+        function renderizarMapaGuerra(tipoVisualizacao = 'nosso') {
             const container = document.getElementById('war-mapa-list');
-            if (globalGuerraJogadoresData.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum dado de jogador encontrado na guerra atual.</p>';
-                return;
-            }
-    
             let html = '';
-            globalGuerraJogadoresData.forEach(jog => {
-                // Checagem de Espelho
-                let isAtk1Espelho = jog.atk1Status === 'Ataque Espelho';
-    
-                // Botões de edição (Desativados se for espelho no 1º ataque)
-                let btnEditAtk1 = (isAdminLogado && !isAtk1Espelho) ? `<button class="btn-icon" onclick="abrirModalAuthAtaque('${jog.tag}', '1', '${jog.atk1Status}')" title="Editar Autorização">✏️</button>` : '';
-                let btnEditAtk2 = isAdminLogado ? `<button class="btn-icon" onclick="abrirModalAuthAtaque('${jog.tag}', '2', '${jog.atk2Status}')" title="Editar Autorização">✏️</button>` : '';
-    
-                let btnWpp = '';
-                if (isAdminLogado) {
-                    btnWpp = `<button class="action-button" onclick="enviarMsgAutorizacao('${jog.tag}', '${jog.nome}')" style="padding: 6px; font-size: 11px; margin-bottom:0; background: var(--accent-green); width: auto;">💬 Autorizar Ataque</button>`;
+
+            // Atualizar botões de aba interna
+            if (tipoVisualizacao === 'nosso') {
+                document.getElementById('btn-mapa-nosso').style.background = 'var(--accent-blue)';
+                document.getElementById('btn-mapa-nosso').style.color = '#fff';
+                document.getElementById('btn-mapa-rival').style.background = 'var(--bg-color)';
+                document.getElementById('btn-mapa-rival').style.color = 'var(--text-secondary)';
+                
+                if (globalGuerraJogadoresData.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum dado de jogador encontrado no Nosso Clã.</p>';
+                    return;
                 }
-    
-                html += `
-                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
-                            <div style="display:flex; align-items: center;">
-                                <div style="font-size: 16px; font-weight: bold; color: var(--text-secondary); width: 35px;">#${jog.posicao}</div>
-                                <img src="${jog.fotoCV}" style="width: 36px; height: 36px; margin-right: 10px;" alt="CV">
+        
+                globalGuerraJogadoresData.forEach(jog => {
+                    let isAtk1Espelho = jog.atk1Status === 'Ataque Espelho';
+        
+                    let btnEditAtk1 = (isAdminLogado && !isAtk1Espelho) ? `<button class="btn-icon" onclick="abrirModalAuthAtaque('${jog.tag}', '1', '${jog.atk1Status}')" title="Editar Autorização">✏️</button>` : '';
+                    let btnEditAtk2 = isAdminLogado ? `<button class="btn-icon" onclick="abrirModalAuthAtaque('${jog.tag}', '2', '${jog.atk2Status}')" title="Editar Autorização">✏️</button>` : '';
+        
+                    let btnWpp = '';
+                    if (isAdminLogado) {
+                        btnWpp = `<button class="action-button" onclick="enviarMsgAutorizacao('${jog.tag}', '${jog.nome}')" style="padding: 6px; font-size: 11px; margin-bottom:0; background: var(--accent-green); width: auto;">💬 Autorizar Ataque</button>`;
+                    }
+        
+                    html += `
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+                                <div style="display:flex; align-items: center;">
+                                    <div style="font-size: 16px; font-weight: bold; color: var(--text-secondary); width: 35px;">#${jog.posicao}</div>
+                                    <img src="${jog.fotoCV}" style="width: 36px; height: 36px; margin-right: 10px;" alt="CV">
+                                    <div>
+                                        <div style="font-weight: bold; font-size: 14px; color: var(--text-color); line-height: 1.1;">${jog.nome}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); margin-top:2px;">CV ${jog.cv}</div>
+                                    </div>
+                                </div>
+                                ${btnWpp}
+                            </div>
+                            
+                            <!-- Ataque 1 -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
                                 <div>
-                                    <div style="font-weight: bold; font-size: 14px; color: var(--text-color); line-height: 1.1;">${jog.nome}</div>
-                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top:2px;">CV ${jog.cv}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">1º Ataque</div>
+                                    <div style="font-size: 12px; font-weight: bold; color: ${isAtk1Espelho ? 'var(--accent-blue)' : 'var(--text-color)'};">${jog.atk1Status}</div>
+                                    <div style="font-size: 11px; color: var(--accent-yellow); margin-top: 2px;">⭐ ${jog.atk1Estrelas} | 💥 ${jog.atk1Destruicao}</div>
+                                </div>
+                                ${btnEditAtk1}
+                            </div>
+        
+                            <!-- Ataque 2 -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">2º Ataque</div>
+                                    <div style="font-size: 12px; font-weight: bold; color: var(--text-color);">${jog.atk2Status}</div>
+                                    <div style="font-size: 11px; color: var(--accent-yellow); margin-top: 2px;">⭐ ${jog.atk2Estrelas} | 💥 ${jog.atk2Destruicao}</div>
+                                </div>
+                                ${btnEditAtk2}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (tipoVisualizacao === 'rival') {
+                document.getElementById('btn-mapa-rival').style.background = 'var(--accent-red)';
+                document.getElementById('btn-mapa-rival').style.color = '#fff';
+                document.getElementById('btn-mapa-nosso').style.background = 'var(--bg-color)';
+                document.getElementById('btn-mapa-nosso').style.color = 'var(--text-secondary)';
+                
+                if (globalClaRivalData.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum dado encontrado para o Clã Rival nesta guerra.</p>';
+                    return;
+                }
+
+                globalClaRivalData.forEach(rival => {
+                    let corDefesa = 'var(--text-secondary)';
+                    if(rival.defesaHeroica === 'Sim') corDefesa = 'var(--accent-blue)';
+                    else if(rival.maxEstrelasRecebidas == 3) corDefesa = 'var(--accent-green)';
+
+                    html += `
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; border-left: 4px solid var(--accent-red);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+                                <div style="display:flex; align-items: center;">
+                                    <div style="font-size: 16px; font-weight: bold; color: var(--accent-red); width: 35px;">#${rival.posicao}</div>
+                                    <img src="${rival.fotoCV}" style="width: 36px; height: 36px; margin-right: 10px;" alt="CV">
+                                    <div>
+                                        <div style="font-weight: bold; font-size: 14px; color: var(--text-color); line-height: 1.1;">${rival.nome}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); margin-top:2px;">CV ${rival.cv}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 10px; color: var(--text-secondary);">Recebeu Defesas</div>
+                                    <div style="font-size: 14px; font-weight: bold; color: var(--text-color);">${rival.qtdDefesas}</div>
                                 </div>
                             </div>
-                            ${btnWpp}
-                        </div>
-                        
-                        <!-- Ataque 1 -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
-                            <div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">1º Ataque</div>
-                                <div style="font-size: 12px; font-weight: bold; color: ${isAtk1Espelho ? 'var(--accent-blue)' : 'var(--text-color)'};">${jog.atk1Status}</div>
-                                <div style="font-size: 11px; color: var(--accent-yellow); margin-top: 2px;">⭐ ${jog.atk1Estrelas} | 💥 ${jog.atk1Destruicao}</div>
+                            
+                            <div style="display: flex; gap: 8px;">
+                                <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
+                                    <div style="font-size: 11px; color: var(--text-secondary); text-align: center; margin-bottom: 4px;">Ataques Realizados</div>
+                                    <div style="font-size: 11px; color: var(--text-color);">1º: ⭐ ${rival.atk1Estrelas} | 💥 ${rival.atk1Destruicao}</div>
+                                    <div style="font-size: 11px; color: var(--text-color);">2º: ⭐ ${rival.atk2Estrelas} | 💥 ${rival.atk2Destruicao}</div>
+                                </div>
+                                <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Melhor Defesa Sofrida</div>
+                                    <div style="font-size: 14px; font-weight: bold; color: ${corDefesa};">⭐ ${rival.maxEstrelasRecebidas} | 💥 ${rival.maxDestruicaoRecebida}</div>
+                                </div>
                             </div>
-                            ${btnEditAtk1}
                         </div>
-    
-                        <!-- Ataque 2 -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
-                            <div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">2º Ataque</div>
-                                <div style="font-size: 12px; font-weight: bold; color: var(--text-color);">${jog.atk2Status}</div>
-                                <div style="font-size: 11px; color: var(--accent-yellow); margin-top: 2px;">⭐ ${jog.atk2Estrelas} | 💥 ${jog.atk2Destruicao}</div>
-                            </div>
-                            ${btnEditAtk2}
-                        </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
+
             container.innerHTML = html;
         }
         
@@ -1646,7 +1708,7 @@
                 if (res.sucesso) {
                     fecharModalAuth();
                     carregarDados(() => {
-                        mudarSubAbaGuerra('mapa'); // Mantém o usuário na tela do Mapa
+                        mudarSubAbaGuerra('mapa'); 
                     });
                 } else {
                     alert("Erro ao atualizar status.");
@@ -1666,7 +1728,7 @@
             }
             
             let alvo = prompt("Qual o número da vila inimiga que ele deve atacar e destruir 100%?");
-            if (!alvo) return; // Se o admin cancelar
+            if (!alvo) return; 
             
             let telLimpo = String(cadastro.telefone).replace(/\D/g, '');
             if (telLimpo.length <= 11 && !telLimpo.startsWith('55')) {
@@ -1928,11 +1990,9 @@
                 }
             }
             
-            // Re-renderizar abas de guerra para aplicar os botões de edição de ADMIN caso o admin logue estando nela
             if(document.getElementById('tab-guerra').style.display === 'block'){
-                 // verifica qual sub-aba está ativa
                  if(document.getElementById('war-mapa-container').style.display === 'block') {
-                     renderizarMapaGuerra();
+                     renderizarMapaGuerra('nosso'); // re-render para mostrar botões
                  }
             }
         }
@@ -2720,7 +2780,7 @@
                         document.getElementById('last-update').innerText = "Última atualização: " + formatarUltimaAtualizacao(getVal("Última Atualização"));
                     }
 
-                    // --- INÍCIO: CARREGAR DADOS DA GUERRA (INCLUI EVENTOS E MAPA) ---
+                    // --- INÍCIO: CARREGAR DADOS DA GUERRA E MAPAS ---
                     const rawEventos = data["Eventos Guerra"];
                     globalEventosGuerraData = [];
                     if (rawEventos && rawEventos.length > 1) {
@@ -2756,6 +2816,33 @@
                                 atk2Status: row[idxGJ("2º Ataque (Alvo / Status)")],
                                 atk2Estrelas: row[idxGJ("2º Ataque (Estrelas)")],
                                 atk2Destruicao: row[idxGJ("2º Ataque (%)")]
+                            });
+                        }
+                    }
+
+                    const rawClaRival = data["Clã Rival"];
+                    globalClaRivalData = [];
+                    if (rawClaRival && rawClaRival.length > 1) {
+                        const cabCR = rawClaRival[0];
+                        const idxCR = (nome) => cabCR.indexOf(nome);
+                        for (let i = 1; i < rawClaRival.length; i++) {
+                            let row = rawClaRival[i];
+                            globalClaRivalData.push({
+                                posicao: row[idxCR("Posição")],
+                                fotoCV: row[idxCR("Foto CV")],
+                                nome: row[idxCR("Nome")],
+                                tag: row[idxCR("Tag")],
+                                cv: row[idxCR("Nível CV")],
+                                atk1Estrelas: row[idxCR("1º Ataque (Estrelas)")],
+                                atk1Destruicao: row[idxCR("1º Ataque (%)")],
+                                atk2Estrelas: row[idxCR("2º Ataque (Estrelas)")],
+                                atk2Destruicao: row[idxCR("2º Ataque (%)")],
+                                totalEstrelas: row[idxCR("Total Estrelas Feitas")],
+                                ataqueHeroico: row[idxCR("Ataque Heróico?")],
+                                qtdDefesas: row[idxCR("Qtd Defesas")],
+                                maxEstrelasRecebidas: row[idxCR("Max Estrelas Recebidas")],
+                                maxDestruicaoRecebida: row[idxCR("Max Destruição Recebida (%)")],
+                                defesaHeroica: row[idxCR("Defesa Heróica?")]
                             });
                         }
                     }
