@@ -1046,7 +1046,7 @@
                 <div class="version-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span style="color: var(--text-secondary);">Versão do Sistema</span>
-                        <span style="font-weight: bold; color: var(--accent-blue);">1.23.0</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.22.10</span>
                     </div>
                     <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                         Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
@@ -1453,6 +1453,63 @@
             if (estado.toLowerCase().includes("preparação")) corEstado = "var(--accent-yellow)";
             else if (estado.toLowerCase().includes("em guerra")) corEstado = "var(--accent-red)";
 
+            // GERAÇÃO DO COMPARATIVO DE CVs
+            let contagemCvHtml = '';
+            if (globalGuerraJogadoresData.length > 0 || globalClaRivalData.length > 0) {
+                let cvNosso = {};
+                let cvRival = {};
+                let todosCVs = new Set();
+
+                globalGuerraJogadoresData.forEach(j => {
+                    let cv = parseInt(j.cv) || 0;
+                    if (cv > 0) { cvNosso[cv] = (cvNosso[cv] || 0) + 1; todosCVs.add(cv); }
+                });
+
+                globalClaRivalData.forEach(r => {
+                    let cv = parseInt(r.cv) || 0;
+                    if (cv > 0) { cvRival[cv] = (cvRival[cv] || 0) + 1; todosCVs.add(cv); }
+                });
+
+                let cvsOrdenados = Array.from(todosCVs).sort((a,b) => b - a);
+
+                if (cvsOrdenados.length > 0) {
+                    let linhasCv = cvsOrdenados.map(cv => {
+                        let nNosso = cvNosso[cv] || 0;
+                        let nRival = cvRival[cv] || 0;
+                        
+                        let colorNosso = nNosso > nRival ? 'var(--accent-blue)' : (nNosso < nRival ? 'var(--text-secondary)' : 'var(--text-color)');
+                        let colorRival = nRival > nNosso ? 'var(--accent-red)' : (nRival < nNosso ? 'var(--text-secondary)' : 'var(--text-color)');
+
+                        return `
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                            <div style="flex: 1; text-align: right; padding-right: 10px; font-weight: bold; color: ${colorNosso};">
+                                ${nNosso > 0 ? nNosso : '-'}
+                            </div>
+                            <div style="width: 70px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 4px; display: flex; justify-content: center; align-items: center; gap: 4px;">
+                                <img src="https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall${cv}.png" style="height: 18px; width: 18px; object-fit: contain;">
+                                <span style="font-size: 11px; font-weight: bold;">CV ${cv}</span>
+                            </div>
+                            <div style="flex: 1; text-align: left; padding-left: 10px; font-weight: bold; color: ${colorRival};">
+                                ${nRival > 0 ? nRival : '-'}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+
+                    contagemCvHtml = `
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin: 15px 20px; padding: 15px;">
+                        <h4 style="margin: 0 0 15px 0; color: var(--text-color); font-size: 14px; text-align: center;">📊 Comparativo de Centros de Vila</h4>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+                            <div style="flex: 1; text-align: right; padding-right: 10px;">Nosso Clã</div>
+                            <div style="width: 70px; text-align: center;">Nível</div>
+                            <div style="flex: 1; text-align: left; padding-left: 10px;">Oponente</div>
+                        </div>
+                        ${linhasCv}
+                    </div>
+                    `;
+                }
+            }
+
             // HTML Base da Aba de Guerra (com submenus embutidos)
             container.innerHTML = `
                 <!-- BOTOES DE SUB-ABA -->
@@ -1502,6 +1559,9 @@
                             <div class="war-extra-stat">Vitórias: <span>${vitOponente}</span></div>
                         </div>
                     </div>
+                    
+                    <!-- NOVO: COMPARATIVO DE CENTROS DE VILA -->
+                    ${contagemCvHtml}
         
                     <div class="war-predictions">
                         <div class="prediction-box">
@@ -1804,6 +1864,21 @@
         // OUTRAS FUNÇÕES DO SISTEMA
         // ==========================================
 
+        function formatarDataSimples(valor) {
+            if (!valor) return '--';
+            let str = String(valor).trim();
+            if (str.includes('T') || (str.includes('-') && str.length >= 10)) {
+                let d = new Date(str);
+                if (!isNaN(d.getTime())) {
+                    let dia = String(d.getUTCDate()).padStart(2, '0');
+                    let mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    let ano = d.getUTCFullYear();
+                    return `${dia}/${mes}/${ano}`;
+                }
+            }
+            return str;
+        }
+
         function formatarTemporadaData(valor) {
             if (!valor) return '';
             let str = String(valor).trim();
@@ -1992,7 +2067,7 @@
             
             if(document.getElementById('tab-guerra').style.display === 'block'){
                  if(document.getElementById('war-mapa-container').style.display === 'block') {
-                     renderizarMapaGuerra('nosso'); // re-render para mostrar botões
+                     renderizarMapaGuerra('nosso'); 
                  }
             }
         }
@@ -2992,7 +3067,7 @@
                                 tagMembro: adv[idA("Tag do Membro")],
                                 nomeClash: adv[idA("Nome no Clash")],
                                 nivelInfracao: adv[idA("Nível da Infração")],
-                                data: adv[idA("Data")],
+                                data: formatarDataSimples(adv[idA("Data")]),
                                 motivo: adv[idA("Motivo / Descrição")],
                                 punicao: adv[idA("Punição Aplicada")],
                                 statusPunicao: adv[idA("Status da Punição")]
