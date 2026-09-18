@@ -1,33 +1,58 @@
+No meu codigo no Appscript toda vez que eu autorizo alguem atacar quando a planilha atualizar ele apagar e deixa não atacou e tambem quando o membro ataca uma vila ela atualizar tambem como ataque não autorizado sendo que eu editei manualmente. é infelizmente as fotos dos centro de vilas parou de mostrar os CV no codigo HTML antes mostrava normal e agora não. é aproveitando na aba Regras do clã e Bilhetes dourado no HTML coloque um butao de poder compartilhar essa aba obs: se for possivel pois o codigo HTML esta sendo hospedado no GitHub link: https://invictosbrwp-prog.github.io/Invictos-BR/ , se for possivel adiciona para entra nessas duas abas em específico ao compartilhar vc adiciona se não for possivel não precisa, me mandem os dois codigos HTMLs atualizar completo 100% 
+
+var CLAN_TAG = "%232QU2GV028"; // Declarada globalmente
+
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetsNames = ["Clã", "Membros", "Cadastro Membros", "Guerra Atual", "Previsão Guerra", "Advertências", "Login", "Eventos Guerra", "Guerra - Jogadores", "Bilhete", "Escalação", "Config Guerra"];
+  var sheetsNames = ["Clã", "Membros", "Cadastro Membros", "Advertências", "Bilhete", "Escalação", "Config Guerra", "Login", "Layouts de Guerra", "Base Guerra", "Guerra Atual", "Guerra - Jogadores", "Clã Rival", "Eventos Guerra", "Previsão Guerra", "CWL Atual", "CWL - Jogadores", "CWL - Tabela e Próximos"];
   var data = {};
 
   sheetsNames.forEach(function(name) {
     var sheet = ss.getSheetByName(name);
     if (sheet) {
-      data[name] = sheet.getDataRange().getValues();
-    } else if (name === "Cadastro Membros") {
-      var newSheet = ss.insertSheet("Cadastro Membros");
-      newSheet.appendRow(["Nome Real", "Número de Telefone", "Tag do Clash", "Nome no Clash", "Status"]);
-      data[name] = newSheet.getDataRange().getValues();
-    } else if (name === "Advertências") {
-      var newSheetAdv = ss.insertSheet("Advertências");
-      newSheetAdv.appendRow(["ID Ocorrência", "Tag do Membro", "Nome no Clash", "Nível da Infração", "Data", "Motivo / Descrição", "Punição Aplicada", "Status da Punição"]);
-      data[name] = newSheetAdv.getDataRange().getValues();
-    } else if (name === "Bilhete") {
-      var newSheetBilhete = ss.insertSheet("Bilhete");
-      newSheetBilhete.appendRow(["Mês", "Membro"]);
-      data[name] = newSheetBilhete.getDataRange().getValues();
-    } else if (name === "Escalação") {
-      var newSheetEscalacao = ss.insertSheet("Escalação");
-      newSheetEscalacao.appendRow(["Tag do Membro", "Nome no Clash", "Status"]);
-      data[name] = newSheetEscalacao.getDataRange().getValues();
-    } else if (name === "Config Guerra") {
-      var newSheetCfg = ss.insertSheet("Config Guerra");
-      newSheetCfg.appendRow(["Formato", "Data", "Hora"]);
-      newSheetCfg.appendRow(["15x15", "", ""]);
-      data[name] = newSheetCfg.getDataRange().getValues();
+      var lastRow = sheet.getLastRow();
+      var lastCol = sheet.getLastColumn();
+      if (lastRow > 0 && lastCol > 0) {
+        var valores = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+        
+        if (name === "Config Guerra" && lastRow >= 2) {
+          for (var i = 1; i < valores.length; i++) {
+            if (valores[i][1] instanceof Date) {
+              valores[i][1] = Utilities.formatDate(valores[i][1], Session.getScriptTimeZone(), "yyyy-MM-dd");
+            }
+            if (valores[i][2] instanceof Date) {
+              valores[i][2] = Utilities.formatDate(valores[i][2], Session.getScriptTimeZone(), "HH:mm");
+            }
+          }
+        }
+        
+        data[name] = valores;
+      } else {
+        data[name] = [];
+      }
+    } else {
+      var newSheet = ss.insertSheet(name);
+      if (name === "Cadastro Membros") {
+        newSheet.appendRow(["Nome Real", "Número de Telefone", "Tag do Clash", "Nome no Clash", "Status"]);
+      } else if (name === "Advertências") {
+        newSheet.appendRow(["ID Ocorrência", "Tag do Membro", "Nome no Clash", "Nível da Infração", "Data", "Motivo / Descrição", "Punição Aplicada", "Status da Punição"]);
+      } else if (name === "Bilhete") {
+        newSheet.appendRow(["Mês", "Membro"]);
+      } else if (name === "Escalação") {
+        newSheet.appendRow(["Tag do Membro", "Nome no Clash", "Status"]);
+      } else if (name === "Config Guerra") {
+        newSheet.appendRow(["Formato", "Data", "Hora"]);
+        newSheet.appendRow(["15x15", "", ""]);
+      } else if (name === "Login") {
+        newSheet.appendRow(["Telefone", "Senha"]);
+      } else if (name === "Layouts de Guerra") {
+        newSheet.appendRow(["ID", "CV (Centro de Vila)", "Link do Layout", "Foto (URL ou Descrição)"]);
+      } else if (name === "Base Guerra") {
+        newSheet.appendRow(["Tag do Membro", "Nome no Clash", "CV", "Ataques e Defesas Obtidas"]);
+      }
+      var lr = newSheet.getLastRow();
+      var lc = newSheet.getLastColumn();
+      data[name] = lr > 0 && lc > 0 ? newSheet.getRange(1, 1, lr, lc).getValues() : [];
     }
   });
 
@@ -53,15 +78,31 @@ function doPost(e) {
         sheet.appendRow([data.nomeReal, data.telefone, data.tagClash, data.nomeClash, data.status]);
       } else if (acao === "editar") {
         var linha = Number(data.linha);
-        sheet.getRange(linha, 1).setValue(data.nomeReal);
-        sheet.getRange(linha, 2).setValue(data.telefone);
-        sheet.getRange(linha, 3).setValue(data.tagClash);
-        sheet.getRange(linha, 4).setValue(data.nomeClash);
-        sheet.getRange(linha, 5).setValue(data.status);
+        sheet.getRange(linha, 1, 1, 5).setValues([[data.nomeReal, data.telefone, data.tagClash, data.nomeClash, data.status]]);
       } else if (acao === "excluir") {
         sheet.deleteRow(Number(data.linha));
       }
     } 
+    else if (acao === "editar_status_ataque") {
+      // Atualiza o status de autorização do 1º ou 2º ataque na aba "Guerra - Jogadores"
+      var sheetGuerraJog = ss.getSheetByName("Guerra - Jogadores");
+      if (sheetGuerraJog) {
+        var valores = sheetGuerraJog.getDataRange().getValues();
+        var tagMembro = String(data.tag);
+        var tipoAtaque = data.tipoAtaque; // "1" ou "2"
+        var novoStatus = data.status; // Ex: "Ataque Espelho", "Não autorizado", "autorizado por Lord Igor"
+        
+        var colunaAlvo = (tipoAtaque === "1") ? 6 : 9; // Coluna F (6) para 1º Ataque ou I (9) para 2º Ataque
+        
+        for (var i = 1; i < valores.length; i++) {
+          var tagLinha = String(valores[i][3]); // Coluna D (Tag)
+          if (tagLinha === tagMembro) {
+            sheetGuerraJog.getRange(i + 1, colunaAlvo).setValue(novoStatus);
+            break;
+          }
+        }
+      }
+    }
     else if (acao === "cadastrar_advertencia") {
       var sheetAdv = ss.getSheetByName("Advertências");
       if (!sheetAdv) {
@@ -95,8 +136,7 @@ function doPost(e) {
         }
 
         if (linhaEncontrada !== -1) {
-          sheetAdv.getRange(linhaEncontrada, 7).setValue(data.punicao);
-          sheetAdv.getRange(linhaEncontrada, 8).setValue(data.statusPunicao);
+          sheetAdv.getRange(linhaEncontrada, 7, 1, 2).setValues([[data.punicao, data.statusPunicao]]);
         }
       }
     }
@@ -116,9 +156,29 @@ function doPost(e) {
       }
       
       var membrosArray = data.membros || [];
-      membrosArray.forEach(function(m) {
-        sheetEscalacao.appendRow([m.tag, m.nome, "Escalado"]);
-      });
+      if (membrosArray.length > 0) {
+        var linhasParaInserir = membrosArray.map(function(m) {
+          return [m.tag, m.nome, m.status || "Escalado"];
+        });
+        sheetEscalacao.getRange(sheetEscalacao.getLastRow() + 1, 1, linhasParaInserir.length, 3).setValues(linhasParaInserir);
+      }
+    }
+    else if (acao === "alternar_status_escala") {
+      var sheetEscalacao = ss.getSheetByName("Escalação");
+      if (sheetEscalacao) {
+        var valores = sheetEscalacao.getDataRange().getValues();
+        var alvo = String(data.tag);
+        for (var i = 1; i < valores.length; i++) {
+          var tagLinha = String(valores[i][0]);
+          var nomeLinha = String(valores[i][1]);
+          if (tagLinha === alvo || nomeLinha === alvo) {
+            var statusAtual = String(valores[i][2] || "Escalado");
+            var novoStatus = (statusAtual === "Reserva") ? "Escalado" : "Reserva";
+            sheetEscalacao.getRange(i + 1, 3).setValue(novoStatus);
+            break;
+          }
+        }
+      }
     }
     else if (acao === "excluir_escala") {
       var sheetEscalacao = ss.getSheetByName("Escalação");
@@ -155,12 +215,5020 @@ function doPost(e) {
         sheetCfg.getRange(2, 1, 1, 3).setValues([[data.formato, data.data, data.hora]]);
       }
     }
+    else if (acao === "cadastrar_layout") {
+      var sheetLayout = ss.getSheetByName("Layouts de Guerra");
+      if (!sheetLayout) {
+        sheetLayout = ss.insertSheet("Layouts de Guerra");
+        sheetLayout.appendRow(["ID", "CV (Centro de Vila)", "Link do Layout", "Foto (URL ou Descrição)"]);
+      }
+      var idLayout = Math.floor(Date.now() / 1000);
+      sheetLayout.appendRow([idLayout, data.cv, data.link, data.foto]);
+    }
+    else if (acao === "editar_layout") {
+      var sheetLayout = ss.getSheetByName("Layouts de Guerra");
+      if (sheetLayout) {
+        var valores = sheetLayout.getDataRange().getValues();
+        var idProcurado = String(data.id);
+        var linhaEncontrada = -1;
+        for (var i = 1; i < valores.length; i++) {
+          if (String(valores[i][0]) === idProcurado) {
+            linhaEncontrada = i + 1;
+            break;
+          }
+        }
+        if (linhaEncontrada !== -1) {
+          sheetLayout.getRange(linhaEncontrada, 2, 1, 3).setValues([[data.cv, data.link, data.foto]]);
+        }
+      }
+    }
+    else if (acao === "excluir_layout") {
+      var sheetLayout = ss.getSheetByName("Layouts de Guerra");
+      if (sheetLayout) {
+        var valores = sheetLayout.getDataRange().getValues();
+        var idProcurado = String(data.id);
+        for (var i = 1; i < valores.length; i++) {
+          if (String(valores[i][0]) === idProcurado) {
+            sheetLayout.deleteRow(i + 1);
+            break;
+          }
+        }
+      }
+    }
 
-    return ContentService.createTextOutput(JSON.stringify({sucesso: true}))
+    return ContentService.createTextOutput(JSON.stringify({ sucesso: true }))
       .setMimeType(ContentService.MimeType.JSON);
-
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({sucesso: false, erro: err.toString()}))
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ sucesso: false, erro: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+function atualizarSistemaClash() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  
+  if (!API_TOKEN) {
+    Logger.log("Erro: O API_TOKEN não está definido nas Propriedades do Script.");
+    return;
+  }
+
+  var urlClan = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG;
+  
+  var options = {
+    "method": "get",
+    "headers": { 
+      "Authorization": "Bearer " + API_TOKEN.trim(), 
+      "Accept": "application/json" 
+    },
+    "muteHttpExceptions": true
+  };
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var resposta = UrlFetchApp.fetch(urlClan, options);
+  
+  if (resposta.getResponseCode() === 200) {
+    var clan = JSON.parse(resposta.getContentText());
+    
+    var nomeAba = "Clã";
+    var sheet = ss.getSheetByName(nomeAba);
+    if (!sheet) {
+      sheet = ss.insertSheet(nomeAba);
+    } else {
+      sheet.clear(); 
+    }
+    
+    var timeZone = ss.getSpreadsheetTimeZone();
+    var dataFormatada = Utilities.formatDate(new Date(), timeZone, "dd/MM/yyyy HH:mm:ss");
+    
+    var cabecalhos = [
+      "Nome", "Tag", "Emblema", "Nível do Clã", "Pontos do Clã", 
+      "Pontos de Vila Principal (Guerra)", "Membros", "Tipo", 
+      "Requisito de Troféus", "Frequência de Guerras", 
+      "Sequência de Vitórias em Guerra", "Vitórias em Guerra", 
+      "Empates em Guerra", "Derrotas em Guerra", "Localização", 
+      "Descrição", "Última Atualização"
+    ];
+    
+    var valores = [
+      clan.name,
+      clan.tag,
+      clan.badgeUrls ? clan.badgeUrls.large : "",
+      clan.clanLevel,
+      clan.clanPoints,
+      clan.clanVersusPoints,
+      clan.members + " / 50",
+      traduzirTipoCla(clan.type),
+      clan.requiredTrophies,
+      traduzirFrequenciaGuerra(clan.warFrequency),
+      clan.warWinStreak,
+      clan.warWins,
+      clan.warTies,
+      clan.warLosses,
+      clan.location ? clan.location.name : "Internacional",
+      clan.description,
+      dataFormatada
+    ];
+    
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(2, 1, 1, valores.length).setValues([valores]);
+    
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+
+    atualizarMembros();
+    atualizarGuerra();
+    atualizarEventosGuerra();
+    atualizarCadastroMembros();
+    atualizarSistemaAdvertencias();
+    atualizarCWL();
+    
+    Logger.log("Dados do clã atualizados com sucesso!");
+    
+  } else {
+    Logger.log("Erro ao buscar dados do clã: " + resposta.getResponseCode() + " - " + resposta.getContentText());
+  }
+}
+
+/**
+ * Funções Auxiliares de Tradução
+ */
+function traduzirTipoCla(tipo) {
+  var tipos = { "open": "Aberto", "inviteOnly": "Apenas por Convite", "closed": "Fechado" };
+  return tipos[tipo] || tipo;
+}
+
+function traduzirFrequenciaGuerra(freq) {
+  var frequencias = { "always": "Sempre", "moreThanOncePerWeek": "Mais de uma vez por semana", "oncePerWeek": "Uma vez por semana", "lessThanOncePerWeek": "Menos de uma vez por semana", "never": "Nunca", "unknown": "Desconhecido" };
+  return frequencias[freq] || freq;
+}
+
+function traduzirCargo(cargo) {
+  var cargos = { "leader": "Líder", "coLeader": "Co-líder", "elder": "Ancião", "member": "Membro" };
+  return cargos[cargo] || cargo;
+}
+
+/**
+ * Busca dados detalhados de um clã externo na API do Clash of Clans
+ */
+function buscarDadosClan(tagClan) {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  var tagFormatada = tagClan.indexOf("#") === 0 ? "%23" + tagClan.substring(1) : tagClan;
+  var url = "https://cocproxy.royaleapi.dev/v1/clans/" + tagFormatada;
+  
+  var options = {
+    "method": "get",
+    "headers": { 
+      "Authorization": "Bearer " + API_TOKEN.trim(), 
+      "Accept": "application/json" 
+    },
+    "muteHttpExceptions": true
+  };
+  
+  var resposta = UrlFetchApp.fetch(url, options);
+  if (resposta.getResponseCode() === 200) {
+    return JSON.parse(resposta.getContentText());
+  }
+  return null;
+}
+
+/**
+ * Atualiza os membros do clã com Foto do CV, Nome, Tag, Cargo, Nível Exp, Troféus, Doações, Recebidas e Nível CV.
+ */
+function atualizarMembros() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  var urlClan = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG;
+  
+  var options = {
+    "method": "get",
+    "headers": { 
+      "Authorization": "Bearer " + API_TOKEN.trim(), 
+      "Accept": "application/json" 
+    },
+    "muteHttpExceptions": true
+  };
+  
+  var resposta = UrlFetchApp.fetch(urlClan, options);
+  
+  if (resposta.getResponseCode() === 200) {
+    var clan = JSON.parse(resposta.getContentText());
+    var membros = clan.memberList || [];
+    
+    var requests = membros.map(function(m) {
+      return {
+        url: "https://cocproxy.royaleapi.dev/v1/players/" + encodeURIComponent(m.tag),
+        method: "get",
+        headers: options.headers,
+        muteHttpExceptions: true
+      };
+    });
+
+    var respostasJogadores = UrlFetchApp.fetchAll(requests);
+    
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Membros") || ss.insertSheet("Membros");
+    sheet.clear();
+    
+    var cabecalhos = ["Nome", "Foto CV", "Tag", "Cargo", "Nível Exp", "Troféus", "Doadas", "Recebidas", "Nível CV"];
+    var linhas = [];
+
+    for (var i = 0; i < membros.length; i++) {
+      var m = membros[i];
+      var dadosJogador = JSON.parse(respostasJogadores[i].getContentText());
+      
+      var lvlCV = dadosJogador.townHallLevel || 0;
+      var imgCV = "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + lvlCV + ".png";
+      
+      linhas.push([
+        m.name,
+        imgCV,
+        m.tag,
+        traduzirCargo(m.role),
+        m.expLevel,
+        m.trophies,
+        m.donations,         
+        m.donationsReceived, 
+        lvlCV                
+      ]);
+    }
+    
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(2, 1, linhas.length, cabecalhos.length).setValues(linhas);
+    
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+    
+    Logger.log("Membros atualizados com Doações, Recebidas e Nível de CV!");
+    
+  } else {
+    Logger.log("Erro ao buscar membros: " + resposta.getContentText());
+  }
+}
+
+/**
+ * Busca e atualiza os dados da Guerra Atual, desempenho dos membros, Previsão, Base Guerra e Clã Rival.
+ */
+function atualizarGuerra() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  var urlGuerra = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG + "/currentwar";
+  
+  var options = {
+    "method": "get",
+    "headers": { 
+      "Authorization": "Bearer " + API_TOKEN.trim(), 
+      "Accept": "application/json" 
+    },
+    "muteHttpExceptions": true
+  };
+  
+  var resposta = UrlFetchApp.fetch(urlGuerra, options);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  var sheetGuerra = ss.getSheetByName("Guerra Atual") || ss.insertSheet("Guerra Atual");
+  var sheetJogadores = ss.getSheetByName("Guerra - Jogadores") || ss.insertSheet("Guerra - Jogadores");
+  var sheetRival = ss.getSheetByName("Clã Rival") || ss.insertSheet("Clã Rival");
+  
+  // ==========================================
+  // FIX: PRESERVAR STATUS DE ATAQUES CUSTOMIZADOS
+  // Para que o script não apague a edição feita pelo usuário no Frontend
+  // ==========================================
+  var statusAtaquesSalvos = {};
+  if (sheetJogadores.getLastRow() > 1) {
+    var dadosJogadoresAntigos = sheetJogadores.getDataRange().getValues();
+    for (var i = 1; i < dadosJogadoresAntigos.length; i++) {
+      var tagSalva = String(dadosJogadoresAntigos[i][3]); // Coluna D (índice 3) = Tag
+      var status1 = String(dadosJogadoresAntigos[i][5]);  // Coluna F (índice 5) = 1º Ataque (Status)
+      var status2 = String(dadosJogadoresAntigos[i][8]);  // Coluna I (índice 8) = 2º Ataque (Status)
+      statusAtaquesSalvos[tagSalva] = {
+        atk1: status1,
+        atk2: status2
+      };
+    }
+  }
+
+  sheetGuerra.clear();
+  sheetJogadores.clear();
+  sheetRival.clear();
+
+  if (resposta.getResponseCode() === 200) {
+    var guerra = JSON.parse(resposta.getContentText());
+    
+    if (guerra.state === "notInWar") {
+      sheetGuerra.getRange(1, 1).setValue("O clã não está em guerra no momento.");
+      sheetJogadores.getRange(1, 1).setValue("Sem dados de jogadores.");
+      sheetRival.getRange(1, 1).setValue("Sem dados do clã rival.");
+      return;
+    }
+    
+    var estado = guerra.state;
+    if (estado === "preparation") estado = "Dia de Preparação";
+    else if (estado === "inWar") estado = "Em Guerra";
+    else if (estado === "warEnded") estado = "Guerra Encerrada";
+
+    function formatarData(str) {
+      if (!str) return "";
+      var ano = str.substring(0, 4);
+      var mes = str.substring(4, 6);
+      var dia = str.substring(6, 8);
+      var hora = str.substring(9, 11);
+      var min = str.substring(11, 13);
+      var seg = str.substring(13, 15);
+      
+      var dataUTC = new Date(ano + "-" + mes + "-" + dia + "T" + hora + ":" + min + ":" + seg + ".000Z");
+      var timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+      return Utilities.formatDate(dataUTC, timeZone, "dd/MM/yyyy HH:mm");
+    }
+    
+    var cabecalhosGuerra = [
+      "Estado", "Tamanho", 
+      "Nosso Emblema", "Nome Clã", "Nossas Estrelas", "Nossa Destruição (%)", "Nossos Ataques",
+      "Emblema Oponente", "Nome Oponente", "Estrelas Oponente", "Destruição Oponente (%)", "Ataques Oponente", 
+      "Início", "Fim"
+    ];
+    
+    var nossoEmblema = guerra.clan.badgeUrls ? guerra.clan.badgeUrls.large : "";
+    var emblemaOponente = guerra.opponent.badgeUrls ? guerra.opponent.badgeUrls.large : "";
+
+    var linhasGuerra = [
+      estado,
+      guerra.teamSize + " v " + guerra.teamSize,
+      nossoEmblema,
+      guerra.clan.name,
+      guerra.clan.stars || 0,
+      Math.round(guerra.clan.destructionPercentage || 0) + "%",
+      guerra.clan.attacks || 0,
+      emblemaOponente,
+      guerra.opponent.name,
+      guerra.opponent.stars || 0,
+      Math.round(guerra.opponent.destructionPercentage || 0) + "%",
+      guerra.opponent.attacks || 0,
+      formatarData(guerra.startTime),
+      formatarData(guerra.endTime)
+    ];
+    
+    sheetGuerra.getRange(1, 1, 1, cabecalhosGuerra.length).setValues([cabecalhosGuerra]);
+    sheetGuerra.getRange(2, 1, 1, linhasGuerra.length).setValues([linhasGuerra]);
+
+    // ==========================================
+    // PREVISÃO AVANÇADA
+    // ==========================================
+    var dadosNossoClanGlobal = buscarDadosClan(CLAN_TAG);
+    var vitoriasNossoClã = dadosNossoClanGlobal ? (dadosNossoClanGlobal.warWins || 0) : 0;
+    var sequenciaNossoClã = dadosNossoClanGlobal ? (dadosNossoClanGlobal.warWinStreak || 0) : 0;
+
+    var membrosNossoClã = guerra.clan.members || [];
+    var somaCVNosso = 0;
+    membrosNossoClã.forEach(function(m) { somaCVNosso += (m.townhallLevel || 0); });
+    var mediaCVNosso = membrosNossoClã.length > 0 ? (somaCVNosso / membrosNossoClã.length).toFixed(1) : 0;
+
+    var dadosOponenteGlobal = buscarDadosClan(guerra.opponent.tag);
+    var vitoriasOponente = dadosOponenteGlobal ? (dadosOponenteGlobal.warWins || 0) : 0;
+    var sequenciaOponente = dadosOponenteGlobal ? (dadosOponenteGlobal.warWinStreak || 0) : 0;
+
+    var membrosOponenteGuerra = guerra.opponent.members || [];
+    var somaCVOponente = 0;
+    membrosOponenteGuerra.forEach(function(m) { somaCVOponente += (m.townhallLevel || 0); });
+    var mediaCVOponente = membrosOponenteGuerra.length > 0 ? (somaCVOponente / membrosOponenteGuerra.length).toFixed(1) : 0;
+
+    var nossaDestruicaoArredondada = Math.round(guerra.clan.destructionPercentage || 0);
+    var destruicaoOponenteArredondada = Math.round(guerra.opponent.destructionPercentage || 0);
+    
+    var statusInicialCalculado = "Equilibrado";
+    if (Number(mediaCVNosso) > Number(mediaCVOponente)) {
+      statusInicialCalculado = "Favorável (Vantagem de CV)";
+    } else if (Number(mediaCVNosso) < Number(mediaCVOponente)) {
+      statusInicialCalculado = "Desfavorável (Oponente mais forte em CV)";
+    }
+
+    var statusAtualizado = statusInicialCalculado;
+    if (nossaDestruicaoArredondada > destruicaoOponenteArredondada + 5) {
+      statusAtualizado = "Altamente Favorável (Em andamento)";
+    } else if (destruicaoOponenteArredondada > nossaDestruicaoArredondada + 5) {
+      statusAtualizado = "Crítico / Desfavorável (Em andamento)";
+    }
+
+    var rawStart = guerra.startTime; 
+    var idGuerraAtual = rawStart ? rawStart.substring(0, 8) : new Date().getTime().toString();
+    var temporadaAtual = rawStart ? rawStart.substring(0, 4) + "-" + rawStart.substring(4, 6) : "";
+
+    var sheetPrev = ss.getSheetByName("Previsão Guerra") || ss.insertSheet("Previsão Guerra");
+    var statusInicialSalvo = statusInicialCalculado;
+    var dadosPrevExistentes = sheetPrev.getDataRange().getValues();
+    
+    if (dadosPrevExistentes.length > 1) {
+      var ultimaGuerraSalva = sheetPrev.getRange("D1").getValue(); 
+      if (ultimaGuerraSalva === idGuerraAtual) {
+        var valorAntigoInicial = sheetPrev.getRange(7, 2).getValue();
+        if (valorAntigoInicial && valorAntigoInicial !== "") {
+          statusInicialSalvo = valorAntigoInicial;
+        }
+      }
+    }
+
+    sheetPrev.clear();
+    
+    var cabecalhosPrev = ["Indicador / Métrica", "Nosso Clã (" + guerra.clan.name + ")", "Clã Oponente (" + guerra.opponent.name + ")"];
+    var linhasPrev = [
+      ["Nome do Clã", guerra.clan.name, guerra.opponent.name],
+      ["Média de Nível de CV (Guerra)", mediaCVNosso, mediaCVOponente],
+      ["Total de Vitórias Históricas", vitoriasNossoClã, vitoriasOponente],
+      ["Sequência de Vitórias (Streak)", sequenciaNossoClã, sequenciaOponente],
+      ["Destruição Parcial Atual", nossaDestruicaoArredondada + "%", destruicaoOponenteArredondada + "%"],
+      ["Previsão no Início da Guerra", statusInicialSalvo, ""],
+      ["Status Projetado Atualizado", statusAtualizado, ""]
+    ];
+
+    sheetPrev.getRange(1, 1, 1, cabecalhosPrev.length).setValues([cabecalhosPrev]);
+    sheetPrev.getRange(2, 1, linhasPrev.length, cabecalhosPrev.length).setValues(linhasPrev);
+    sheetPrev.getRange(1, 1, 1, cabecalhosPrev.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheetPrev.getRange("D1").setValue(idGuerraAtual);
+    sheetPrev.hideColumns(4); 
+    sheetPrev.autoResizeColumns(1, cabecalhosPrev.length);
+
+    // ==========================================
+    // MAPEAMENTO DE DEFESAS E ATAQUES DO CLÃ RIVAL
+    // ==========================================
+    var defesasPorMembroBase = {};
+    if (guerra.opponent && guerra.opponent.members) {
+      guerra.opponent.members.forEach(function(opMembro) {
+        if (opMembro.attacks) {
+          opMembro.attacks.forEach(function(atk) {
+            var defenderTag = atk.defenderTag;
+            if (!defesasPorMembroBase[defenderTag]) {
+              defesasPorMembroBase[defenderTag] = [];
+            }
+            defesasPorMembroBase[defenderTag].push(atk);
+          });
+        }
+      });
+    }
+
+    // Mapeamento inverso para a nova aba "Clã Rival"
+    var ataquesFeitosPorMembroOponente = {};
+    if (guerra.opponent && guerra.opponent.members) {
+      guerra.opponent.members.forEach(function(opMembro) {
+        var ataquesOp = opMembro.attacks || [];
+        ataquesFeitosPorMembroOponente[opMembro.tag] = ataquesOp;
+      });
+    }
+
+    // ==========================================
+    // PREENCHIMENTO DA ABA "Clã Rival"
+    // ==========================================
+    membrosOponenteGuerra.sort(function(a, b) { return a.mapPosition - b.mapPosition; });
+    
+    var cabecalhosRival = [
+      "Posição", "Foto CV", "Nome", "Tag", "Nível CV", 
+      "1º Ataque (Estrelas)", "1º Ataque (%)", 
+      "2º Ataque (Estrelas)", "2º Ataque (%)", 
+      "Total Estrelas Feitas", "Ataque Heróico?",
+      "Qtd Defesas", "Max Estrelas Recebidas", "Max Destruição Recebida (%)", "Defesa Heróica?"
+    ];
+    
+    var linhasRival = [];
+    
+    for (var r = 0; r < membrosOponenteGuerra.length; r++) {
+      var opMem = membrosOponenteGuerra[r];
+      var ataquesOp = ataquesFeitosPorMembroOponente[opMem.tag] || [];
+      var totalEstrelasRival = 0;
+      var temAtaqueHeroicoRival = "Não";
+      
+      var opAtk1Estrelas = "-";
+      var opAtk1Destruicao = "-";
+      if (ataquesOp.length > 0) {
+        opAtk1Estrelas = ataquesOp[0].stars;
+        opAtk1Destruicao = Math.round(ataquesOp[0].destructionPercentage) + "%";
+        if (ataquesOp[0].isHeroicParsec) temAtaqueHeroicoRival = "Sim";
+        totalEstrelasRival += ataquesOp[0].stars;
+      }
+
+      var opAtk2Estrelas = "-";
+      var opAtk2Destruicao = "-";
+      if (ataquesOp.length > 1) {
+        opAtk2Estrelas = ataquesOp[1].stars;
+        opAtk2Destruicao = Math.round(ataquesOp[1].destructionPercentage) + "%";
+        if (ataquesOp[1].isHeroicParsec) temAtaqueHeroicoRival = "Sim";
+        totalEstrelasRival += ataquesOp[1].stars;
+      }
+      
+      var defesasDoRival = [];
+      membrosNossoClã.forEach(function(nossoMem) {
+        if (nossoMem.attacks) {
+          nossoMem.attacks.forEach(function(atkNosso) {
+            if (atkNosso.defenderTag === opMem.tag) {
+              defesasDoRival.push(atkNosso);
+            }
+          });
+        }
+      });
+
+      var qtdDefesasRival = defesasDoRival.length;
+      var maxEstrelasRecebidasRival = 0;
+      var maxDestruicaoRecebidaRival = 0;
+      var temDefesaHeroicaRival = "Não";
+
+      defesasDoRival.forEach(function(def) {
+        var estrelas = def.stars || 0;
+        var destr = def.destructionPercentage || 0;
+        if (estrelas > maxEstrelasRecebidasRival) maxEstrelasRecebidasRival = estrelas;
+        if (destr > maxDestruicaoRecebidaRival) maxDestruicaoRecebidaRival = destr;
+        if (def.isHeroicParsec) temDefesaHeroicaRival = "Sim";
+      });
+
+      // FIX: Retirado o sufixo _Destroyed.png pois não existe confiavelmente na Wiki.
+      // O script sempre puxará a imagem base do CV, impedindo que as fotos fiquem quebradas na interface.
+      var lvlCVRival = opMem.townhallLevel || 1;
+      var imgCVRival = "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + lvlCVRival + ".png";
+
+      linhasRival.push([
+        opMem.mapPosition, imgCVRival, opMem.name, opMem.tag, lvlCVRival,
+        opAtk1Estrelas, opAtk1Destruicao,
+        opAtk2Estrelas, opAtk2Destruicao,
+        totalEstrelasRival, temAtaqueHeroicoRival,
+        qtdDefesasRival, maxEstrelasRecebidasRival,
+        Math.round(maxDestruicaoRecebidaRival) + "%", temDefesaHeroicaRival
+      ]);
+    }
+
+    sheetRival.getRange(1, 1, 1, cabecalhosRival.length).setValues([cabecalhosRival]);
+    if (linhasRival.length > 0) {
+      sheetRival.getRange(2, 1, linhasRival.length, cabecalhosRival.length).setValues(linhasRival);
+      sheetRival.setRowHeights(2, linhasRival.length, 60);
+    }
+    sheetRival.getRange(1, 1, 1, cabecalhosRival.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheetRival.autoResizeColumns(1, cabecalhosRival.length);
+
+    // ==========================================
+    // ALIMENTAÇÃO DA ABA "Base Guerra" 
+    // ==========================================
+    var sheetBase = ss.getSheetByName("Base Guerra");
+    if (!sheetBase) {
+      sheetBase = ss.insertSheet("Base Guerra");
+      sheetBase.appendRow(["ID Guerra", "Temporada", "Tag Jogador", "Nome", "Tipo", "Resultado", "Heroico"]);
+      sheetBase.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#d9d9d9");
+    }
+
+    var dadosBaseExistentes = sheetBase.getDataRange().getValues();
+    if (dadosBaseExistentes.length > 1) {
+      var linhasMantidas = [dadosBaseExistentes[0]]; 
+      for (var b = 1; b < dadosBaseExistentes.length; b++) {
+        if (String(dadosBaseExistentes[b][0]) !== String(idGuerraAtual)) {
+          linhasMantidas.push(dadosBaseExistentes[b]);
+        }
+      }
+      sheetBase.clear();
+      if (linhasMantidas.length > 0) {
+        sheetBase.getRange(1, 1, linhasMantidas.length, linhasMantidas[0].length).setValues(linhasMantidas);
+      }
+      sheetBase.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#d9d9d9");
+    }
+
+    var novasLinhasBase = [];
+    membrosNossoClã.forEach(function(mem) {
+      var ataques = mem.attacks || [];
+      for (var a = 0; a < 2; a++) {
+        var resAtaque = "NA";
+        var heroicoAtaque = "Não";
+        if (ataques[a]) {
+          resAtaque = ataques[a].stars;
+          if (ataques[a].isHeroicParsec) heroicoAtaque = "Sim";
+        }
+        novasLinhasBase.push([idGuerraAtual, temporadaAtual, mem.tag, mem.name, "Ataque", resAtaque, heroicoAtaque]);
+      }
+
+      var defesas = defesasPorMembroBase[mem.tag] || [];
+      if (defesas.length > 0) {
+        var maxEstrelasPerdidas = 0;
+        var defesaHeroica = "Não";
+        
+        defesas.forEach(function(def) {
+          var estrelasTotaisDoAtaque = def.stars || 0;
+          if (estrelasTotaisDoAtaque > maxEstrelasPerdidas) {
+            maxEstrelasPerdidas = estrelasTotaisDoAtaque;
+          }
+          if (def.isHeroicParsec) {
+            defesaHeroica = "Sim";
+          }
+        });
+
+        novasLinhasBase.push([idGuerraAtual, temporadaAtual, mem.tag, mem.name, "Defesa", maxEstrelasPerdidas, defesaHeroica]);
+      } else {
+        novasLinhasBase.push([idGuerraAtual, temporadaAtual, mem.tag, mem.name, "Defesa", "NFA", "Não"]);
+      }
+    });
+
+    if (novasLinhasBase.length > 0) {
+      sheetBase.getRange(sheetBase.getLastRow() + 1, 1, novasLinhasBase.length, novasLinhasBase[0].length).setValues(novasLinhasBase);
+    }
+
+    // ==========================================
+    // MAPEAMENTO DE JOGADORES PARA ABA "Guerra - Jogadores"
+    // ==========================================
+    membrosNossoClã.sort(function(a, b) { return a.mapPosition - b.mapPosition; });
+    
+    var mapaPosicaoOponentePorTag = {};
+    membrosOponenteGuerra.forEach(function(op) {
+      mapaPosicaoOponentePorTag[op.tag] = op.mapPosition;
+    });
+    
+    var cabecalhosJogadores = [
+      "Posição", "Foto CV", "Nome", "Tag", "Nível CV", 
+      "1º Ataque (Alvo / Status)", "1º Ataque (Estrelas)", "1º Ataque (%)", 
+      "2º Ataque (Alvo / Status)", "2º Ataque (Estrelas)", "2º Ataque (%)", 
+      "Total Estrelas Feitas", "Ataque Heróico?",
+      "Qtd Defesas", "Total Estrelas Recebidas", "Média Destruição Sofrida (%)", "Defesa Heróica?"
+    ];
+    
+    var linhasJogadores = [];
+    
+    for (var i = 0; i < membrosNossoClã.length; i++) {
+      var mem = membrosNossoClã[i];
+      var ataques = mem.attacks || [];
+      var totalEstrelas = 0;
+      var temAtaqueHeroico = "Não";
+      var posicaoEspelho = mem.mapPosition;
+      
+      // Avaliação do 1º Ataque
+      var atk1Status = "Não Atacou";
+      var atk1Estrelas = "-";
+      var atk1Destruicao = "-";
+      
+      if (ataques.length > 0) {
+        var alv1Tag = ataques[0].defenderTag;
+        var posAlvo1 = mapaPosicaoOponentePorTag[alv1Tag] || 0;
+        
+        // FIX: Reaplicar status editado manualmente na planilha
+        var statusSalvo1 = statusAtaquesSalvos[mem.tag] ? statusAtaquesSalvos[mem.tag].atk1 : null;
+        
+        if (statusSalvo1 && statusSalvo1 !== "Não Atacou" && statusSalvo1 !== "Não autorizado" && statusSalvo1 !== "Ataque Espelho" && statusSalvo1 !== "-") {
+          atk1Status = statusSalvo1; // Se houver um texto editado pelo front (Ex: Autorizado por...), preserva
+        } else if (posAlvo1 === posicaoEspelho) {
+          atk1Status = "Ataque Espelho";
+        } else {
+          atk1Status = "Não autorizado";
+        }
+
+        atk1Estrelas = ataques[0].stars;
+        atk1Destruicao = Math.round(ataques[0].destructionPercentage) + "%";
+        if (ataques[0].isHeroicParsec) temAtaqueHeroico = "Sim";
+        totalEstrelas += ataques[0].stars;
+      }
+
+      // Avaliação do 2º Ataque
+      var atk2Status = "Não Atacou";
+      var atk2Estrelas = "-";
+      var atk2Destruicao = "-";
+      
+      if (ataques.length > 1) {
+        // FIX: Reaplicar status editado manualmente no segundo ataque
+        var statusSalvo2 = statusAtaquesSalvos[mem.tag] ? statusAtaquesSalvos[mem.tag].atk2 : null;
+        
+        if (statusSalvo2 && statusSalvo2 !== "Não Atacou" && statusSalvo2 !== "Não autorizado" && statusSalvo2 !== "Ataque Espelho" && statusSalvo2 !== "-") {
+          atk2Status = statusSalvo2;
+        } else {
+          atk2Status = "Não autorizado";
+        }
+
+        atk2Estrelas = ataques[1].stars;
+        atk2Destruicao = Math.round(ataques[1].destructionPercentage) + "%";
+        if (ataques[1].isHeroicParsec) temAtaqueHeroico = "Sim";
+        totalEstrelas += ataques[1].stars;
+      }
+      
+      var defesas = defesasPorMembroBase[mem.tag] || [];
+      var qtdDefesas = defesas.length;
+      var totalEstrelasRecebidas = 0;
+      var somaDestruicaoSofrida = 0;
+      var temDefesaHeroica = "Não";
+
+      for (var d = 0; d < defesas.length; d++) {
+        totalEstrelasRecebidas += defesas[d].stars || 0;
+        somaDestruicaoSofrida += defesas[d].destructionPercentage || 0;
+        if (defesas[d].isHeroicParsec) temDefesaHeroica = "Sim";
+      }
+
+      var mediaDestruicaoSofrida = qtdDefesas > 0 ? Math.round(somaDestruicaoSofrida / qtdDefesas) + "%" : "0%";
+      var imgCV = "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + mem.townhallLevel + ".png";
+      
+      linhasJogadores.push([
+        mem.mapPosition, imgCV, mem.name, mem.tag, mem.townhallLevel,
+        atk1Status, atk1Estrelas, atk1Destruicao,
+        atk2Status, atk2Estrelas, atk2Destruicao,
+        totalEstrelas, temAtaqueHeroico,
+        qtdDefesas, totalEstrelasRecebidas,
+        mediaDestruicaoSofrida, temDefesaHeroica
+      ]);
+    }
+    
+    sheetJogadores.getRange(1, 1, 1, cabecalhosJogadores.length).setValues([cabecalhosJogadores]);
+    if (linhasJogadores.length > 0) {
+      sheetJogadores.getRange(2, 1, linhasJogadores.length, cabecalhosJogadores.length).setValues(linhasJogadores);
+      sheetJogadores.setRowHeights(2, linhasJogadores.length, 60); 
+    }
+    
+    sheetJogadores.getRange(1, 1, 1, cabecalhosJogadores.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheetJogadores.autoResizeColumns(1, cabecalhosJogadores.length);
+    
+    Logger.log("Dados de Guerra e Clã Rival atualizados com sucesso!");
+    
+  } else {
+    Logger.log("Erro ao buscar guerra: " + resposta.getContentText());
+  }
+}
+
+/**
+ * Busca ataques realizados e recebidos, ordena cronologicamente e gera a aba de eventos.
+ */
+function atualizarEventosGuerra() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  var urlGuerra = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG + "/currentwar";
+  
+  var options = {
+    "method": "get",
+    "headers": { "Authorization": "Bearer " + API_TOKEN.trim(), "Accept": "application/json" },
+    "muteHttpExceptions": true
+  };
+  
+  var resposta = UrlFetchApp.fetch(urlGuerra, options);
+  if (resposta.getResponseCode() !== 200) return;
+  
+  var guerra = JSON.parse(resposta.getContentText());
+  if (!guerra || guerra.state === "notInWar") return;
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Eventos Guerra") || ss.insertSheet("Eventos Guerra");
+  sheet.clear();
+  
+  var eventos = [];
+  var mapaOponentes = {};
+  if (guerra.opponent && guerra.opponent.members) {
+    guerra.opponent.members.forEach(function(m) {
+      mapaOponentes[m.tag] = m.name;
+    });
+  }
+
+  if (guerra.clan && guerra.clan.members) {
+    guerra.clan.members.forEach(function(m) {
+      if (m.attacks) {
+        m.attacks.forEach(function(a) {
+          var nomeAlvo = mapaOponentes[a.defenderTag] || "Desconhecido";
+          eventos.push({
+            data: a.creationTime || "",
+            tipo: "Ataque Realizado",
+            nomeAtacante: m.name,
+            fotoCV: "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + (m.townhallLevel || 1) + ".png",
+            info: "Alvo: " + nomeAlvo + " (" + (a.stars || 0) + "★ / " + (a.destructionPercentage || 0) + "%)"
+          });
+        });
+      }
+    });
+  }
+
+  eventos.sort(function(a, b) {
+    return (a.data || "").localeCompare(b.data || "");
+  });
+
+  var cabecalhos = ["Tipo", "Atacante", "Foto CV", "Detalhes"];
+  var linhas = eventos.map(function(e) {
+    return [e.tipo, e.nomeAtacante, e.fotoCV, e.info];
+  });
+
+  sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+  if (linhas.length > 0) {
+    sheet.getRange(2, 1, linhas.length, cabecalhos.length).setValues(linhas);
+    sheet.setRowHeights(2, linhas.length, 60);
+  }
+  
+  sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+  sheet.autoResizeColumns(1, cabecalhos.length);
+}
+
+function atualizarCadastroMembros() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var nomeAba = "Cadastro Membros";
+  var sheet = ss.getSheetByName(nomeAba);
+  
+  if (!sheet) {
+    sheet = ss.insertSheet(nomeAba);
+    var cabecalhos = ["Nome Real", "Número de Telefone", "Tag do Clash", "Nome no Clash", "Status"];
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+  } else {
+    var primeiroCabecalho = sheet.getRange(1, 5).getValue();
+    if (primeiroCabecalho !== "Status") {
+      sheet.getRange(1, 5).setValue("Status").setFontWeight("bold").setBackground("#d9d9d9");
+    }
+  }
+}
+
+function atualizarSistemaAdvertencias() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var nomeAba = "Advertências";
+  var sheet = ss.getSheetByName(nomeAba);
+  
+  if (!sheet) {
+    sheet = ss.insertSheet(nomeAba);
+    var cabecalhos = [
+      "ID Ocorrência", "Tag do Membro", "Nome no Clash", 
+      "Nível da Infração", "Data", "Motivo / Descrição", 
+      "Punição Aplicada", "Status da Punição"
+    ];
+    sheet.getRange(1, 1, 1, cabecalhos.length).setValues([cabecalhos]);
+    sheet.getRange(1, 1, 1, cabecalhos.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheet.autoResizeColumns(1, cabecalhos.length);
+  }
+}
+
+/**
+ * Atualiza dados da CWL (Guerra-Liga)
+ */
+function atualizarCWL() {
+  var API_TOKEN = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+  
+  var options = {
+    "method": "get",
+    "headers": { 
+      "Authorization": "Bearer " + API_TOKEN.trim(), 
+      "Accept": "application/json" 
+    },
+    "muteHttpExceptions": true
+  };
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetCWL = ss.getSheetByName("CWL Atual") || ss.insertSheet("CWL Atual");
+  var sheetCWLJogadores = ss.getSheetByName("CWL - Jogadores") || ss.insertSheet("CWL - Jogadores");
+  var sheetCWLTabela = ss.getSheetByName("CWL - Tabela e Próximos") || ss.insertSheet("CWL - Tabela e Próximos");
+  
+  sheetCWL.clear();
+  sheetCWLJogadores.clear();
+  sheetCWLTabela.clear();
+
+  var urlGroup = "https://cocproxy.royaleapi.dev/v1/clans/" + CLAN_TAG + "/currentwar/leaguegroup";
+  var respostaGroup = UrlFetchApp.fetch(urlGroup, options);
+  
+  if (respostaGroup.getResponseCode() !== 200) {
+    sheetCWL.getRange(1, 1).setValue("O clã não está participando de uma CWL no momento ou a temporada encerrou.");
+    sheetCWLJogadores.getRange(1, 1).setValue("Sem dados de jogadores.");
+    sheetCWLTabela.getRange(1, 1).setValue("Sem dados de tabela.");
+    return;
+  }
+  
+  var leagueGroup = JSON.parse(respostaGroup.getContentText());
+  if (!leagueGroup.rounds || leagueGroup.rounds.length === 0) {
+    sheetCWL.getRange(1, 1).setValue("Grupo da CWL encontrado, mas sem rodadas ativas.");
+    return;
+  }
+
+  var rounds = leagueGroup.rounds;
+  var guerraIdEncontrado = null;
+  var guerraObjEncontrado = null;
+  var proximoConfrontosLista = [];
+  
+  var estatisticasClãsGrupo = {};
+  if (leagueGroup.clans) {
+    leagueGroup.clans.forEach(function(c) {
+      estatisticasClãsGrupo[c.tag] = {
+        nome: c.name, tag: c.tag,
+        emblema: c.badgeUrls ? c.badgeUrls.large : "",
+        totalEstrelas: 0, totalDestruicao: 0, guerrasJogadas: 0
+      };
+    });
+  }
+
+  for (var r = 0; r < rounds.length; r++) {
+    var matchWars = rounds[r].warTags;
+    var rodadaNumero = r + 1;
+    
+    for (var m = 0; m < matchWars.length; m++) {
+      if (matchWars[m] !== "#0") {
+        var urlWarMatch = "https://cocproxy.royaleapi.dev/v1/clanwarleagues/wars/" + encodeURIComponent(matchWars[m]);
+        var respWarMatch = UrlFetchApp.fetch(urlWarMatch, options);
+        
+        if (respWarMatch.getResponseCode() === 200) {
+          var warData = JSON.parse(respWarMatch.getContentText());
+          
+          if (warData.state !== "notInWar") {
+            if (warData.clan && warData.clan.tag && estatisticasClãsGrupo[warData.clan.tag]) {
+              estatisticasClãsGrupo[warData.clan.tag].totalEstrelas += (warData.clan.stars || 0);
+              estatisticasClãsGrupo[warData.clan.tag].totalDestruicao += (warData.clan.destructionPercentage || 0);
+              estatisticasClãsGrupo[warData.clan.tag].guerrasJogadas++;
+            }
+            if (warData.opponent && warData.opponent.tag && estatisticasClãsGrupo[warData.opponent.tag]) {
+              estatisticasClãsGrupo[warData.opponent.tag].totalEstrelas += (warData.opponent.stars || 0);
+              estatisticasClãsGrupo[warData.opponent.tag].totalDestruicao += (warData.opponent.destructionPercentage || 0);
+              estatisticasClãsGrupo[warData.opponent.tag].guerrasJogadas++;
+            }
+          }
+
+          var clanTagClean = "#2QU2GV028".toLowerCase();
+          var isNossoClan = (warData.clan && warData.clan.tag.toLowerCase() === clanTagClean) || 
+                            (warData.opponent && warData.opponent.tag.toLowerCase() === clanTagClean);
+          
+          if (isNossoClan) {
+            var oponenteDaGuerra = warData.clan.tag.toLowerCase() === clanTagClean ? warData.opponent : warData.clan;
+            
+            if (warData.state === "inWar" || warData.state === "preparation") {
+              if (!guerraIdEncontrado || warData.state === "inWar") {
+                guerraIdEncontrado = matchWars[m];
+                guerraObjEncontrado = warData;
+              }
+            } 
+            
+            if (warData.state === "notInWar" || warData.state === "preparation") {
+              proximoConfrontosLista.push({
+                rodada: "Rodada " + rodadaNumero,
+                oponente: oponenteDaGuerra.name,
+                tagOponente: oponenteDaGuerra.tag,
+                estado: warData.state === "preparation" ? "Em Preparação" : "Aguardando"
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (guerraIdEncontrado) {
+    var guerra = guerraObjEncontrado;
+    var estado = guerra.state === "preparation" ? "Dia de Preparação (CWL)" : (guerra.state === "inWar" ? "Em Guerra (CWL)" : "Guerra Encerrada (CWL)");
+
+    function formatarDataCWL(str) {
+      if (!str) return "";
+      var ano = str.substring(0, 4), mes = str.substring(4, 6), dia = str.substring(6, 8);
+      var hora = str.substring(9, 11), min = str.substring(11, 13), seg = str.substring(13, 15);
+      var dataUTC = new Date(ano + "-" + mes + "-" + dia + "T" + hora + ":" + min + ":" + seg + ".000Z");
+      return Utilities.formatDate(dataUTC, ss.getSpreadsheetTimeZone(), "dd/MM/yyyy HH:mm");
+    }
+    
+    var nossoClan = guerra.clan.tag.toLowerCase() === "#2qu2gv028".toLowerCase() ? guerra.clan : guerra.opponent;
+    var clãOponente = guerra.clan.tag.toLowerCase() === "#2qu2gv028".toLowerCase() ? guerra.opponent : guerra.clan;
+
+    var cabecalhosGuerra = [
+      "Estado", "Tamanho", "Nosso Emblema", "Nome Clã", "Nossas Estrelas", "Nossa Destruição (%)", "Nossos Ataques",
+      "Emblema Oponente", "Nome Oponente", "Estrelas Oponente", "Destruição Oponente (%)", "Ataques Oponente", "Início", "Fim"
+    ];
+    
+    var linhasGuerra = [
+      estado, guerra.teamSize + " v " + guerra.teamSize,
+      nossoClan.badgeUrls ? nossoClan.badgeUrls.large : "", nossoClan.name, nossoClan.stars || 0, Math.round(nossoClan.destructionPercentage || 0) + "%", nossoClan.attacks || 0,
+      clãOponente.badgeUrls ? clãOponente.badgeUrls.large : "", clãOponente.name, clãOponente.stars || 0, Math.round(clãOponente.destructionPercentage || 0) + "%", clãOponente.attacks || 0,
+      formatarDataCWL(guerra.startTime), formatarDataCWL(guerra.endTime)
+    ];
+    
+    sheetCWL.getRange(1, 1, 1, cabecalhosGuerra.length).setValues([cabecalhosGuerra]);
+    sheetCWL.getRange(2, 1, 1, linhasGuerra.length).setValues([linhasGuerra]);
+    sheetCWL.getRange(1, 1, 1, cabecalhosGuerra.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheetCWL.autoResizeColumns(1, cabecalhosGuerra.length);
+
+    var defesasPorMembroBase = {};
+    if (clãOponente && clãOponente.members) {
+      clãOponente.members.forEach(function(opMembro) {
+        if (opMembro.attacks) {
+          opMembro.attacks.forEach(function(atk) {
+            if (!defesasPorMembroBase[atk.defenderTag]) defesasPorMembroBase[atk.defenderTag] = [];
+            defesasPorMembroBase[atk.defenderTag].push(atk);
+          });
+        }
+      });
+    }
+
+    var membrosNossoClã = nossoClan.members || [];
+    membrosNossoClã.sort(function(a, b) { return a.mapPosition - b.mapPosition; });
+    
+    var cabecalhosJogadores = [
+      "Posição", "Foto CV", "Nome", "Tag", "Nível CV", 
+      "Ataque (Estrelas)", "Ataque (%)", "Total Estrelas Feitas", "Ataque Heróico?",
+      "Qtd Defesas", "Total Estrelas Recebidas", "Média Destruição Sofrida (%)", "Defesa Heróica?"
+    ];
+    
+    var linhasJogadores = [];
+    membrosNossoClã.forEach(function(mem) {
+      var ataques = mem.attacks || [];
+      var totalEstrelas = 0, temAtaqueHeroico = "Não";
+      var atkEstrelas = "-", atkDestruicao = "-";
+      
+      if (ataques.length > 0) {
+        atkEstrelas = ataques[0].stars;
+        atkDestruicao = Math.round(ataques[0].destructionPercentage) + "%";
+        if (ataques[0].isHeroicParsec) temAtaqueHeroico = "Sim";
+        totalEstrelas += ataques[0].stars;
+      }
+      
+      var defesas = defesasPorMembroBase[mem.tag] || [];
+      var totalEstrelasRecebidas = 0, somaDestruicaoSofrida = 0, temDefesaHeroica = "Não";
+      
+      defesas.forEach(function(def) {
+        totalEstrelasRecebidas += def.stars || 0;
+        somaDestruicaoSofrida += def.destructionPercentage || 0;
+        if (def.isHeroicParsec) temDefesaHeroica = "Sim";
+      });
+
+      linhasJogadores.push([
+        mem.mapPosition, "https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall" + mem.townhallLevel + ".png",
+        mem.name, mem.tag, mem.townhallLevel, atkEstrelas, atkDestruicao, totalEstrelas, temAtaqueHeroico,
+        defesas.length, totalEstrelasRecebidas, defesas.length > 0 ? Math.round(somaDestruicaoSofrida / defesas.length) + "%" : "0%", temDefesaHeroica
+      ]);
+    });
+    
+    sheetCWLJogadores.getRange(1, 1, 1, cabecalhosJogadores.length).setValues([cabecalhosJogadores]);
+    if (linhasJogadores.length > 0) {
+      sheetCWLJogadores.getRange(2, 1, linhasJogadores.length, cabecalhosJogadores.length).setValues(linhasJogadores);
+      sheetCWLJogadores.setRowHeights(2, linhasJogadores.length, 60);
+    }
+    sheetCWLJogadores.getRange(1, 1, 1, cabecalhosJogadores.length).setFontWeight("bold").setBackground("#d9d9d9");
+    sheetCWLJogadores.autoResizeColumns(1, cabecalhosJogadores.length);
+  }
+
+  sheetCWLTabela.getRange("A1").setValue("PRÓXIMOS CONFRONTOS DA CWL").setFontWeight("bold").setFontSize(12);
+  var cabecalhosProximos = ["Rodada", "Clã Oponente", "Tag Oponente", "Status"];
+  sheetCWLTabela.getRange(2, 1, 1, cabecalhosProximos.length).setValues([cabecalhosProximos]).setFontWeight("bold").setBackground("#d9d9d9");
+  
+  if (proximoConfrontosLista.length > 0) {
+    var linhasProx = proximoConfrontosLista.map(function(p) { return [p.rodada, p.oponente, p.tagOponente, p.estado]; });
+    sheetCWLTabela.getRange(3, 1, linhasProx.length, 4).setValues(linhasProx);
+  } else {
+    sheetCWLTabela.getRange(3, 1).setValue("Nenhum confronto futuro pendente listado nas rodadas atuais.");
+  }
+
+  var linhaInicioTabela = (proximoConfrontosLista.length > 0 ? proximoConfrontosLista.length + 5 : 6);
+  sheetCWLTabela.getRange(linhaInicioTabela, 1).setValue("CLASSIFICAÇÃO DO GRUPO DA LIGA").setFontWeight("bold").setFontSize(12);
+  
+  var cabecalhosGrupo = ["Emblema", "Nome do Clã", "Tag", "Total de Estrelas", "Destruição Acumulada (%)"];
+  sheetCWLTabela.getRange(linhaInicioTabela + 1, 1, 1, cabecalhosGrupo.length).setValues([cabecalhosGrupo]).setFontWeight("bold").setBackground("#d9d9d9");
+  
+  var arrayClasTabela = [];
+  for (var key in estatisticasClãsGrupo) {
+    if (estatisticasClãsGrupo.hasOwnProperty(key)) {
+      arrayClasTabela.push(estatisticasClãsGrupo[key]);
+    }
+  }
+
+  arrayClasTabela.sort(function(a, b) {
+    if (b.totalEstrelas !== a.totalEstrelas) {
+      return b.totalEstrelas - a.totalEstrelas;
+    }
+    return b.totalDestruicao - a.totalDestruicao;
+  });
+
+  if (arrayClasTabela.length > 0) {
+    var linhasGrupo = arrayClasTabela.map(function(tc) { 
+      return [tc.emblema, tc.nome, tc.tag, tc.totalEstrelas, Math.round(tc.totalDestruicao) + "%"]; 
+    });
+    sheetCWLTabela.getRange(linhaInicioTabela + 2, 1, linhasGrupo.length, 5).setValues(linhasGrupo);
+    sheetCWLTabela.setRowHeights(linhaInicioTabela + 2, linhasGrupo.length, 50); 
+  }
+
+  sheetCWLTabela.autoResizeColumns(1, 5);
+  Logger.log("Tabela da CWL atualizada com sucesso!");
+}
+
+Codido HTML abaixo
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Invictos BR - Painel do Clã</title>
+    <style>
+        :root {
+            --bg-color: #12141c;
+            --card-bg: #1a1d28;
+            --card-hover: #222634;
+            --text-color: #ffffff;
+            --text-secondary: #cbd5e1;
+            --accent-green: #22c55e;
+            --accent-blue: #38bdf8;
+            --accent-red: #ef4444;
+            --accent-yellow: #facc15;
+            --border-color: #33384a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            padding-top: 24px;
+            padding-bottom: 90px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .action-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 20, 28, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        }
+
+        .action-loading-box {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-blue);
+            padding: 20px 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .loader-content {
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        .loader-logo {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .loader-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .loader-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            transition: width 0.2s ease;
+            border-radius: 5px;
+        }
+
+        .progress-percentage {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        .network-warning {
+            display: none;
+            margin-top: 15px;
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            color: var(--accent-yellow);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            animation: pulseWarning 1.5s infinite;
+        }
+
+        @keyframes pulseWarning {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        .safe-area-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 24px;
+            background-color: #0b0d13;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            z-index: 1001;
+            text-transform: uppercase;
+        }
+
+        .clan-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .admin-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn-action-top {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-action-top:hover {
+            background: var(--card-hover);
+            color: var(--text-color);
+        }
+
+        .btn-admin.logged {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .clan-badge-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .clan-badge {
+            width: 70px;
+            height: auto;
+        }
+
+        .clan-title-info h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .clan-members-count {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .war-stats {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--card-bg);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-badge.win span { color: var(--accent-green); font-weight: bold; }
+        .stat-badge.tie span { color: var(--accent-blue); font-weight: bold; }
+        .stat-badge.lose span { color: var(--accent-red); font-weight: bold; }
+        .stat-badge.streak span { color: var(--accent-yellow); font-weight: bold; }
+
+        .info-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .chip {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .clan-description {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            margin: 15px 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            text-align: left;
+        }
+
+        .last-update {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            text-align: right;
+            padding-right: 20px;
+        }
+
+        .members-section {
+            padding: 0 15px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 10px 10px 10px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+
+        .sort-select {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .search-bar-container {
+            display: flex;
+            gap: 8px;
+            margin: 0 10px 15px 10px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .member-card {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .member-card:hover {
+            background: var(--card-hover);
+        }
+
+        .member-pos {
+            font-size: 13px;
+            color: var(--text-secondary);
+            width: 22px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .member-avatar {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            margin-right: 10px;
+        }
+
+        .member-info {
+            flex-grow: 1;
+        }
+
+        .member-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .member-role {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin: 2px 0 0 0;
+        }
+
+        .member-extra-details {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .member-stats-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .member-stats-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .member-stat-box {
+            background: #12141c;
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            color: var(--accent-yellow);
+        }
+
+        .whatsapp-container {
+            padding: 15px;
+        }
+
+        .action-button {
+            background: var(--accent-green);
+            color: #fff;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-button.red { background: var(--accent-red); width: calc(100% - 30px); margin: 15px 15px 0 15px; }
+        .action-button:hover { opacity: 0.9; }
+
+        .whatsapp-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .whatsapp-card-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .whatsapp-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .whatsapp-details p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon.delete { color: var(--accent-red); }
+        .btn-icon.whatsapp { color: var(--accent-green); border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.1); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 { margin-top: 0; color: var(--text-color); }
+
+        .form-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: inherit;
+        }
+        .form-group textarea { resize: vertical; height: 70px; }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-save { background: var(--accent-blue); color: white; }
+        .btn-cancel { background: var(--border-color); color: var(--text-color); }
+
+        .more-container {
+            padding: 15px;
+        }
+
+        .submenu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .submenu-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .submenu-card:hover {
+            background: var(--card-hover);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .submenu-icon {
+            font-size: 28px;
+        }
+
+        .submenu-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .submenu-content-view {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .submenu-header-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 0 15px 0;
+        }
+
+        .submenu-body h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .submenu-body p, .submenu-body li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .submenu-body ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px;
+            flex: 1;
+            transition: color 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item span { font-size: 16px; }
+        .nav-item.active { color: var(--accent-blue); font-weight: bold; }
+        .nav-item:hover { color: var(--text-color); }
+
+        .admin-only {
+            display: none !important;
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ESTILOS DA ABA GUERRA ATUAL */
+        .war-header-status {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 25px 0 10px 0;
+            text-transform: uppercase;
+        }
+        
+        .war-timer {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 10px 20px 20px 20px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .war-timer-countdown {
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--text-color);
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        
+        .war-scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            margin: 15px 20px;
+            border-radius: 12px;
+            padding: 15px 10px;
+            position: relative;
+        }
+        
+        .clan-side {
+            width: 45%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .vs-divider {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: var(--accent-red);
+            z-index: 2;
+        }
+        
+        .war-badge {
+            width: 65px;
+            height: 65px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+        
+        .war-clan-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        .war-stars {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent-yellow);
+            margin-bottom: 4px;
+        }
+        
+        .war-stats-row {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+        
+        .war-stats-row span {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .war-extra-stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-top: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            color: var(--text-secondary);
+        }
+        
+        .war-extra-stat span {
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+        
+        .war-predictions {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .prediction-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .prediction-box.highlight {
+            border-color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+        }
+        
+        .prediction-box h4 {
+            margin: 0 0 6px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .prediction-box p {
+            margin: 0;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="loader-logo">🛡️</div>
+            <div class="loader-title">Invictos BR</div>
+            <div class="loader-subtitle" id="loader-status-text">Sincronizando dados da API...</div>
+            
+            <div class="progress-bar-container">
+                <div id="progress-bar-fill" class="progress-bar-fill"></div>
+            </div>
+            <div id="progress-percentage" class="progress-percentage">0%</div>
+
+            <div id="network-warning" class="network-warning">
+                ⚠️ Sua conexão parece estar lenta ou instável. O carregamento pode demorar um pouco mais...
+            </div>
+        </div>
+    </div>
+
+    <div id="action-loading-overlay" class="action-loading-overlay">
+        <div class="action-loading-box">
+            <div class="spin" style="font-size: 20px;">🔄</div>
+            <span id="action-loading-text">Salvando e sincronizando dados...</span>
+        </div>
+    </div>
+
+    <div class="safe-area-banner">Invictos BR • Painel Oficial</div>
+
+    <div class="container">
+        <!-- ABA 1: MEU CLÃ -->
+        <div id="tab-meu-cla" class="tab-content" style="display: none;">
+            <div id="app">
+                <div class="clan-header">
+                    <div class="admin-bar">
+                        <button id="btn-sync" class="btn-action-top" onclick="sincronizarPlanilha()">
+                            <span id="sync-icon">🔄</span> <span id="sync-text">Sincronizar</span>
+                        </button>
+                        <button id="btn-admin-toggle" class="btn-action-top btn-admin" onclick="controlarAcessoAdmin()">
+                            <span id="admin-icon">🔒</span> <span id="admin-text">Painel Admin</span>
+                        </button>
+                    </div>
+
+                    <div class="clan-badge-container">
+                        <img id="clan-badge" class="clan-badge" src="" alt="Emblema">
+                        <div class="clan-title-info" style="text-align: left;">
+                            <h1 id="clan-name">Carregando...</h1>
+                            <div class="clan-members-count" id="clan-members">-- / 50</div>
+                        </div>
+                    </div>
+
+                    <div class="war-stats">
+                        <div class="stat-badge win"><span id="war-wins">0</span> Vitórias</div>
+                        <div class="stat-badge tie"><span id="war-ties">0</span> Empates</div>
+                        <div class="stat-badge lose"><span id="war-losses">0</span> Derrotas</div>
+                        <div class="stat-badge streak"><span id="war-streak">0</span> Sequência</div>
+                    </div>
+
+                    <div class="info-chips">
+                        <div class="chip" id="clan-points">🏆 Pontos: --</div>
+                        <div class="chip" id="clan-location">📍 Brasil</div>
+                        <div class="chip" id="clan-tag">#-------</div>
+                        <div class="chip" id="clan-freq">🕒 Frequência</div>
+                    </div>
+
+                    <div class="clan-description" id="clan-desc">Carregando descrição...</div>
+                    <div class="last-update" id="last-update">Última atualização: --</div>
+                </div>
+
+                <div class="members-section">
+                    <div class="section-header">
+                        <div class="section-title">Membros</div>
+                        <select id="sort-select" class="sort-select" onchange="renderizarMembros()">
+                            <option value="trofeus">Ordenar por: Troféus</option>
+                            <option value="cv">Nível de CV</option>
+                            <option value="cargo">Cargo</option>
+                            <option value="doadas">Tropas Doadas</option>
+                            <option value="recebidas">Tropas Recebidas</option>
+                            <option value="xp">Nível de XP</option>
+                        </select>
+                    </div>
+                    <div class="search-bar-container">
+                        <input type="text" id="search-member-input" class="search-input" placeholder="Pesquisar pelo nome da vila..." oninput="renderizarMembros()">
+                    </div>
+                    <div id="members-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 2: GUERRA ATUAL -->
+        <div id="tab-guerra" class="tab-content" style="display: none;">
+            <div id="guerra-container">
+                <!-- Conteúdo preenchido dinamicamente pelo Javascript com sub-menus e abas! -->
+            </div>
+        </div>
+
+        <!-- ABA 3: WHATSAPP -->
+        <div id="tab-whatsapp" class="tab-content admin-only btn-admin-control" style="display: none;">
+            <div class="whatsapp-container">
+                <button class="action-button admin-only btn-admin-control" onclick="abrirModalCadastro()">
+                    <span>➕</span> Cadastrar Nova Vila
+                </button>
+                <div id="whatsapp-members-list"></div>
+            </div>
+        </div>
+
+        <!-- ABA 4: ADVERTÊNCIAS -->
+        <div id="tab-advertencias" class="tab-content admin-only btn-admin-control" style="display: none;">
+            <div class="header" style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-color);">
+                <h1 style="margin: 0 0 5px 0; font-size: 20px; color: var(--accent-blue); display: flex; align-items: center; justify-content: center; gap: 8px;"><span>⚠️</span> Controle de Advertências</h1>
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Gerenciamento de infrações, punições e inatividade</p>
+            </div>
+
+            <button class="action-button red admin-only btn-admin-control" onclick="abrirModalAdvertencia()">
+                <span>➕</span> Aplicar Nova Advertência
+            </button>
+
+            <div class="stats-ranking-card" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; margin: 15px; padding: 12px;">
+                <div style="font-size: 13px; font-weight: bold; color: var(--accent-yellow); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">🏆 Top Punições no Clã</div>
+                <div id="ranking-list"></div>
+            </div>
+
+            <div class="filters-section" style="padding: 0 15px 15px 15px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <select id="filter-status-inativo" class="filter-select" style="flex: 1; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; cursor: pointer;" onchange="renderizarAdvertencias()">
+                    <option value="todos">Status Clã (Ativo/Inativo)</option>
+                    <option value="Ativo">Apenas Ativos</option>
+                    <option value="Inativo">Apenas Inativos</option>
+                </select>
+                <select id="filter-gravidade" class="filter-select" style="flex: 1; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; cursor: pointer;" onchange="renderizarAdvertencias()">
+                    <option value="todas">Infrações (Todas)</option>
+                    <option value="Grave">Grave</option>
+                    <option value="Média">Média</option>
+                    <option value="Leve">Leve</option>
+                </select>
+            </div>
+
+            <div class="warnings-container" id="warnings-list" style="padding: 0 15px;"></div>
+        </div>
+
+        <!-- ABA 5: MAIS -->
+        <div id="tab-mais" class="tab-content" style="display: none;">
+            <div class="more-container">
+                <div id="more-menu-grid" class="submenu-grid">
+                    <div class="submenu-card" onclick="abrirSubmenu('cwl')">
+                        <span class="submenu-icon">🛡️</span>
+                        <span class="submenu-title">CWL</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('escalacao')">
+                        <span class="submenu-icon">📋</span>
+                        <span class="submenu-title">Escalação da Guerra</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('recap')">
+                        <span class="submenu-icon">📊</span>
+                        <span class="submenu-title">War Recap</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('ranking')">
+                        <span class="submenu-icon">🏆</span>
+                        <span class="submenu-title">Ranking</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('dicas')">
+                        <span class="submenu-icon">💡</span>
+                        <span class="submenu-title">Dicas de Ataques</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('layouts')">
+                        <span class="submenu-icon">🗺️</span>
+                        <span class="submenu-title">Layouts de Guerra</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('regras')">
+                        <span class="submenu-icon">📜</span>
+                        <span class="submenu-title">Regras do Clã</span>
+                    </div>
+                    <div class="submenu-card" onclick="abrirSubmenu('bilhete')">
+                        <span class="submenu-icon">🎟️</span>
+                        <span class="submenu-title">Bilhete Dourado</span>
+                    </div>
+                </div>
+
+                <div id="submenu-view" style="display: none;">
+                    <button class="submenu-header-back" onclick="voltarMenuMais()">
+                        <span>←</span> Voltar aos menus
+                    </button>
+                    <div id="submenu-body-content" class="submenu-content-view"></div>
+                </div>
+
+                <div class="version-card" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <span style="color: var(--text-secondary);">Versão do Sistema</span>
+                        <span style="font-weight: bold; color: var(--accent-blue);">1.22.10</span>
+                    </div>
+                    <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+                        Criado por <strong style="color: var(--text-color);">Lord Igor</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="mudarAba('meu-cla', this)">
+                <span>🔰</span> Meu Clã
+            </button>
+            <button class="nav-item" onclick="mudarAba('guerra', this)">
+                <span>⚔️</span> Guerra Atual
+            </button>
+            <button id="nav-item-whatsapp" class="nav-item admin-only btn-admin-control" onclick="mudarAba('whatsapp', this)">
+                <span>💬</span> WhatsApp
+            </button>
+            <button id="nav-item-advertencias" class="nav-item admin-only btn-admin-control" onclick="mudarAba('advertencias', this)">
+                <span>⚠️</span> Advertências
+            </button>
+            <button class="nav-item" onclick="mudarAba('mais', this)">
+                <span>⚙️</span> Mais
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL DE LOGIN ADMIN -->
+    <div id="modal-login" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center;">
+            <h3>🔐 Acesso Administrativo</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Informe seus dados cadastrados para entrar.</p>
+            <form onsubmit="realizarLogin(event)">
+                <div class="form-group">
+                    <input type="text" id="login-telefone" required placeholder="Número de Telefone">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="login-senha" required placeholder="Senha">
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 8px; justify-content: flex-start; margin-top: 8px;">
+                    <input type="checkbox" id="login-lembrar" style="width: auto; cursor: pointer;">
+                    <label for="login-lembrar" style="margin-bottom: 0; cursor: pointer; color: var(--text-color);">Lembrar senha neste dispositivo</label>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalLogin()">Cancelar</button>
+                    <button type="submit" class="btn-save">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE LAYOUTS DE GUERRA -->
+    <div id="modal-layout" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title-layout">Cadastrar Layout de Guerra</h3>
+            <form id="form-layout" onsubmit="salvarLayoutGuerra(event)">
+                <input type="hidden" id="edit-id-layout" value="">
+                <div class="form-group">
+                    <label>Centro de Vila (CV)</label>
+                    <select id="campo-layout-cv" required>
+                        <option value="">Selecione o CV...</option>
+                        <option value="CV17">CV 17</option>
+                        <option value="CV16">CV 16</option>
+                        <option value="CV15">CV 15</option>
+                        <option value="CV14">CV 14</option>
+                        <option value="CV13">CV 13</option>
+                        <option value="CV12">CV 12</option>
+                        <option value="CV11">CV 11</option>
+                        <option value="CV10">CV 10</option>
+                        <option value="CV9">CV 9</option>
+                        <option value="CV8">CV 8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Link do Layout (Link do Clash of Clans)</label>
+                    <input type="url" id="campo-layout-link" required placeholder="https://link.clashofclans.com/pt?action=OpenLayout&id=...">
+                </div>
+                <div class="form-group">
+                    <label>Foto (URL da Imagem ou Descrição)</label>
+                    <input type="text" id="campo-layout-foto" required placeholder="URL da imagem da base...">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalLayout()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE CADASTRO/EDIÇÃO DE VILA -->
+    <div id="modal-cadastro" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Cadastrar Vila</h3>
+            <form id="form-cadastro" onsubmit="salvarCadastro(event)">
+                <input type="hidden" id="edit-index" value="">
+                <div class="form-group">
+                    <label>Nome Real</label>
+                    <input type="text" id="campo-nome-real" required placeholder="Ex: João Silva">
+                </div>
+                <div class="form-group">
+                    <label>Número de Telefone (WhatsApp)</label>
+                    <input type="text" id="campo-telefone" required placeholder="Ex: 11988887777">
+                </div>
+                <div class="form-group">
+                    <label>Selecionar Membro do Clã</label>
+                    <select id="campo-membro-clash" required>
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="campo-status">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL BILHETE -->
+    <div id="modal-bilhete" class="modal">
+        <div class="modal-content">
+            <h3>🎟️ Adicionar Ganhador - Bilhete Dourado</h3>
+            <form id="form-bilhete" onsubmit="salvarBilheteGanhador(event)">
+                <div class="form-group">
+                    <label>Membro Ganhador</label>
+                    <select id="campo-bilhete-membro" required>
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mês / Temporada</label>
+                    <input type="text" id="campo-bilhete-mes" required placeholder="Ex: Março/2026">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalBilhete()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ADVERTÊNCIA -->
+    <div id="modal-advertencia" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title-text">Aplicar Advertência</h3>
+            <form id="form-advertencia" onsubmit="salvarAdvertencia(event)">
+                <input type="hidden" id="edit-id-ocorrencia" value="">
+                
+                <div class="form-group" id="grupo-select-membro">
+                    <label>Selecionar Membro</label>
+                    <select id="campo-membro-advertencia" onchange="preencherDadosMembroAdvertencia()">
+                        <option value="">Selecione o membro...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tag do Membro</label>
+                    <input type="text" id="campo-tag" readonly placeholder="Tag do Clash">
+                </div>
+                <div class="form-group">
+                    <label>Nome no Clash</label>
+                    <input type="text" id="campo-nome-clash" readonly placeholder="Nome no Clash">
+                </div>
+                <div class="form-group" id="grupo-nivel">
+                    <label>Nível da Infração</label>
+                    <select id="campo-nivel">
+                        <option value="Leve">Leve</option>
+                        <option value="Média">Média</option>
+                        <option value="Grave">Grave</option>
+                    </select>
+                </div>
+                <div class="form-group" id="grupo-data">
+                    <label>Data</label>
+                    <input type="date" id="campo-data">
+                </div>
+                <div class="form-group" id="grupo-motivo">
+                    <label>Motivo / Descrição</label>
+                    <textarea id="campo-motivo" placeholder="Motivo..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Punição Aplicada</label>
+                    <input type="text" id="campo-punicao" required placeholder="Ex: Banco de guerra">
+                </div>
+                <div class="form-group">
+                    <label>Status da Punição</label>
+                    <select id="campo-status-punicao">
+                        <option value="Pendente">Pendente</option>
+                        <option value="Cumprida">Cumprida</option>
+                        <option value="Resolvido">Resolvido</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalAdvertencia()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR MEMBROS NA ESCALAÇÃO -->
+    <div id="modal-escalacao" class="modal">
+        <div class="modal-content">
+            <h3>📋 Adicionar Membros à Escalação</h3>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Selecione um ou mais membros (com WhatsApp cadastrado) para adicionar de uma só vez:</p>
+            <div id="lista-checkboxes-escalacao" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; margin-bottom: 12px; background: var(--bg-color);">
+                <!-- Preenchido via JS -->
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="fecharModalEscalacao()">Cancelar</button>
+                <button type="button" class="btn-save" onclick="salvarEscalacaoMembrosMultiplos()">Adicionar Selecionados</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL AUTORIZAÇÃO DE ATAQUE -->
+    <div id="modal-auth-ataque" class="modal">
+        <div class="modal-content">
+            <h3>⚔️ Editar Autorização</h3>
+            <form id="form-auth-ataque" onsubmit="salvarAuthAtaque(event)">
+                <input type="hidden" id="auth-tag" value="">
+                <input type="hidden" id="auth-tipo" value="">
+                
+                <div class="form-group">
+                    <label>Status do Ataque</label>
+                    <input type="text" id="auth-status" required placeholder="Ex: Autorizado no #12 por Lord Igor">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="fecharModalAuth()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzPGEPkHBprwFUiDkhNkZ4MKT_colxtYCX8wSpvwUBRLmjo-FIEOGO9qX3z5BPYxbDE/exec';
+        let isAdminLogado = false;
+
+        let globalMembrosData = [];
+        let globalCadastroData = [];
+        let globalAdvertenciasData = [];
+        let globalLoginData = [];
+        let globalBilheteData = [];
+        let globalEscalacaoData = [];
+        let globalLayoutsData = [];
+        let globalBaseGuerraData = []; 
+        let globalEventosGuerraData = [];
+        let globalGuerraJogadoresData = [];
+        let globalClaRivalData = []; 
+        let rankingAtualGerado = []; 
+        
+        let globalFormatoGuerra = "15x15";
+        let globalDataGuerra = "";
+        let globalHoraGuerra = "";
+        let cvSelecionadoLayout = "CV15";
+
+        let progressInterval = null;
+        let currentProgress = 0;
+        let networkTimer = null;
+        let timerGuerraInterval = null;
+
+        // ==========================================
+        // LÓGICA DE RENDERIZAÇÃO DA GUERRA ATUAL (SUB-ABAS)
+        // ==========================================
+        
+        function mudarSubAbaGuerra(aba) {
+            // Esconder todas as sub-abas da Guerra
+            document.getElementById('war-resumo-container').style.display = 'none';
+            document.getElementById('war-eventos-container').style.display = 'none';
+            document.getElementById('war-mapa-container').style.display = 'none';
+            
+            // Remover classe 'active' e resetar estilos dos botões
+            const btns = document.querySelectorAll('.war-sub-btn');
+            btns.forEach(b => {
+                b.style.background = 'var(--bg-color)';
+                b.style.color = 'var(--text-secondary)';
+                b.style.fontWeight = 'normal';
+                b.classList.remove('active');
+            });
+    
+            // Mostrar a aba selecionada e marcar o botão
+            document.getElementById('war-' + aba + '-container').style.display = 'block';
+            const btnAtivo = document.getElementById('btn-war-' + aba);
+            if(btnAtivo) {
+                btnAtivo.style.background = 'var(--card-bg)';
+                btnAtivo.style.color = 'var(--text-color)';
+                btnAtivo.style.fontWeight = 'bold';
+                btnAtivo.classList.add('active');
+            }
+            
+            // Chamar a renderização de conteúdo extra (se aplicável)
+            if (aba === 'eventos') renderizarEventosGuerra();
+            if (aba === 'mapa') {
+                document.getElementById('btn-mapa-nosso').classList.add('active');
+                document.getElementById('btn-mapa-rival').classList.remove('active');
+                renderizarMapaGuerra('nosso');
+            }
+        }
+
+        function renderizarGuerra(rawGuerra, rawPrev) {
+            const container = document.getElementById('guerra-container');
+            
+            if (!rawGuerra || rawGuerra.length < 2 || rawGuerra[0][0] === "O clã não está em guerra no momento.") {
+                container.innerHTML = `
+                    <div style="padding: 40px 20px; text-align: center;">
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 30px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🛡️</div>
+                            <h2 style="margin: 0 0 10px 0; font-size: 20px; color: var(--text-secondary);">Sem Guerra no Momento</h2>
+                            <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">O clã não está em nenhuma guerra ativa. Aguarde o início de uma nova pesquisa de guerra.</p>
+                        </div>
+                    </div>
+                `;
+                if (timerGuerraInterval) clearInterval(timerGuerraInterval);
+                return;
+            }
+
+            const cabG = rawGuerra[0];
+            const valG = rawGuerra[1];
+            const idxG = (nome) => cabG.indexOf(nome);
+
+            const estado = valG[idxG("Estado")] || "Desconhecido";
+            const tamanho = valG[idxG("Tamanho")] || "-- v --";
+            const nossoEmblema = valG[idxG("Nosso Emblema")] || "";
+            const nomeCla = valG[idxG("Nome Clã")] || "Nosso Clã";
+            const nossasEstrelas = valG[idxG("Nossas Estrelas")] || 0;
+            const nossaDestruicaoRaw = valG[idxG("Nossa Destruição (%)")] || "0%";
+            const nossosAtaques = valG[idxG("Nossos Ataques")] || 0;
+            
+            const emblemaOponente = valG[idxG("Emblema Oponente")] || "";
+            const nomeOponente = valG[idxG("Nome Oponente")] || "Oponente";
+            const estrelasOponente = valG[idxG("Estrelas Oponente")] || 0;
+            const destruicaoOponenteRaw = valG[idxG("Destruição Oponente (%)")] || "0%";
+            const ataquesOponente = valG[idxG("Ataques Oponente")] || 0;
+            
+            const inicioStr = valG[idxG("Início")];
+            const fimStr = valG[idxG("Fim")];
+
+            function corrigirPorcentagem(val) {
+                if (!val && val !== 0) return "0%";
+                let s = String(val).trim();
+                if (s.includes('%')) return s; 
+                let n = parseFloat(s.replace(',', '.'));
+                if (isNaN(n)) return s; 
+                if (n > 0 && n <= 1) n = n * 100; 
+                return n.toFixed(1).replace('.0', '') + "%";
+            }
+
+            const nossaDestruicaoFinal = corrigirPorcentagem(nossaDestruicaoRaw);
+            const destruicaoOponenteFinal = corrigirPorcentagem(destruicaoOponenteRaw);
+
+            function parseDateSafely(str) {
+                if (!str) return new Date(NaN);
+                let s = String(str).trim();
+                if (s.includes('T')) return new Date(s); 
+                let parts = s.split(' ');
+                if (parts.length >= 2) {
+                    let dParts = parts[0].split('/');
+                    let tParts = parts[1].split(':');
+                    if (dParts.length === 3 && tParts.length >= 2) {
+                        return new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1]);
+                    }
+                }
+                return new Date(s);
+            }
+
+            let inicioDate = parseDateSafely(inicioStr);
+            let fimDate = parseDateSafely(fimStr);
+
+            function formatarDataHoraExtenso(d) {
+                if (isNaN(d.getTime())) return "--";
+                let dia = String(d.getDate()).padStart(2, '0');
+                let mes = String(d.getMonth() + 1).padStart(2, '0');
+                let h = String(d.getHours()).padStart(2, '0');
+                let min = String(d.getMinutes()).padStart(2, '0');
+                return `${dia}/${mes} às ${h}:${min}`;
+            }
+
+            let mediaCvNosso = "--", mediaCvOponente = "--";
+            let vitNosso = "--", vitOponente = "--";
+            let prevInicial = "--", prevAtual = "--";
+
+            if (rawPrev && rawPrev.length > 1) {
+                rawPrev.forEach(row => {
+                    if (!row[0]) return;
+                    let ind = String(row[0]);
+                    if (ind.includes("Média de Nível de CV")) {
+                        mediaCvNosso = row[1] || "--"; mediaCvOponente = row[2] || "--";
+                    } else if (ind.includes("Total de Vitórias")) {
+                        vitNosso = row[1] || "--"; vitOponente = row[2] || "--";
+                    } else if (ind.includes("Previsão no Início")) {
+                        prevInicial = row[1] || "--";
+                    } else if (ind.includes("Status Projetado")) {
+                        prevAtual = row[1] || "--";
+                    }
+                });
+            }
+
+            let corEstado = "var(--text-secondary)";
+            if (estado.toLowerCase().includes("preparação")) corEstado = "var(--accent-yellow)";
+            else if (estado.toLowerCase().includes("em guerra")) corEstado = "var(--accent-red)";
+
+            // GERAÇÃO DO COMPARATIVO DE CVs
+            let contagemCvHtml = '';
+            if (globalGuerraJogadoresData.length > 0 || globalClaRivalData.length > 0) {
+                let cvNosso = {};
+                let cvRival = {};
+                let todosCVs = new Set();
+
+                globalGuerraJogadoresData.forEach(j => {
+                    let cv = parseInt(j.cv) || 0;
+                    if (cv > 0) { cvNosso[cv] = (cvNosso[cv] || 0) + 1; todosCVs.add(cv); }
+                });
+
+                globalClaRivalData.forEach(r => {
+                    let cv = parseInt(r.cv) || 0;
+                    if (cv > 0) { cvRival[cv] = (cvRival[cv] || 0) + 1; todosCVs.add(cv); }
+                });
+
+                let cvsOrdenados = Array.from(todosCVs).sort((a,b) => b - a);
+
+                if (cvsOrdenados.length > 0) {
+                    let linhasCv = cvsOrdenados.map(cv => {
+                        let nNosso = cvNosso[cv] || 0;
+                        let nRival = cvRival[cv] || 0;
+                        
+                        let colorNosso = nNosso > nRival ? 'var(--accent-blue)' : (nNosso < nRival ? 'var(--text-secondary)' : 'var(--text-color)');
+                        let colorRival = nRival > nNosso ? 'var(--accent-red)' : (nRival < nNosso ? 'var(--text-secondary)' : 'var(--text-color)');
+
+                        return `
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                            <div style="flex: 1; text-align: right; padding-right: 10px; font-weight: bold; color: ${colorNosso};">
+                                ${nNosso > 0 ? nNosso : '-'}
+                            </div>
+                            <div style="width: 70px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 4px; display: flex; justify-content: center; align-items: center; gap: 4px;">
+                                <img src="https://clashofclans.fandom.com/wiki/Special:FilePath/Town_Hall${cv}.png" style="height: 18px; width: 18px; object-fit: contain;">
+                                <span style="font-size: 11px; font-weight: bold;">CV ${cv}</span>
+                            </div>
+                            <div style="flex: 1; text-align: left; padding-left: 10px; font-weight: bold; color: ${colorRival};">
+                                ${nRival > 0 ? nRival : '-'}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+
+                    contagemCvHtml = `
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin: 15px 20px; padding: 15px;">
+                        <h4 style="margin: 0 0 15px 0; color: var(--text-color); font-size: 14px; text-align: center;">📊 Comparativo de Centros de Vila</h4>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+                            <div style="flex: 1; text-align: right; padding-right: 10px;">Nosso Clã</div>
+                            <div style="width: 70px; text-align: center;">Nível</div>
+                            <div style="flex: 1; text-align: left; padding-left: 10px;">Oponente</div>
+                        </div>
+                        ${linhasCv}
+                    </div>
+                    `;
+                }
+            }
+
+            // HTML Base da Aba de Guerra (com submenus embutidos)
+            container.innerHTML = `
+                <!-- BOTOES DE SUB-ABA -->
+                <div style="display: flex; gap: 6px; margin: 20px 20px 0 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    <button id="btn-war-resumo" class="war-sub-btn active" onclick="mudarSubAbaGuerra('resumo')" style="flex:1; padding: 10px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;">📊 Resumo</button>
+                    <button id="btn-war-eventos" class="war-sub-btn" onclick="mudarSubAbaGuerra('eventos')" style="flex:1; padding: 10px; background: var(--bg-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.2s;">⚡ Eventos</button>
+                    <button id="btn-war-mapa" class="war-sub-btn" onclick="mudarSubAbaGuerra('mapa')" style="flex:1; padding: 10px; background: var(--bg-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.2s;">🗺️ Mapa</button>
+                </div>
+        
+                <!-- SUB-ABA 1: RESUMO -->
+                <div id="war-resumo-container">
+                    <div class="war-header-status" style="color: ${corEstado};">
+                        ${estado} <span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 5px;">Tamanho: ${tamanho}</span>
+                    </div>
+                    
+                    <div class="war-timer" id="war-timer-container">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                            <span id="war-timer-label">Tempo Restante:</span>
+                            <span id="war-timer-countdown" class="war-timer-countdown">--:--:--</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 8px; width: 100%;">
+                            <span title="Horário de início dos combates">⚔️ Início: <strong>${formatarDataHoraExtenso(inicioDate)}</strong></span>
+                            <span title="Horário de encerramento">🛑 Fim: <strong>${formatarDataHoraExtenso(fimDate)}</strong></span>
+                        </div>
+                    </div>
+        
+                    <div class="war-scoreboard">
+                        <div class="clan-side">
+                            <img src="${nossoEmblema}" alt="Nosso Clã" class="war-badge">
+                            <div class="war-clan-name">${nomeCla}</div>
+                            <div class="war-stars">⭐ <span>${nossasEstrelas}</span></div>
+                            <div class="war-stats-row">Destruição: <span>${nossaDestruicaoFinal}</span></div>
+                            <div class="war-stats-row">Ataques: <span>${nossosAtaques}</span></div>
+                            <div class="war-extra-stat">Média CV: <span>${mediaCvNosso}</span></div>
+                            <div class="war-extra-stat">Vitórias: <span>${vitNosso}</span></div>
+                        </div>
+        
+                        <div class="vs-divider">VS</div>
+        
+                        <div class="clan-side">
+                            <img src="${emblemaOponente}" alt="Oponente" class="war-badge">
+                            <div class="war-clan-name">${nomeOponente}</div>
+                            <div class="war-stars">⭐ <span>${estrelasOponente}</span></div>
+                            <div class="war-stats-row">Destruição: <span>${destruicaoOponenteFinal}</span></div>
+                            <div class="war-stats-row">Ataques: <span>${ataquesOponente}</span></div>
+                            <div class="war-extra-stat">Média CV: <span>${mediaCvOponente}</span></div>
+                            <div class="war-extra-stat">Vitórias: <span>${vitOponente}</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- NOVO: COMPARATIVO DE CENTROS DE VILA -->
+                    ${contagemCvHtml}
+        
+                    <div class="war-predictions">
+                        <div class="prediction-box">
+                            <h4>🔮 Previsão Inicial (Início)</h4>
+                            <p>${prevInicial}</p>
+                        </div>
+                        <div class="prediction-box highlight">
+                            <h4>📈 Status Projetado Atual</h4>
+                            <p>${prevAtual}</p>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- SUB-ABA 2: EVENTOS DA GUERRA -->
+                <div id="war-eventos-container" style="display: none; padding: 20px;">
+                    <h3 style="margin-top:0; color: var(--accent-blue);">⚡ Eventos da Guerra</h3>
+                    <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Registro cronológico dos ataques efetuados na guerra atual.</p>
+                    <div id="war-eventos-list"></div>
+                </div>
+        
+                <!-- SUB-ABA 3: MAPA DE GUERRA -->
+                <div id="war-mapa-container" style="display: none; padding: 20px;">
+                    <div style="display: flex; gap: 6px; margin-bottom: 15px;">
+                        <button id="btn-mapa-nosso" class="action-button active" onclick="renderizarMapaGuerra('nosso')" style="flex:1; margin:0; font-size:12px; padding:10px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);">🔰 Nosso Clã</button>
+                        <button id="btn-mapa-rival" class="action-button" onclick="renderizarMapaGuerra('rival')" style="flex:1; margin:0; font-size:12px; padding:10px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-secondary);">⚔️ Clã Rival</button>
+                    </div>
+                    <div id="war-mapa-list"></div>
+                </div>
+            `;
+
+            iniciarTimerGuerra(estado, inicioDate, fimDate);
+        }
+
+        function renderizarEventosGuerra() {
+            const container = document.getElementById('war-eventos-list');
+            if (globalEventosGuerraData.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum evento registrado nesta guerra até o momento.</p>';
+                return;
+            }
+            let html = '';
+            globalEventosGuerraData.forEach(evt => {
+                html += `
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                        <img src="${evt.fotoCV}" style="width: 40px; height: 40px;" alt="CV">
+                        <div style="flex-grow: 1;">
+                            <div style="font-weight: bold; font-size: 14px; color: var(--text-color);">${evt.atacante}</div>
+                            <div style="font-size: 12px; color: var(--accent-blue);">${evt.tipo}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${evt.detalhes}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderizarMapaGuerra(tipoVisualizacao = 'nosso') {
+            const container = document.getElementById('war-mapa-list');
+            let html = '';
+
+            // Atualizar botões de aba interna
+            if (tipoVisualizacao === 'nosso') {
+                document.getElementById('btn-mapa-nosso').style.background = 'var(--accent-blue)';
+                document.getElementById('btn-mapa-nosso').style.color = '#fff';
+                document.getElementById('btn-mapa-rival').style.background = 'var(--bg-color)';
+                document.getElementById('btn-mapa-rival').style.color = 'var(--text-secondary)';
+                
+                if (globalGuerraJogadoresData.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum dado de jogador encontrado no Nosso Clã.</p>';
+                    return;
+                }
+        
+                globalGuerraJogadoresData.forEach(jog => {
+                    let isAtk1Espelho = jog.atk1Status === 'Ataque Espelho';
+        
+                    let btnEditAtk1 = (isAdminLogado && !isAtk1Espelho) ? `<button class="btn-icon" onclick="abrirModalAuthAtaque('${jog.tag}', '1', '${jog.atk1Status}')" title="Editar Autorização">✏️</button>` : '';
+                    let btnEditAtk2 = isAdminLogado ? `<button class="btn-icon" onclick="abrirModalAuthAtaque('${jog.tag}', '2', '${jog.atk2Status}')" title="Editar Autorização">✏️</button>` : '';
+        
+                    let btnWpp = '';
+                    if (isAdminLogado) {
+                        btnWpp = `<button class="action-button" onclick="enviarMsgAutorizacao('${jog.tag}', '${jog.nome}')" style="padding: 6px; font-size: 11px; margin-bottom:0; background: var(--accent-green); width: auto;">💬 Autorizar Ataque</button>`;
+                    }
+        
+                    html += `
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+                                <div style="display:flex; align-items: center;">
+                                    <div style="font-size: 16px; font-weight: bold; color: var(--text-secondary); width: 35px;">#${jog.posicao}</div>
+                                    <img src="${jog.fotoCV}" style="width: 36px; height: 36px; margin-right: 10px;" alt="CV">
+                                    <div>
+                                        <div style="font-weight: bold; font-size: 14px; color: var(--text-color); line-height: 1.1;">${jog.nome}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); margin-top:2px;">CV ${jog.cv}</div>
+                                    </div>
+                                </div>
+                                ${btnWpp}
+                            </div>
+                            
+                            <!-- Ataque 1 -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">1º Ataque</div>
+                                    <div style="font-size: 12px; font-weight: bold; color: ${isAtk1Espelho ? 'var(--accent-blue)' : 'var(--text-color)'};">${jog.atk1Status}</div>
+                                    <div style="font-size: 11px; color: var(--accent-yellow); margin-top: 2px;">⭐ ${jog.atk1Estrelas} | 💥 ${jog.atk1Destruicao}</div>
+                                </div>
+                                ${btnEditAtk1}
+                            </div>
+        
+                            <!-- Ataque 2 -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-secondary);">2º Ataque</div>
+                                    <div style="font-size: 12px; font-weight: bold; color: var(--text-color);">${jog.atk2Status}</div>
+                                    <div style="font-size: 11px; color: var(--accent-yellow); margin-top: 2px;">⭐ ${jog.atk2Estrelas} | 💥 ${jog.atk2Destruicao}</div>
+                                </div>
+                                ${btnEditAtk2}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (tipoVisualizacao === 'rival') {
+                document.getElementById('btn-mapa-rival').style.background = 'var(--accent-red)';
+                document.getElementById('btn-mapa-rival').style.color = '#fff';
+                document.getElementById('btn-mapa-nosso').style.background = 'var(--bg-color)';
+                document.getElementById('btn-mapa-nosso').style.color = 'var(--text-secondary)';
+                
+                if (globalClaRivalData.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum dado encontrado para o Clã Rival nesta guerra.</p>';
+                    return;
+                }
+
+                globalClaRivalData.forEach(rival => {
+                    let corDefesa = 'var(--text-secondary)';
+                    if(rival.defesaHeroica === 'Sim') corDefesa = 'var(--accent-blue)';
+                    else if(rival.maxEstrelasRecebidas == 3) corDefesa = 'var(--accent-green)';
+
+                    html += `
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; border-left: 4px solid var(--accent-red);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+                                <div style="display:flex; align-items: center;">
+                                    <div style="font-size: 16px; font-weight: bold; color: var(--accent-red); width: 35px;">#${rival.posicao}</div>
+                                    <img src="${rival.fotoCV}" style="width: 36px; height: 36px; margin-right: 10px;" alt="CV">
+                                    <div>
+                                        <div style="font-weight: bold; font-size: 14px; color: var(--text-color); line-height: 1.1;">${rival.nome}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary); margin-top:2px;">CV ${rival.cv}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 10px; color: var(--text-secondary);">Recebeu Defesas</div>
+                                    <div style="font-size: 14px; font-weight: bold; color: var(--text-color);">${rival.qtdDefesas}</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px;">
+                                <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px;">
+                                    <div style="font-size: 11px; color: var(--text-secondary); text-align: center; margin-bottom: 4px;">Ataques Realizados</div>
+                                    <div style="font-size: 11px; color: var(--text-color);">1º: ⭐ ${rival.atk1Estrelas} | 💥 ${rival.atk1Destruicao}</div>
+                                    <div style="font-size: 11px; color: var(--text-color);">2º: ⭐ ${rival.atk2Estrelas} | 💥 ${rival.atk2Destruicao}</div>
+                                </div>
+                                <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Melhor Defesa Sofrida</div>
+                                    <div style="font-size: 14px; font-weight: bold; color: ${corDefesa};">⭐ ${rival.maxEstrelasRecebidas} | 💥 ${rival.maxDestruicaoRecebida}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+        
+        function abrirModalAuthAtaque(tag, tipoAtaque, statusAtual) {
+            document.getElementById('auth-tag').value = tag;
+            document.getElementById('auth-tipo').value = tipoAtaque;
+            document.getElementById('auth-status').value = (statusAtual === 'Não Atacou' || statusAtual === '-' || statusAtual === 'Não autorizado') ? '' : statusAtual;
+            document.getElementById('modal-auth-ataque').style.display = 'flex';
+        }
+
+        function fecharModalAuth() {
+            document.getElementById('modal-auth-ataque').style.display = 'none';
+        }
+
+        function salvarAuthAtaque(event) {
+            event.preventDefault();
+            let tag = document.getElementById('auth-tag').value;
+            let tipo = document.getElementById('auth-tipo').value;
+            let status = document.getElementById('auth-status').value;
+
+            mostrarCarregamentoAcao("Salvando autorização...");
+
+            let payload = {
+                acao: "editar_status_ataque",
+                tag: tag,
+                tipoAtaque: tipo,
+                status: status
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    fecharModalAuth();
+                    carregarDados(() => {
+                        mudarSubAbaGuerra('mapa'); 
+                    });
+                } else {
+                    alert("Erro ao atualizar status.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+        
+        function enviarMsgAutorizacao(tag, nome) {
+            let cadastro = globalCadastroData.find(c => c.tagClash === tag);
+            if (!cadastro || !cadastro.telefone) {
+                alert("Este membro não possui um número de WhatsApp cadastrado na aba 'WhatsApp'!");
+                return;
+            }
+            
+            let alvo = prompt("Qual o número da vila inimiga que ele deve atacar e destruir 100%?");
+            if (!alvo) return; 
+            
+            let telLimpo = String(cadastro.telefone).replace(/\D/g, '');
+            if (telLimpo.length <= 11 && !telLimpo.startsWith('55')) {
+                telLimpo = '55' + telLimpo;
+            }
+    
+            let texto = `Olá *${nome}*! ⚔️\n\nVocê foi *autorizado* pela liderança para realizar o seu ataque na guerra.\n\n🎯 *Seu alvo designado é a vila inimiga de número #${alvo}!*\n\nPrecisamos de *100% de destruição* nessa base para garantir a nossa vitória. Prepare suas melhores tropas, confira o castelo do clã inimigo e vá com tudo! 🔰💪`;
+            
+            let urlWpp = `https://wa.me/${telLimpo}?text=${encodeURIComponent(texto)}`;
+            window.open(urlWpp, '_blank');
+        }
+
+        function iniciarTimerGuerra(estado, inicioDate, fimDate) {
+            if (timerGuerraInterval) clearInterval(timerGuerraInterval);
+
+            function updateTimer() {
+                let agora = new Date();
+                let alvo = null;
+                let label = "";
+                let timerEl = document.getElementById("war-timer-countdown");
+                let labelEl = document.getElementById("war-timer-label");
+                let container = document.getElementById("war-timer-container");
+
+                if (!timerEl) {
+                    clearInterval(timerGuerraInterval);
+                    return;
+                }
+
+                if (estado.toLowerCase().includes("prepar")) {
+                    alvo = inicioDate;
+                    label = "Começa em:";
+                    container.style.borderColor = "rgba(234, 179, 8, 0.4)";
+                    container.style.background = "rgba(234, 179, 8, 0.1)";
+                } else if (estado.toLowerCase().includes("em guerra") || estado.toLowerCase() === "inwar") {
+                    alvo = fimDate;
+                    label = "Termina em:";
+                    container.style.borderColor = "rgba(239, 68, 68, 0.4)";
+                    container.style.background = "rgba(239, 68, 68, 0.1)";
+                } else {
+                    labelEl.innerText = "Guerra Encerrada";
+                    timerEl.innerText = "00:00:00";
+                    container.style.borderColor = "rgba(255, 255, 255, 0.2)";
+                    container.style.background = "var(--card-bg)";
+                    clearInterval(timerGuerraInterval);
+                    return;
+                }
+
+                let diff = alvo - agora;
+                if (diff <= 0) {
+                    if (estado.toLowerCase().includes("prepar")) {
+                        labelEl.innerText = "Em andamento...";
+                        timerEl.innerText = "Atualize a página";
+                    } else {
+                        timerEl.innerText = "00:00:00";
+                        labelEl.innerText = "Tempo Esgotado";
+                    }
+                    return;
+                }
+
+                let h = Math.floor(diff / (1000 * 60 * 60));
+                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                let s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                labelEl.innerText = label;
+                timerEl.innerText = `${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+            }
+
+            updateTimer();
+            timerGuerraInterval = setInterval(updateTimer, 1000);
+        }
+
+        // ==========================================
+        // OUTRAS FUNÇÕES DO SISTEMA
+        // ==========================================
+
+        function formatarDataSimples(valor) {
+            if (!valor) return '--';
+            let str = String(valor).trim();
+            if (str.includes('T') || (str.includes('-') && str.length >= 10)) {
+                let d = new Date(str);
+                if (!isNaN(d.getTime())) {
+                    let dia = String(d.getUTCDate()).padStart(2, '0');
+                    let mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    let ano = d.getUTCFullYear();
+                    return `${dia}/${mes}/${ano}`;
+                }
+            }
+            return str;
+        }
+
+        function formatarTemporadaData(valor) {
+            if (!valor) return '';
+            let str = String(valor).trim();
+            if (str.includes('T') || (str.includes('-') && str.length >= 10)) {
+                let d = new Date(str);
+                if (!isNaN(d.getTime())) {
+                    let mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    let ano = d.getUTCFullYear();
+                    return `${mes}/${ano}`;
+                }
+            }
+            return str;
+        }
+
+        function formatarMesAnoBilhete(valor) {
+            if (!valor) return 'Março/2026';
+            let strVal = String(valor).trim();
+            if (strVal.includes('T') || (strVal.includes('-') && strVal.length >= 10)) {
+                let d = new Date(strVal);
+                if (!isNaN(d.getTime())) {
+                    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                    return `${meses[d.getUTCMonth()]} / ${d.getUTCFullYear()}`;
+                }
+            }
+            return strVal;
+        }
+
+        function mostrarCarregamentoAcao(texto = "Salvando e sincronizando dados...") {
+            document.getElementById('action-loading-text').innerText = texto;
+            document.getElementById('action-loading-overlay').style.display = 'flex';
+        }
+
+        function esconderCarregamentoAcao() {
+            document.getElementById('action-loading-overlay').style.display = 'none';
+        }
+
+        function iniciarProgressoLoading() {
+            currentProgress = 0;
+            const fillEl = document.getElementById('progress-bar-fill');
+            const percEl = document.getElementById('progress-percentage');
+            const warningEl = document.getElementById('network-warning');
+
+            warningEl.style.display = 'none';
+
+            networkTimer = setTimeout(() => {
+                warningEl.style.display = 'block';
+            }, 3500);
+
+            if (progressInterval) clearInterval(progressInterval);
+
+            progressInterval = setInterval(() => {
+                if (currentProgress < 90) {
+                    let incremento = Math.floor(Math.random() * 8) + 2;
+                    currentProgress += incremento;
+                    if (currentProgress > 90) currentProgress = 90;
+                    
+                    fillEl.style.width = currentProgress + '%';
+                    percEl.innerText = currentProgress + '%';
+                }
+            }, 180);
+        }
+
+        function finalizarProgressoLoading(callback) {
+            if (networkTimer) clearTimeout(networkTimer);
+            if (progressInterval) clearInterval(progressInterval);
+
+            currentProgress = 100;
+            const fillEl = document.getElementById('progress-bar-fill');
+            const percEl = document.getElementById('progress-percentage');
+            const warningEl = document.getElementById('network-warning');
+            const loadingScreen = document.getElementById('loading-screen');
+
+            fillEl.style.width = '100%';
+            percEl.innerText = '100%';
+            warningEl.style.display = 'none';
+
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    if (callback) callback();
+                }, 400);
+            }, 300);
+        }
+
+        function sincronizarPlanilha() {
+            const iconEl = document.getElementById('sync-icon');
+            const textEl = document.getElementById('sync-text');
+
+            iconEl.classList.add('spin');
+            textEl.innerText = 'Sincronizando...';
+
+            carregarDados(() => {
+                iconEl.classList.remove('spin');
+                textEl.innerText = 'Sincronizar';
+            });
+        }
+
+        function controlarAcessoAdmin() {
+            if (isAdminLogado) {
+                if (confirm("Deseja sair do modo Administrador?")) {
+                    isAdminLogado = false;
+                    localStorage.removeItem('invictos_admin_tel');
+                    localStorage.removeItem('invictos_admin_pass');
+                    
+                    if (document.getElementById('tab-advertencias').style.display === 'block' || document.getElementById('tab-whatsapp').style.display === 'block') {
+                        mudarAba('meu-cla', document.querySelector('.nav-item'));
+                    }
+                    atualizarInterfaceAdmin();
+                }
+            } else {
+                let salvoTel = localStorage.getItem('invictos_admin_tel') || '';
+                let salvoPass = localStorage.getItem('invictos_admin_pass') || '';
+                
+                document.getElementById('login-telefone').value = salvoTel;
+                document.getElementById('login-senha').value = salvoPass;
+                document.getElementById('login-lembrar').checked = (salvoTel !== '');
+                
+                document.getElementById('modal-login').style.display = 'flex';
+            }
+        }
+
+        function realizarLogin(event) {
+            event.preventDefault();
+            let telefoneInformado = String(document.getElementById('login-telefone').value).trim().replace(/\D/g, '');
+            let senhaInformada = String(document.getElementById('login-senha').value).trim();
+            let lembrar = document.getElementById('login-lembrar').checked;
+
+            let adminEncontrado = globalLoginData.find(adm => {
+                let telPlanilha = String(adm.telefone || '').trim().replace(/\D/g, '');
+                let senhaPlanilha = String(adm.senha || '').trim();
+                return telPlanilha === telefoneInformado && senhaPlanilha === senhaInformada;
+            });
+
+            if (adminEncontrado) {
+                isAdminLogado = true;
+                
+                if (lembrar) {
+                    localStorage.setItem('invictos_admin_tel', document.getElementById('login-telefone').value);
+                    localStorage.setItem('invictos_admin_pass', senhaInformada);
+                } else {
+                    localStorage.removeItem('invictos_admin_tel');
+                    localStorage.removeItem('invictos_admin_pass');
+                }
+
+                fecharModalLogin();
+                atualizarInterfaceAdmin();
+                alert("Login efetuado com sucesso! Modo Administrador ativado.");
+            } else {
+                alert("Número de telefone ou senha incorretos!");
+            }
+        }
+
+        function fecharModalLogin() {
+            document.getElementById('modal-login').style.display = 'none';
+        }
+
+        function atualizarInterfaceAdmin() {
+            const btnToggle = document.getElementById('btn-admin-toggle');
+            const iconEl = document.getElementById('admin-icon');
+            const textEl = document.getElementById('admin-text');
+            const elementosAdmin = document.querySelectorAll('.btn-admin-control');
+
+            if (isAdminLogado) {
+                btnToggle.classList.add('logged');
+                iconEl.innerText = '🔓';
+                textEl.innerText = 'Admin Ativo';
+                elementosAdmin.forEach(el => el.classList.remove('admin-only'));
+            } else {
+                btnToggle.classList.remove('logged');
+                iconEl.innerText = '🔒';
+                textEl.innerText = 'Painel Admin';
+                elementosAdmin.forEach(el => el.classList.add('admin-only'));
+            }
+            
+            renderizarMembros();
+            renderizarWhatsappMembros();
+            renderizarAdvertencias();
+            
+            if (document.getElementById('submenu-view').style.display === 'block') {
+                let subAtual = document.getElementById('submenu-body-content').dataset.currentSub;
+                if (subAtual === 'bilhete' || subAtual === 'escalacao' || subAtual === 'layouts' || subAtual === 'ranking') {
+                    abrirSubmenu(subAtual);
+                }
+            }
+            
+            if(document.getElementById('tab-guerra').style.display === 'block'){
+                 if(document.getElementById('war-mapa-container').style.display === 'block') {
+                     renderizarMapaGuerra('nosso'); 
+                 }
+            }
+        }
+
+        function mudarAba(nomeAba, elementoBotao) {
+            if ((nomeAba === 'advertencias' || nomeAba === 'whatsapp') && !isAdminLogado) {
+                return;
+            }
+
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+
+            if (nomeAba === 'meu-cla') {
+                document.getElementById('tab-meu-cla').style.display = 'block';
+            } else if (nomeAba === 'whatsapp' && isAdminLogado) {
+                document.getElementById('tab-whatsapp').style.display = 'block';
+                renderizarWhatsappMembros();
+            } else if (nomeAba === 'guerra') {
+                document.getElementById('tab-guerra').style.display = 'block';
+            } else if (nomeAba === 'advertencias' && isAdminLogado) {
+                document.getElementById('tab-advertencias').style.display = 'block';
+                renderizarEstatisticasRanking();
+                renderizarAdvertencias();
+            } else if (nomeAba === 'mais') {
+                document.getElementById('tab-mais').style.display = 'block';
+                voltarMenuMais();
+            }
+
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            if (elementoBotao) elementoBotao.classList.add('active');
+        }
+
+        function abrirSubmenu(tipo) {
+            const grid = document.getElementById('more-menu-grid');
+            const view = document.getElementById('submenu-view');
+            const bodyContent = document.getElementById('submenu-body-content');
+            bodyContent.dataset.currentSub = tipo;
+
+            grid.style.display = 'none';
+            view.style.display = 'block';
+
+            let titulo = '';
+            let conteudoHtml = '';
+
+            switch(tipo) {
+                case 'cwl':
+                    titulo = 'Liga de Guerra de Clãs (CWL)';
+                    conteudoHtml = `
+                        <h3>🛡️ Informações da CWL</h3>
+                        <p>Acompanhe aqui as orientações de escalação, bônus de medalhas e alinhamento de ataques para a Liga de Guerra.</p>
+                        <ul>
+                            <li><strong>Escalação:</strong> Definida pelos líderes com base na força dos CVs e desempenho recente.</li>
+                            <li><strong>Bônus de Medalhas:</strong> Prioridade para quem completou todos os ataques e ajudou o clã.</li>
+                            <li><strong>Atentados:</strong> Sem ataques em dias de CWL sem aviso prévio resultam em punição direta.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'escalacao':
+                    titulo = 'Escalação da Guerra';
+                    
+                    let limiteTitulares = 15;
+                    let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+                    if (matchFormato) {
+                        limiteTitulares = parseInt(matchFormato[1], 10);
+                    }
+
+                    let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
+                        let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
+                        let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
+                        let cvX = mX ? mX.cv : 0;
+                        let cvY = mY ? mY.cv : 0;
+                        if(cvY !== cvX) return cvY - cvX;
+                        let trofX = mX ? mX.trofeus : 0;
+                        let trofY = mY ? mY.trofeus : 0;
+                        return trofY - trofX;
+                    });
+
+                    let titularesLista = [];
+                    let reservasLista = [];
+
+                    listaEscaladosOrdenada.forEach(esc => {
+                        let st = String(esc.status || '').trim().toLowerCase();
+                        if (st === 'reserva') {
+                            reservasLista.push(esc);
+                        } else {
+                            if (titularesLista.length < limiteTitulares) {
+                                titularesLista.push(esc);
+                            } else {
+                                esc.status = 'Reserva';
+                                reservasLista.push(esc);
+                            }
+                        }
+                    });
+
+                    let renderizarBlocoMembros = (lista, tituloBloco, corBadge, isReservaBloco) => {
+                        if (lista.length === 0) return '';
+                        let htmlBloco = `<h4 style="color: ${corBadge}; margin: 15px 0 8px 0;">${tituloBloco} (${lista.length})</h4>`;
+                        lista.forEach((esc, idx) => {
+                            let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || {
+                                fotoCV: 'https://cdn.jsdelivr.net/gh/clashofclans-api/assets@master/other/town-hall-1.png',
+                                cv: '--',
+                                trofeus: '--',
+                                cargo: 'Membro'
+                            };
+
+                            let botaoRemoverHtml = isAdminLogado ? `
+                                <button class="btn-icon delete" onclick="removerEscalacao('${esc.tag || esc.nome}')" title="Remover">🗑️</button>
+                            ` : '';
+
+                            let botaoTrocarStatusHtml = '';
+                            if (isAdminLogado) {
+                                if (isReservaBloco) {
+                                    botaoTrocarStatusHtml = `<button class="btn-icon" onclick="alternarStatusEscalacao('${esc.tag || esc.nome}', 'Escalado')" title="Promover a Titular">⬆️ Titular</button>`;
+                                } else {
+                                    botaoTrocarStatusHtml = `<button class="btn-icon" onclick="alternarStatusEscalacao('${esc.tag || esc.nome}', 'Reserva')" title="Mover para Reserva">⬇️ Reserva</button>`;
+                                }
+                            }
+
+                            htmlBloco += `
+                                <div style="display: flex; align-items: center; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
+                                    <div style="font-size: 12px; font-weight: bold; color: ${corBadge}; width: 26px; text-align: center;">#${idx + 1}</div>
+                                    <img src="${membroInfo.fotoCV}" class="member-avatar" alt="CV" style="width: 36px; height: 36px; margin: 0 8px;">
+                                    <div style="flex-grow: 1;">
+                                        <div style="font-size: 13px; font-weight: bold; color: var(--text-color);">${esc.nome}</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">CV ${membroInfo.cv} • 🏆 ${membroInfo.trofeus}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 4px;">
+                                        ${botaoTrocarStatusHtml}
+                                        ${botaoRemoverHtml}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        return htmlBloco;
+                    };
+
+                    let itensTitularesHtml = renderizarBlocoMembros(titularesLista, "Titulares da Guerra", "var(--accent-yellow)", false);
+                    let itensReservasHtml = renderizarBlocoMembros(reservasLista, "Reservas de Guerra", "var(--accent-blue)", true);
+
+                    if (listaEscaladosOrdenada.length === 0) {
+                        itensTitularesHtml = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 15px;">Nenhum membro escalado para esta guerra.</p>';
+                    }
+
+                    let formatoSeletorDisabled = !isAdminLogado ? 'disabled' : '';
+                    let bsoEscalacaoBotoes = isAdminLogado ? `
+                        <div style="display: flex; gap: 8px; margin: 12px 0;">
+                            <button class="action-button" onclick="abrirModalEscalacao()" style="margin: 0; flex: 1;">
+                                <span>➕</span> Adicionar Membros
+                            </button>
+                            <button class="action-button red" onclick="limparTodaEscalacao()" style="margin: 0; flex: 1; width: auto;">
+                                <span>🗑️</span> Limpar Todos
+                            </button>
+                        </div>
+                        <button class="action-button" onclick="salvarConfiguracaoGuerra()" style="background: var(--accent-blue); margin-bottom: 10px;">
+                            <span>💾</span> Salvar Configuração (Formato/Data/Hora)
+                        </button>
+                    ` : '';
+
+                    let botaoEnviarWpp = isAdminLogado ? `
+                        <button class="action-button" onclick="enviarEscalacaoWhatsApp()" style="background: var(--accent-green); margin-top: 10px;">
+                            <span>💬</span> Enviar Escalação para o WhatsApp
+                        </button>
+                    ` : '';
+
+                    conteudoHtml = `
+                        <h3>📋 Gerenciamento de Escalação</h3>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Formato da Guerra</label>
+                            <select id="select-formato-guerra" class="sort-select" style="width: 100%; padding: 10px;" onchange="atualizarFormatoGuerra(this.value)" ${formatoSeletorDisabled}>
+                                <option value="5x5">5 x 5</option>
+                                <option value="10x10">10 x 10</option>
+                                <option value="15x15">15 x 15</option>
+                                <option value="20x20">20 x 20</option>
+                                <option value="25x25">25 x 25</option>
+                                <option value="30x30">30 x 30</option>
+                                <option value="40x40">40 x 40</option>
+                                <option value="50x50">50 x 50</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Data da Guerra</label>
+                                <input type="date" id="input-data-guerra" onchange="atualizarDataGuerra(this.value)" ${formatoSeletorDisabled}>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Horário</label>
+                                <input type="time" id="input-hora-guerra" onchange="atualizarHoraGuerra(this.value)" ${formatoSeletorDisabled}>
+                            </div>
+                        </div>
+
+                        ${bsoEscalacaoBotoes}
+
+                        <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                            ${itensTitularesHtml}
+                            ${itensReservasHtml}
+                        </div>
+
+                        ${botaoEnviarWpp}
+                    `;
+                    break;
+                case 'recap':
+                    titulo = 'War Recap (Resumo de Guerras)';
+                    conteudoHtml = `
+                        <h3>📊 Histórico e Desempenho Recente</h3>
+                        <p>Acompanhe o balanço das últimas confrontações do clã:</p>
+                        <ul>
+                            <li><strong>Taxa de Destruição Média:</strong> Mantemos uma média de destruição consistente acima de 85% nas últimas guerras.</li>
+                            <li><strong>Erros Comuns:</strong> Atenção redobrada na limpeza inicial de tropas de castelo e aproveitamento do tempo de ataque.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'ranking':
+                    titulo = 'Ranking de Guerras';
+                    
+                    let temporadas = [...new Set(globalBaseGuerraData.map(item => item.temporada).filter(t => t))].sort((a,b) => b.localeCompare(a));
+                    let optionsHtml = '<option value="todos">Todos os Tempos</option>';
+                    temporadas.forEach(t => {
+                        optionsHtml += `<option value="${t}">${t}</option>`;
+                    });
+
+                    conteudoHtml = `
+                        <h3>🏆 Ranking de Guerras</h3>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Acompanhe a pontuação e as estrelas dos membros baseadas em seus desempenhos de ataques e defesas nas guerras do clã.</p>
+                        
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <select id="filtro-temporada-ranking" class="sort-select" style="flex: 1; padding: 10px;" onchange="renderizarRankingBaseGuerra()">
+                                ${optionsHtml}
+                            </select>
+                            <select id="filtro-ordem-ranking" class="sort-select" style="flex: 1; padding: 10px;" onchange="renderizarRankingBaseGuerra()">
+                                <option value="pontos">Ordenar: Total de Pontos</option>
+                                <option value="estrelas">Ordenar: Total de Estrelas</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; background: var(--card-bg); padding: 10px; border: 1px solid var(--border-color); border-radius: 8px;">
+                            <input type="checkbox" id="ignorar-guerra-atual" onchange="renderizarRankingBaseGuerra()" style="cursor: pointer; width: 16px; height: 16px;">
+                            <label for="ignorar-guerra-atual" style="font-size: 12px; color: var(--text-secondary); cursor: pointer; flex: 1; margin: 0;">
+                                <strong style="color: var(--accent-yellow);">Guerra em andamento?</strong> Marque para ocultar os pontos da última guerra registrada.
+                            </label>
+                        </div>
+
+                        <button class="action-button" onclick="compartilharRankingWhatsApp()" style="background: var(--accent-green); margin-bottom: 15px;">
+                            <span>💬</span> Compartilhar Ranking no WhatsApp
+                        </button>
+
+                        <div id="lista-ranking-guerra"></div>
+                    `;
+                    setTimeout(() => renderizarRankingBaseGuerra(), 50);
+                    break;
+                case 'dicas':
+                    titulo = 'Dicas de Ataques';
+                    conteudoHtml = `
+                        <h3>💡 Estratégias e Estruturas de Ataque</h3>
+                        <p>Guia rápido com estratégias recomendadas:</p>
+                        <ul>
+                            <li><strong>Hybrid:</strong> Excelente para CVs intermediários e altos.</li>
+                            <li><strong>Lalo:</strong> Potente nas mãos de jogadores precisos.</li>
+                        </ul>
+                    `;
+                    break;
+                case 'layouts':
+                    titulo = 'Layouts de Guerra';
+                    
+                    let cvsDisponiveis = ["CV17", "CV16", "CV15", "CV14", "CV13", "CV12", "CV11", "CV10", "CV9", "CV8"];
+                    let botoesCvHtml = '';
+                    cvsDisponiveis.forEach(cv => {
+                        let activeClass = cv === cvSelecionadoLayout ? 'background: var(--accent-blue); color: white;' : 'background: var(--card-bg); color: var(--text-secondary);';
+                        botoesCvHtml += `<button onclick="mudarCvLayout('${cv}')" style="padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; ${activeClass}">${cv}</button>`;
+                    });
+
+                    let layoutsFiltrados = globalLayoutsData.filter(l => String(l.cv).toUpperCase().replace(/\s+/g, '') === cvSelecionadoLayout.toUpperCase());
+                    let layoutsCardsHtml = '';
+
+                    if (layoutsFiltrados.length === 0) {
+                        layoutsCardsHtml = `<p style="text-align: center; color: var(--text-secondary); padding: 25px; font-size: 13px;">Nenhum layout cadastrado para o ${cvSelecionadoLayout}.</p>`;
+                    } else {
+                        layoutsFiltrados.forEach(layout => {
+                            let botaoAdminLayout = isAdminLogado ? `
+                                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                                    <button class="btn-icon" onclick='abrirModalLayoutEdicao(${JSON.stringify(layout)})' style="flex: 1;">✏️ Editar</button>
+                                    <button class="btn-icon delete" onclick="excluirLayout('${layout.id}')" style="flex: 1;">🗑️ Excluir</button>
+                                </div>
+                            ` : '';
+
+                            layoutsCardsHtml += `
+                                <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 12px; text-align: center;">
+                                    <a href="${layout.link}" target="_blank" title="Abrir link do layout">
+                                        <img src="${layout.foto}" alt="Layout ${layout.cv}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                                    </a>
+                                    <div style="font-size: 13px; font-weight: bold; color: var(--text-color); margin-bottom: 8px;">Base ${layout.cv}</div>
+                                    <div style="display: flex; gap: 6px; margin-bottom: 4px;">
+                                        <a href="${layout.link}" target="_blank" class="action-button" style="margin: 0; padding: 8px; font-size: 13px; text-decoration: none; flex: 1;">
+                                            <span>🔗</span> Copiar
+                                        </a>
+                                        <button class="action-button" onclick="compartilharLayout('${layout.link}', '${layout.cv}')" style="background: var(--accent-green); margin: 0; padding: 8px; font-size: 13px; flex: 1;">
+                                            <span>💬</span> Compartilhar
+                                        </button>
+                                    </div>
+                                    ${botaoAdminLayout}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    let btnAddLayoutAdmin = isAdminLogado ? `
+                        <button class="action-button" onclick="abrirModalLayoutNovo()" style="margin-bottom: 15px;">
+                            <span>➕</span> Cadastrar Novo Layout
+                        </button>
+                    ` : '';
+
+                    conteudoHtml = `
+                        <h3>🗺️ Layouts de Guerra</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Selecione o seu Centro de Vila para ver as melhores bases de guerra disponíveis:</p>
+                        
+                        <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px;">
+                            ${botoesCvHtml}
+                        </div>
+
+                        ${btnAddLayoutAdmin}
+
+                        <div id="lista-layouts-container">
+                            ${layoutsCardsHtml}
+                        </div>
+                    `;
+                    break;
+                case 'regras':
+                    titulo = 'Regras do Clã';
+                    conteudoHtml = `
+                        <h3>📜 Diretrizes do Clã</h3>
+                        <p>Bem vindo ao 〽️ Invictos BR! 🔰</p>
+                        <p>Queremos players que acrescentem e ajudem os outros membros, fazendo com que o clã cresça, se você não quer ajudar e não faz nada em prol do clã, então você certamente não precisa de um, sendo assim será retirado!</p>
+                        
+                        <p><strong>Respeito:</strong> Respeite os membros no chat, temos membros mais novos, mais velhos, homens e mulheres, portanto pense antes de falar qualquer besteira!</p>
+                        
+                        <p><strong>Participação em Guerras:</strong> Se você não quiser ir para uma determinada guerra, votem no nosso grupo do Whatsapp. Mais lembro que o clã é de guerra, fique fora apenas se tiver os heróis upando ou outros casos específicos.</p>
+                        
+                        <p><strong>Novatos:</strong> Novos jogadores ficam de fora da primeira guerra. Estamos vendo sua atividade no clã para ver se é um jogador ativo. Se não houver atividade, você não irá para guerra, pois corremos sério risco de perder por falta do seu ataque.</p>
+                        
+                        <h4 style="color: var(--accent-yellow); margin: 12px 0 6px 0;">Regras básicas:</h4>
+                        <ul>
+                            <li>Ser participativo</li>
+                            <li>Fazer todos ataques nas guerras</li>
+                            <li>Não ofender ninguém</li>
+                            <li>Pergunte no chat sempre que tiver dúvidas</li>
+                        </ul>
+                        <p>Players que ficarem mais de 15 dias sem jogar será retirado do clã, podendo voltar quando retornar a atividade.</p>
+                        
+                        <h4 style="color: var(--accent-yellow); margin: 12px 0 6px 0;">Regras para guerra:</h4>
+                        <p>Guerras 3 vezes por semana, sempre votem na enquete no grupo do whatsapp.</p>
+                        <p><strong>HORÁRIOS de GUERRA:</strong> DOMINGOS, TERÇAS e QUINTAS começando às 18:00h horário de Brasília.<br>
+                        <strong>PESQUISA:</strong> SEG, QUA e SAB as 18:00h.</p>
+                        
+                        <p><strong>PRIMEIRO ATAQUE:</strong> Deve-se OBRIGATORIAMENTE atacar o oponente de mesma posição. Em alguns casos os líderes podem decidir o seu ataque em outro, de acordo com a estratégia, então mandaremos mensagem se o ataque for diferente de ser no seu espelho.<br>
+                        Você preferencialmente deve fazer seu 1º ataque nas 12 primeiras horas de guerra, assim teremos uma boa estratégia para o segundo ataque. <strong>IMPORTANTE:</strong> Caso não faça nas primeiras 12 horas, outro jogador pode atacar seu espelho mediante autorização de um líder.</p>
+                        
+                        <p><strong>SEGUNDO ATAQUE:</strong> Aguardar permissão dos líderes para atacar vila QUE JÁ RECEBEU ATAQUE E NÃO OBTEVE-SE 100%, ou no final da guerra (faltando 3 ~ 2 horas para o encerramento da guerra).</p>
+                        
+                        <p style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 10px; border-radius: 8px; font-size: 12px;">⚠️ <strong>É terminantemente PROIBIDO</strong> deixar layout de guerra de zoeira, qualquer tipo de mensagem, troll e todas variáveis possíveis, antes da guerra. Caso desrespeitada, será punido com advertência.</p>
+                    `;
+                    break;
+                case 'bilhete':
+                    titulo = 'Sorteio Mensal do Bilhete Dourado';
+                    let contagemGanhadores = {};
+                    globalBilheteData.forEach(item => {
+                        let nome = item.membro || 'Desconhecido';
+                        contagemGanhadores[nome] = (contagemGanhadores[nome] || 0) + 1;
+                    });
+                    let topGanhadores = Object.keys(contagemGanhadores)
+                        .map(nome => ({ nome, total: contagemGanhadores[nome] }))
+                        .sort((a, b) => b.total - a.total)
+                        .slice(0, 3);
+
+                    let topHtml = '';
+                    if (topGanhadores.length === 0) {
+                        topHtml = '<p style="font-size: 12px; color: var(--text-secondary);">Nenhum registro encontrado.</p>';
+                    } else {
+                        topHtml = `<table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 15px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
+                                    <th style="padding: 6px;">Pos</th>
+                                    <th style="padding: 6px;">Membro</th>
+                                    <th style="padding: 6px; text-align: right;">Bilhetes</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                        topGanhadores.forEach((g, idx) => {
+                            topHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 6px; font-weight: bold; color: var(--accent-yellow);">#${idx + 1}</td>
+                                <td style="padding: 6px; color: var(--text-color);">${g.nome}</td>
+                                <td style="padding: 6px; text-align: right; font-weight: bold; color: var(--accent-green);">${g.total}x</td>
+                            </tr>`;
+                        });
+                        topHtml += `</tbody></table>`;
+                    }
+
+                    let ultimos10Html = '';
+                    let ultimos10Lista = [...globalBilheteData].slice(-10).reverse();
+                    if (ultimos10Lista.length === 0) {
+                        ultimos10Html = '<p style="font-size: 12px; color: var(--text-secondary);">Nenhum ganhador registrado.</p>';
+                    } else {
+                        ultimos10Html = `<table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
+                                    <th style="padding: 6px;">Mês / Temporada</th>
+                                    <th style="padding: 6px;">Ganhador</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                        ultimos10Lista.forEach(item => {
+                            let mesFormatado = formatarMesAnoBilhete(item.mes);
+                            ultimos10Html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 6px; color: var(--accent-blue); font-weight: bold;">${mesFormatado}</td>
+                                <td style="padding: 6px; color: var(--text-color);">${item.membro || '--'}</td>
+                            </tr>`;
+                        });
+                        ultimos10Html += `</tbody></table>`;
+                    }
+
+                    let botaoAdicionarHtml = isAdminLogado ? `
+                        <button class="action-button" onclick="abrirModalBilhete()" style="margin: 15px 0 10px 0;">
+                            <span>➕</span> Adicionar Novo Ganhador
+                        </button>
+                    ` : '';
+
+                    conteudoHtml = `
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <img src="https://image.jimcdn.com/app/cms/image/transf/none/path/s8203c0343ee3fe52/image/ib20e7021e0f87b69/version/1708819737/image.jpg" alt="Bilhete Dourado" style="max-width: 100%; height: auto; border-radius: 8px;">
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--text-color); font-weight: bold; text-align: center; margin-bottom: 15px;">Prepare-se para ter a chance de ganhar um Bilhete Dourado do Clash of Clans todo mês!</p>
+
+                        ${botaoAdicionarHtml}
+                        <h4 style="color: var(--accent-yellow); margin: 15px 0 8px 0;">🏆 Top 3 Ganhadores</h4>
+                        ${topHtml}
+
+                        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                            <h4 style="color: var(--accent-blue); margin: 0 0 8px 0;">O que é o Bilhete Dourado?</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">O Bilhete Dourado do Clash of Clans é um item especial que concede ao jogador diversos benefícios, como:</p>
+                            <ul>
+                                <li><strong>Recompensas exclusivas da Temporada:</strong> Obtenha skins de heróis, recursos, acelerações e muito mais!</li>
+                                <li><strong>Aumento no Banco da Temporada:</strong> Armazene mais recursos do que nunca!</li>
+                                <li><strong>Desafios e Missões Extras:</strong> Complete desafios para ganhar recompensas ainda mais incríveis!</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-blue); margin: 15px 0 8px 0;">Como participar do sorteio?</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Para participar do sorteio do Bilhete Dourado, você precisa:</p>
+                            <ul>
+                                <li>Ser membro do clã "Invictos BR"</li>
+                                <li>Participar do grupo do WhatsApp do clã</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-blue); margin: 15px 0 8px 0;">Como será realizado o sorteio?</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">O sorteio será realizado ao vivo no canal do YouTube "Clash Invictos" no primeiro dia de cada Temporada. Durante o sorteio, um número aleatório será gerado, e o membro do clã que estiver com o número correspondente no grupo do WhatsApp será o vencedor.</p>
+                            
+                            <p style="font-size: 12px; color: var(--accent-green); font-weight: bold; margin-top: 10px;">Boa sorte!</p>
+                            <p style="font-size: 12px; color: var(--text-secondary);">Não perca essa chance de turbinar seu progresso no Clash of Clans!</p>
+                        </div>
+
+                        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                            <h4 style="color: var(--accent-yellow); margin: 0 0 8px 0;">📜 Últimos Ganhadores do Sorteio</h4>
+                            ${ultimos10Html}
+                        </div>
+                    `;
+                    break;
+            }
+
+            bodyContent.innerHTML = `<h3>${titulo}</h3>` + conteudoHtml;
+
+            if (tipo === 'escalacao') {
+                const elFormato = document.getElementById('select-formato-guerra');
+                const elData = document.getElementById('input-data-guerra');
+                const elHora = document.getElementById('input-hora-guerra');
+                if (elFormato) elFormato.value = globalFormatoGuerra || "15x15";
+                if (elData) elData.value = globalDataGuerra || "";
+                if (elHora) elHora.value = globalHoraGuerra || "";
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DO RANKING BASE GUERRA
+        // ==========================================
+        function renderizarRankingBaseGuerra() {
+            const temporada = document.getElementById('filtro-temporada-ranking').value;
+            const ordem = document.getElementById('filtro-ordem-ranking').value;
+            const ignorarGuerraAtual = document.getElementById('ignorar-guerra-atual') ? document.getElementById('ignorar-guerra-atual').checked : false;
+            const container = document.getElementById('lista-ranking-guerra');
+
+            let maxIdGuerra = 0;
+            if (ignorarGuerraAtual) {
+                maxIdGuerra = Math.max(...globalBaseGuerraData.map(item => Number(item.idGuerra) || 0));
+            }
+
+            let stats = {};
+
+            globalBaseGuerraData.forEach(row => {
+                if (temporada !== 'todos' && row.temporada !== temporada) return;
+                
+                if (ignorarGuerraAtual && (Number(row.idGuerra) || 0) === maxIdGuerra) return;
+
+                let membroAtual = globalMembrosData.find(m => m.tag === row.tag);
+                if (!membroAtual) return;
+
+                if (!stats[row.tag]) {
+                    stats[row.tag] = {
+                        tag: row.tag,
+                        nome: membroAtual.nome,
+                        fotoCV: membroAtual.fotoCV,
+                        cv: membroAtual.cv,
+                        pontos: 0,
+                        estrelas: 0
+                    };
+                }
+
+                let tipo = String(row.tipo).trim().toUpperCase();
+                let res = String(row.resultado).trim().toUpperCase();
+                let her = String(row.heroico).trim().toUpperCase();
+
+                let p = 0;
+                let est = 0;
+
+                if (tipo === 'ATAQUE') {
+                    if (res === '3') { p = 10; est = 3; }
+                    else if (res === '2') { p = 5; est = 2; }
+                    else if (res === '1') { p = 3; est = 1; }
+                    else if (res === '0') { p = 0; est = 0; }
+                    else if (res === 'NA') { p = -20; est = 0; }
+                    if (her === 'SIM') p += 5;
+                } else if (tipo === 'DEFESA') {
+                    if (res === '0') p = 10;
+                    else if (res === '1') p = 7;
+                    else if (res === '2') p = 5;
+                    else if (res === '3') p = 0;
+                    else if (res === 'NFA') p = 7;
+                    if (her === 'SIM') p += 5;
+                }
+
+                stats[row.tag].pontos += p;
+                stats[row.tag].estrelas += est;
+            });
+
+            let arrayStats = Object.values(stats);
+
+            arrayStats.sort((a, b) => {
+                if (ordem === 'pontos') {
+                    if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+                    return b.estrelas - a.estrelas;
+                } else {
+                    if (b.estrelas !== a.estrelas) return b.estrelas - a.estrelas;
+                    return b.pontos - a.pontos;
+                }
+            });
+
+            rankingAtualGerado = arrayStats;
+
+            if (arrayStats.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 20px;">Nenhum dado encontrado para a seleção atual.</p>';
+                return;
+            }
+
+            let html = '';
+            arrayStats.forEach((item, idx) => {
+                let corPosicao = 'var(--text-secondary)';
+                if(idx === 0) corPosicao = '#fbbf24';
+                else if(idx === 1) corPosicao = '#9ca3af';
+                else if(idx === 2) corPosicao = '#b45309';
+
+                html += `
+                    <div style="display: flex; align-items: center; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+                        <div style="font-size: 16px; font-weight: bold; color: ${corPosicao}; width: 30px; text-align: center;">#${idx + 1}</div>
+                        <img src="${item.fotoCV}" style="width: 36px; height: 36px; margin: 0 10px;" alt="CV">
+                        <div style="flex-grow: 1;">
+                            <div style="font-size: 14px; font-weight: bold; color: var(--text-color);">${item.nome}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">CV ${item.cv}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                            <div style="font-size: 12px; font-weight: bold; color: var(--accent-yellow);">🏆 ${item.pontos} Pts</div>
+                            <div style="font-size: 11px; color: var(--accent-blue);">⭐ ${item.estrelas} Estrelas</div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function compartilharRankingWhatsApp() {
+            if (rankingAtualGerado.length === 0) {
+                alert("Não há dados para compartilhar nesta temporada.");
+                return;
+            }
+            
+            let selectTemp = document.getElementById('filtro-temporada-ranking');
+            let nomeTemp = selectTemp.options[selectTemp.selectedIndex].text;
+            
+            const ignorarGuerraAtual = document.getElementById('ignorar-guerra-atual') ? document.getElementById('ignorar-guerra-atual').checked : false;
+            let avisoAndamento = ignorarGuerraAtual ? "*(Última guerra em andamento não contabilizada)*\n\n" : "\n";
+
+            let texto = `🏆 *RANKING DE GUERRAS - INVICTOS BR* 🏆\n`;
+            texto += `📅 Temporada: *${nomeTemp}*\n${avisoAndamento}`;
+            
+            rankingAtualGerado.forEach((item, idx) => {
+                let medalha = '';
+                if (idx === 0) medalha = '🥇 ';
+                else if (idx === 1) medalha = '🥈 ';
+                else if (idx === 2) medalha = '🥉 ';
+                else medalha = `*${idx + 1}º* `;
+                
+                texto += `${medalha}${item.nome}\n`;
+                texto += `   🔸 Pontos: ${item.pontos}\n`;
+                texto += `   ⭐ Estrelas: ${item.estrelas}\n\n`;
+            });
+            
+            texto += `🔰 *Clã Invictos BR*`;
+            
+            let numeroDestino = "5577991282136";
+            let urlWpp = `https://wa.me/${numeroDestino}?text=` + encodeURIComponent(texto);
+            window.open(urlWpp, '_blank');
+        }
+
+        function mudarCvLayout(cv) {
+            cvSelecionadoLayout = cv;
+            abrirSubmenu('layouts');
+        }
+
+        function compartilharLayout(link, cv) {
+            let texto = `🗺️ *LAYOUT DE GUERRA - ${cv}*\n\nConfira este layout do clã Invictos BR:\n${link}`;
+            let urlWpp = `https://wa.me/?text=` + encodeURIComponent(texto);
+            window.open(urlWpp, '_blank');
+        }
+
+        function abrirModalLayoutNovo() {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title-layout').innerText = "Cadastrar Layout de Guerra";
+            document.getElementById('edit-id-layout').value = "";
+            document.getElementById('form-layout').reset();
+            document.getElementById('campo-layout-cv').value = cvSelecionadoLayout;
+            document.getElementById('modal-layout').style.display = 'flex';
+        }
+
+        function abrirModalLayoutEdicao(layout) {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title-layout').innerText = "Editar Layout de Guerra";
+            document.getElementById('edit-id-layout').value = layout.id;
+            document.getElementById('campo-layout-cv').value = layout.cv;
+            document.getElementById('campo-layout-link').value = layout.link;
+            document.getElementById('campo-layout-foto').value = layout.foto;
+            document.getElementById('modal-layout').style.display = 'flex';
+        }
+
+        function fecharModalLayout() {
+            document.getElementById('modal-layout').style.display = 'none';
+        }
+
+        function salvarLayoutGuerra(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let id = document.getElementById('edit-id-layout').value;
+            let cv = document.getElementById('campo-layout-cv').value;
+            let link = document.getElementById('campo-layout-link').value;
+            let foto = document.getElementById('campo-layout-foto').value;
+
+            mostrarCarregamentoAcao("Salvando layout de guerra...");
+
+            let acaoStr = id ? "editar_layout" : "cadastrar_layout";
+            let payload = {
+                acao: acaoStr,
+                id: id,
+                cv: cv,
+                link: link,
+                foto: foto
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    fecharModalLayout();
+                    cvSelecionadoLayout = cv;
+                    carregarDados(() => {
+                        abrirSubmenu('layouts');
+                    });
+                } else {
+                    alert("Erro ao salvar layout.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                console.error(err);
+                alert("Erro de conexão.");
+            });
+        }
+
+        function excluirLayout(id) {
+            if (!isAdminLogado) return;
+            if (!confirm("Tem certeza que deseja excluir este layout?")) return;
+
+            mostrarCarregamentoAcao("Excluindo layout...");
+
+            let payload = {
+                acao: "excluir_layout",
+                id: id
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('layouts');
+                    });
+                } else {
+                    alert("Erro ao excluir layout.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function voltarMenuMais() {
+            document.getElementById('more-menu-grid').style.display = 'grid';
+            document.getElementById('submenu-view').style.display = 'none';
+        }
+
+        function formatarUltimaAtualizacao(dataString) {
+            if (!dataString) return '--';
+            if (isNaN(dataString) && !dataString.includes('T') && !dataString.includes('-') && dataString.includes(':')) {
+                return dataString;
+            }
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) return dataString;
+            return data.toLocaleString('pt-BR', {
+                timeZone: 'America/Sao_Paulo',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function carregarDados(callbackSuccess = null) {
+            iniciarProgressoLoading();
+
+            fetch(WEB_APP_URL)
+                .then(response => response.json())
+                .then(data => {
+                    if (document.getElementById('tab-meu-cla').style.display === 'none' &&
+                        document.getElementById('tab-guerra').style.display === 'none' &&
+                        document.getElementById('tab-whatsapp').style.display === 'none' &&
+                        document.getElementById('tab-advertencias').style.display === 'none' &&
+                        document.getElementById('tab-mais').style.display === 'none') {
+                        document.getElementById('tab-meu-cla').style.display = 'block';
+                    }
+
+                    const clanData = data["Clã"];
+                    if (clanData && clanData.length > 1) {
+                        const cabecalhos = clanData[0];
+                        const valores = clanData[1];
+                        const getVal = (nome) => valores[cabecalhos.indexOf(nome)];
+
+                        document.getElementById('clan-name').innerText = getVal("Nome");
+                        document.getElementById('clan-badge').src = getVal("Emblema");
+                        document.getElementById('clan-members').innerText = getVal("Membros") + " | " + getVal("Tipo");
+                        document.getElementById('war-wins').innerText = getVal("Vitórias em Guerra");
+                        document.getElementById('war-ties').innerText = getVal("Empates em Guerra");
+                        document.getElementById('war-losses').innerText = getVal("Derrotas em Guerra");
+                        document.getElementById('war-streak').innerText = getVal("Sequência de Vitórias em Guerra");
+                        document.getElementById('clan-points').innerText = "🏆 Pontos: " + getVal("Pontos do Clã");
+                        document.getElementById('clan-location').innerText = "📍 " + getVal("Localização");
+                        document.getElementById('clan-tag').innerText = "🏷️ " + getVal("Tag");
+                        document.getElementById('clan-freq').innerText = "🕒 " + getVal("Frequência de Guerras");
+                        document.getElementById('clan-desc').innerText = getVal("Descrição");
+                        document.getElementById('last-update').innerText = "Última atualização: " + formatarUltimaAtualizacao(getVal("Última Atualização"));
+                    }
+
+                    // --- INÍCIO: CARREGAR DADOS DA GUERRA E MAPAS ---
+                    const rawEventos = data["Eventos Guerra"];
+                    globalEventosGuerraData = [];
+                    if (rawEventos && rawEventos.length > 1) {
+                        const cabE = rawEventos[0];
+                        const idxE = (nome) => cabE.indexOf(nome);
+                        for (let i = 1; i < rawEventos.length; i++) {
+                            let evt = rawEventos[i];
+                            globalEventosGuerraData.push({
+                                tipo: evt[idxE("Tipo")],
+                                atacante: evt[idxE("Atacante")],
+                                fotoCV: evt[idxE("Foto CV")],
+                                detalhes: evt[idxE("Detalhes")]
+                            });
+                        }
+                    }
+
+                    const rawGuerraJog = data["Guerra - Jogadores"];
+                    globalGuerraJogadoresData = [];
+                    if (rawGuerraJog && rawGuerraJog.length > 1) {
+                        const cabGJ = rawGuerraJog[0];
+                        const idxGJ = (nome) => cabGJ.indexOf(nome);
+                        for (let i = 1; i < rawGuerraJog.length; i++) {
+                            let row = rawGuerraJog[i];
+                            globalGuerraJogadoresData.push({
+                                posicao: row[idxGJ("Posição")],
+                                fotoCV: row[idxGJ("Foto CV")],
+                                nome: row[idxGJ("Nome")],
+                                tag: row[idxGJ("Tag")],
+                                cv: row[idxGJ("Nível CV")],
+                                atk1Status: row[idxGJ("1º Ataque (Alvo / Status)")],
+                                atk1Estrelas: row[idxGJ("1º Ataque (Estrelas)")],
+                                atk1Destruicao: row[idxGJ("1º Ataque (%)")],
+                                atk2Status: row[idxGJ("2º Ataque (Alvo / Status)")],
+                                atk2Estrelas: row[idxGJ("2º Ataque (Estrelas)")],
+                                atk2Destruicao: row[idxGJ("2º Ataque (%)")]
+                            });
+                        }
+                    }
+
+                    const rawClaRival = data["Clã Rival"];
+                    globalClaRivalData = [];
+                    if (rawClaRival && rawClaRival.length > 1) {
+                        const cabCR = rawClaRival[0];
+                        const idxCR = (nome) => cabCR.indexOf(nome);
+                        for (let i = 1; i < rawClaRival.length; i++) {
+                            let row = rawClaRival[i];
+                            globalClaRivalData.push({
+                                posicao: row[idxCR("Posição")],
+                                fotoCV: row[idxCR("Foto CV")],
+                                nome: row[idxCR("Nome")],
+                                tag: row[idxCR("Tag")],
+                                cv: row[idxCR("Nível CV")],
+                                atk1Estrelas: row[idxCR("1º Ataque (Estrelas)")],
+                                atk1Destruicao: row[idxCR("1º Ataque (%)")],
+                                atk2Estrelas: row[idxCR("2º Ataque (Estrelas)")],
+                                atk2Destruicao: row[idxCR("2º Ataque (%)")],
+                                totalEstrelas: row[idxCR("Total Estrelas Feitas")],
+                                ataqueHeroico: row[idxCR("Ataque Heróico?")],
+                                qtdDefesas: row[idxCR("Qtd Defesas")],
+                                maxEstrelasRecebidas: row[idxCR("Max Estrelas Recebidas")],
+                                maxDestruicaoRecebida: row[idxCR("Max Destruição Recebida (%)")],
+                                defesaHeroica: row[idxCR("Defesa Heróica?")]
+                            });
+                        }
+                    }
+
+                    renderizarGuerra(data["Guerra Atual"], data["Previsão Guerra"]);
+                    // --- FIM: CARREGAR DADOS DA GUERRA ---
+
+                    const rawBaseGuerra = data["Base Guerra"];
+                    globalBaseGuerraData = [];
+                    if (rawBaseGuerra && rawBaseGuerra.length > 1) {
+                        const cabBg = rawBaseGuerra[0];
+                        const idxIdGuerra = cabBg.indexOf("ID Guerra");
+                        const idxTemp = cabBg.indexOf("Temporada");
+                        const idxTag = cabBg.indexOf("Tag Jogador");
+                        const idxTipo = cabBg.indexOf("Tipo");
+                        const idxRes = cabBg.indexOf("Resultado");
+                        const idxHer = cabBg.indexOf("Heroico");
+
+                        for (let i = 1; i < rawBaseGuerra.length; i++) {
+                            let row = rawBaseGuerra[i];
+                            if (row[idxTag]) {
+                                globalBaseGuerraData.push({
+                                    idGuerra: row[idxIdGuerra],
+                                    temporada: formatarTemporadaData(row[idxTemp]),
+                                    tag: row[idxTag],
+                                    tipo: row[idxTipo],
+                                    resultado: row[idxRes],
+                                    heroico: row[idxHer]
+                                });
+                            }
+                        }
+                    }
+
+                    const rawLayouts = data["Layouts de Guerra"];
+                    globalLayoutsData = [];
+                    if (rawLayouts && rawLayouts.length > 1) {
+                        const cabLay = rawLayouts[0];
+                        const idxLay = (nome) => cabLay.indexOf(nome);
+                        for (let i = 1; i < rawLayouts.length; i++) {
+                            let lay = rawLayouts[i];
+                            globalLayoutsData.push({
+                                id: lay[idxLay("ID")],
+                                cv: lay[idxLay("CV (Centro de Vila)")],
+                                link: lay[idxLay("Link do Layout")],
+                                foto: lay[idxLay("Foto (URL ou Descrição)")]
+                            });
+                        }
+                    }
+
+                    const rawCadastro = data["Cadastro Membros"];
+                    globalCadastroData = [];
+                    if (rawCadastro && rawCadastro.length > 1) {
+                        const cabC = rawCadastro[0];
+                        const idx = (nome) => cabC.indexOf(nome);
+                        for (let i = 1; i < rawCadastro.length; i++) {
+                            let c = rawCadastro[i];
+                            globalCadastroData.push({
+                                linhaPlanilha: i + 1,
+                                nomeReal: c[idx("Nome Real")],
+                                telefone: c[idx("Número de Telefone")],
+                                tagClash: c[idx("Tag do Clash")],
+                                nomeClash: c[idx("Nome no Clash")],
+                                status: c[idx("Status")] || "Ativo"
+                            });
+                        }
+                    }
+
+                    const rawMembros = data["Membros"];
+                    if (rawMembros && rawMembros.length > 1) {
+                        const cab = rawMembros[0];
+                        const mapIndex = (nome) => cab.indexOf(nome);
+
+                        globalMembrosData = [];
+                        for (let i = 1; i < rawMembros.length; i++) {
+                            let m = rawMembros[i];
+                            globalMembrosData.push({
+                                nome: m[mapIndex("Nome")],
+                                fotoCV: m[mapIndex("Foto CV")],
+                                tag: m[mapIndex("Tag")],
+                                cargo: m[mapIndex("Cargo")],
+                                xp: Number(m[mapIndex("Nível Exp")]) || 0,
+                                trofeus: Number(m[mapIndex("Troféus")]) || 0,
+                                doadas: Number(m[mapIndex("Doadas")]) || 0,
+                                recebidas: Number(m[mapIndex("Recebidas")]) || 0,
+                                cv: Number(m[mapIndex("Nível CV")]) || 0
+                            });
+                        }
+                        renderizarMembros();
+                        popularSelectMembros();
+                        popularSelectMembrosAdvertencia();
+                        popularSelectMembrosBilhete();
+                    }
+
+                    const rawBilhete = data["Bilhete"];
+                    globalBilheteData = [];
+                    if (rawBilhete && rawBilhete.length > 1) {
+                        const cabB = rawBilhete[0];
+                        const idxB = (nome) => cabB.indexOf(nome);
+                        for (let i = 1; i < rawBilhete.length; i++) {
+                            let b = rawBilhete[i];
+                            globalBilheteData.push({
+                                mes: b[idxB("Mês")],
+                                membro: b[idxB("Membro")]
+                            });
+                        }
+                    }
+
+                    const rawEscalacao = data["Escalação"];
+                    globalEscalacaoData = [];
+                    if (rawEscalacao && rawEscalacao.length > 1) {
+                        const cabE = rawEscalacao[0];
+                        const idxE = (nome) => cabE.indexOf(nome);
+                        for (let i = 1; i < rawEscalacao.length; i++) {
+                            let e = rawEscalacao[i];
+                            let tagVal = e[idxE("Tag do Membro")] || "";
+                            let nomeVal = e[idxE("Nome no Clash")] || "";
+                            let statusVal = e[idxE("Status")] || "Escalado";
+                            if (tagVal || nomeVal) {
+                                globalEscalacaoData.push({
+                                    tag: tagVal,
+                                    nome: nomeVal,
+                                    status: statusVal
+                                });
+                            }
+                        }
+                    }
+
+                    const rawConfigGuerra = data["Config Guerra"];
+                    if (rawConfigGuerra && rawConfigGuerra.length > 1) {
+                        const cabCfg = rawConfigGuerra[0];
+                        const valCfg = rawConfigGuerra[1];
+                        const idxCfg = (nome) => cabCfg.indexOf(nome);
+                        globalFormatoGuerra = valCfg[idxCfg("Formato")] || "15x15";
+                        globalDataGuerra = valCfg[idxCfg("Data")] || "";
+                        globalHoraGuerra = valCfg[idxCfg("Hora")] || "";
+                    }
+
+                    const rawAdvertências = data["Advertências"];
+                    globalAdvertenciasData = [];
+                    if (rawAdvertências && rawAdvertências.length > 1) {
+                        const cabA = rawAdvertências[0];
+                        const idA = (nome) => cabA.indexOf(nome);
+                        for (let i = 1; i < rawAdvertências.length; i++) {
+                            let adv = rawAdvertências[i];
+                            globalAdvertenciasData.push({
+                                idOcorrencia: adv[idA("ID Ocorrência")],
+                                tagMembro: adv[idA("Tag do Membro")],
+                                nomeClash: adv[idA("Nome no Clash")],
+                                nivelInfracao: adv[idA("Nível da Infração")],
+                                data: formatarDataSimples(adv[idA("Data")]),
+                                motivo: adv[idA("Motivo / Descrição")],
+                                punicao: adv[idA("Punição Aplicada")],
+                                statusPunicao: adv[idA("Status da Punição")]
+                            });
+                        }
+                    }
+
+                    const rawLogin = data["Login"];
+                    globalLoginData = [];
+                    if (rawLogin && rawLogin.length > 1) {
+                        const cabL = rawLogin[0];
+                        const idxL = (nome) => cabL.indexOf(nome);
+                        for (let i = 1; i < rawLogin.length; i++) {
+                            let linhaLog = rawLogin[i];
+                            globalLoginData.push({
+                                telefone: linhaLog[idxL("Telefone")],
+                                senha: linhaLog[idxL("Senha")]
+                            });
+                        }
+                    }
+
+                    let salvoTel = localStorage.getItem('invictos_admin_tel') || '';
+                    let salvoPass = localStorage.getItem('invictos_admin_pass') || '';
+                    if (salvoTel && salvoPass && !isAdminLogado) {
+                        let telLimpo = salvoTel.replace(/\D/g, '');
+                        let adminEncontrado = globalLoginData.find(adm => {
+                            let tP = String(adm.telefone || '').trim().replace(/\D/g, '');
+                            let sP = String(adm.senha || '').trim();
+                            return tP === telLimpo && sP === salvoPass;
+                        });
+                        if (adminEncontrado) {
+                            isAdminLogado = true;
+                        }
+                    }
+
+                    atualizarInterfaceAdmin();
+                    finalizarProgressoLoading(() => {
+                        if (callbackSuccess) callbackSuccess();
+                    });
+                })
+                .catch(error => {
+                    if (networkTimer) clearTimeout(networkTimer);
+                    if (progressInterval) clearInterval(progressInterval);
+                    document.getElementById('loader-status-text').innerText = 'Erro ao carregar dados da API.';
+                    document.getElementById('network-warning').style.display = 'block';
+                    document.getElementById('network-warning').innerText = '⚠️ Erro de conexão com a API. Verifique sua internet ou tente recarregar a página.';
+                    console.error('Erro:', error);
+                    if (callbackSuccess) callbackSuccess();
+                });
+        }
+
+        function renderizarMembros() {
+            const criterio = document.getElementById('sort-select').value;
+            const termoBusca = document.getElementById('search-member-input').value.toLowerCase().trim();
+
+            let membrosFiltrados = globalMembrosData.filter(m => {
+                return m.nome.toLowerCase().includes(termoBusca);
+            });
+
+            membrosFiltrados.sort((a, b) => {
+                if (criterio === 'trofeus') return b.trofeus - a.trofeus;
+                if (criterio === 'cv') return b.cv - a.cv;
+                if (criterio === 'doadas') return b.doadas - a.doadas;
+                if (criterio === 'recebidas') return b.recebidas - a.recebidas;
+                if (criterio === 'xp') return b.xp - a.xp;
+                if (criterio === 'cargo') {
+                    const pesos = { "leader": 3, "coLeader": 2, "elder": 1, "member": 0 };
+                    return (pesos[b.cargo] || 0) - (pesos[a.cargo] || 0);
+                }
+                return 0;
+            });
+
+            const membrosListDiv = document.getElementById('members-list');
+            membrosListDiv.innerHTML = '';
+
+            if (membrosFiltrados.length === 0) {
+                membrosListDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum membro encontrado.</p>';
+                return;
+            }
+
+            membrosFiltrados.forEach((m, index) => {
+                let cadastroMatch = globalCadastroData.find(c => c.tagClash === m.tag);
+                let btnWhatsappHtml = '';
+                
+                if (cadastroMatch && cadastroMatch.telefone) {
+                    let telLimpo = String(cadastroMatch.telefone).replace(/\D/g, '');
+                    if (telLimpo.length <= 11 && !telLimpo.startsWith('55')) {
+                        telLimpo = '55' + telLimpo;
+                    }
+                    let mensagemWpp = encodeURIComponent(`Olá ${m.nome}, aqui é da administração do clã Invictos BR.`);
+                    let wppUrl = `https://wa.me/${telLimpo}?text=${mensagemWpp}`;
+                    let adminClass = isAdminLogado ? '' : 'admin-only';
+                    btnWhatsappHtml = `<a href="${wppUrl}" target="_blank" class="btn-icon whatsapp ${adminClass}" title="Enviar WhatsApp">💬</a>`;
+                }
+
+                let card = document.createElement('div');
+                card.className = 'member-card';
+                card.innerHTML = `
+                    <div class="member-pos">${index + 1}</div>
+                    <img src="${m.fotoCV}" class="member-avatar" alt="CV">
+                    <div class="member-info">
+                        <p class="member-name">${m.nome}</p>
+                        <p class="member-role">${m.cargo} • XP ${m.xp}</p>
+                        <div class="member-extra-details">🟢 Doadas: ${m.doadas} | 🔴 Recebidas: ${m.recebidas}</div>
+                    </div>
+                    <div class="member-stats-group">
+                        ${btnWhatsappHtml}
+                        <div class="member-stats-column">
+                            <div class="member-stat-box">🏆 ${m.trofeus}</div>
+                        </div>
+                    </div>
+                `;
+                membrosListDiv.appendChild(card);
+            });
+        }
+
+        function popularSelectMembros(tagEmEdicao = null) {
+            const select = document.getElementById('campo-membro-clash');
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+
+            const tagsCadastradas = globalCadastroData
+                .filter(c => c.tagClash !== tagEmEdicao)
+                .map(c => c.tagClash);
+
+            globalMembrosData.forEach(m => {
+                if (!tagsCadastradas.includes(m.tag)) {
+                    let opt = document.createElement('option');
+                    opt.value = m.tag;
+                    opt.text = `${m.nome} (${m.tag})`;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function popularSelectMembrosAdvertencia() {
+            const select = document.getElementById('campo-membro-advertencia');
+            if(!select) return;
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+            globalCadastroData.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.tagClash;
+                opt.text = `${c.nomeClash || c.nomeReal} (${c.tagClash})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function popularSelectMembrosBilhete() {
+            const select = document.getElementById('campo-bilhete-membro');
+            if(!select) return;
+            select.innerHTML = '<option value="">Selecione o membro...</option>';
+            globalMembrosData.forEach(m => {
+                let opt = document.createElement('option');
+                opt.value = m.nome;
+                opt.text = m.nome;
+                select.appendChild(opt);
+            });
+        }
+
+        function abrirModalEscalacao() {
+            if (!isAdminLogado) return;
+            const containerCheckboxes = document.getElementById('lista-checkboxes-escalacao');
+            containerCheckboxes.innerHTML = '';
+
+            let tagsEscaladas = globalEscalacaoData.map(e => e.tag);
+            let nomesEscalados = globalEscalacaoData.map(e => e.nome);
+
+            let tagsCadastradasComWpp = globalCadastroData
+                .filter(c => c.telefone && String(c.telefone).trim() !== '')
+                .map(c => c.tagClash);
+
+            let disponiveis = globalMembrosData.filter(m => {
+                let jaEscalado = tagsEscaladas.includes(m.tag) || nomesEscalados.includes(m.nome);
+                let temWhatsappSalvo = tagsCadastradasComWpp.includes(m.tag);
+                return !jaEscalado && temWhatsappSalvo;
+            });
+
+            if (disponiveis.length === 0) {
+                containerCheckboxes.innerHTML = '<p style="font-size: 12px; color: var(--text-secondary); text-align: center;">Nenhum membro disponível com WhatsApp cadastrado.</p>';
+            } else {
+                disponiveis.forEach(m => {
+                    let div = document.createElement('div');
+                    div.style.display = 'flex';
+                    div.style.alignItems = 'center';
+                    div.style.gap = '8px';
+                    div.style.marginBottom = '6px';
+                    div.innerHTML = `
+                        <input type="checkbox" class="check-membro-escalacao" value="${m.tag}" data-nome="${m.nome}" style="width: auto; cursor: pointer;">
+                        <span style="font-size: 12px; color: var(--text-color); cursor: pointer;">${m.nome} (CV ${m.cv})</span>
+                    `;
+                    containerCheckboxes.appendChild(div);
+                });
+            }
+
+            document.getElementById('modal-escalacao').style.display = 'flex';
+        }
+
+        function fecharModalEscalacao() {
+            document.getElementById('modal-escalacao').style.display = 'none';
+        }
+
+        function salvarEscalacaoMembrosMultiplos() {
+            if (!isAdminLogado) return;
+
+            let checkboxes = document.querySelectorAll('.check-membro-escalacao:checked');
+            if (checkboxes.length === 0) {
+                alert("Selecione pelo menos um membro.");
+                return;
+            }
+
+            mostrarCarregamentoAcao("Salvando escalação...");
+
+            let limiteTitulares = 15;
+            let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+            if (matchFormato) {
+                limiteTitulares = parseInt(matchFormato[1], 10);
+            }
+
+            let countTitularesAtuais = globalEscalacaoData.filter(e => String(e.status || '').toLowerCase() !== 'reserva').length;
+
+            let novosMembros = [];
+            checkboxes.forEach(chk => {
+                let statusInicial = "Escalado";
+                if (countTitularesAtuais >= limiteTitulares) {
+                    statusInicial = "Reserva";
+                } else {
+                    countTitularesAtuais++;
+                }
+
+                novosMembros.push({
+                    tag: chk.value,
+                    nome: chk.dataset.nome,
+                    status: statusInicial
+                });
+            });
+
+            let payload = {
+                acao: "cadastrar_escalacao",
+                membros: novosMembros
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if(res.sucesso) {
+                    fecharModalEscalacao();
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao adicionar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                console.error(err);
+                alert("Erro de conexão.");
+            });
+        }
+
+        function alternarStatusEscalacao(tagOuNome, novoStatus) {
+            if (!isAdminLogado) return;
+
+            if (novoStatus === 'Escalado' || novoStatus === 'Titular') {
+                let limiteTitulares = 15;
+                let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+                if (matchFormato) {
+                    limiteTitulares = parseInt(matchFormato[1], 10);
+                }
+                let titularesAtuais = globalEscalacaoData.filter(e => {
+                    let st = String(e.status || '').toLowerCase();
+                    return st !== 'reserva' && (e.tag !== tagOuNome && e.nome !== tagOuNome);
+                }).length;
+
+                if (titularesAtuais >= limiteTitulares) {
+                    alert(`Não é possível mover para Titular: o limite de ${limiteTitulares} vagas para este formato de guerra (${globalFormatoGuerra}) já foi atingido.`);
+                    return;
+                }
+            }
+
+            mostrarCarregamentoAcao("Atualizando status na escalação...");
+
+            let payload = {
+                acao: "alternar_status_escala",
+                tag: tagOuNome,
+                status: novoStatus
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if(res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao alternar status.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function removerEscalacao(tagOuNome) {
+            if (!isAdminLogado) return;
+            if (!confirm("Deseja remover este membro da escalação?")) return;
+
+            mostrarCarregamentoAcao("Removendo da escalação...");
+
+            let payload = {
+                acao: "excluir_escala",
+                tag: tagOuNome
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if(res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao remover.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function limparTodaEscalacao() {
+            if (!isAdminLogado) return;
+            if (!confirm("Tem certeza absoluta que deseja limpar toda a escalação da guerra?")) return;
+
+            mostrarCarregamentoAcao("Limpando escalação...");
+
+            let payload = {
+                acao: "limpar_escalacao"
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if(res.sucesso) {
+                    carregarDados(() => {
+                        abrirSubmenu('escalacao');
+                    });
+                } else {
+                    alert("Erro ao limpar escalação.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function atualizarFormatoGuerra(formato) {
+            if (!isAdminLogado) return;
+            globalFormatoGuerra = formato;
+            abrirSubmenu('escalacao');
+        }
+
+        function atualizarDataGuerra(data) {
+            if (!isAdminLogado) return;
+            globalDataGuerra = data;
+        }
+
+        function atualizarHoraGuerra(hora) {
+            if (!isAdminLogado) return;
+            globalHoraGuerra = hora;
+        }
+
+        function salvarConfiguracaoGuerra() {
+            if (!isAdminLogado) return;
+
+            mostrarCarregamentoAcao("Salvando configuração de guerra...");
+
+            let payload = {
+                acao: "salvar_config_guerra",
+                formato: globalFormatoGuerra,
+                data: globalDataGuerra,
+                hora: globalHoraGuerra
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if(res.sucesso) {
+                    alert("Configurações de guerra salvas com sucesso!");
+                } else {
+                    alert("Erro ao salvar configurações.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function enviarEscalacaoWhatsApp() {
+            if (!isAdminLogado) return;
+
+            let listaEscaladosOrdenada = [...globalEscalacaoData].sort((a, b) => {
+                let mX = globalMembrosData.find(m => m.tag === a.tag || m.nome === a.nome);
+                let mY = globalMembrosData.find(m => m.tag === b.tag || m.nome === b.nome);
+                let cvX = mX ? mX.cv : 0;
+                let cvY = mY ? mY.cv : 0;
+                if(cvY !== cvX) return cvY - cvX;
+                let trofX = mX ? mX.trofeus : 0;
+                let trofY = mY ? mY.trofeus : 0;
+                return trofY - trofX;
+            });
+
+            if (listaEscaladosOrdenada.length === 0) {
+                alert("Não há membros escalados para enviar.");
+                return;
+            }
+
+            let limiteTitulares = 15;
+            let matchFormato = globalFormatoGuerra.match(/^(\d+)x\d+$/);
+            if (matchFormato) {
+                limiteTitulares = parseInt(matchFormato[1], 10);
+            }
+
+            let titularesLista = [];
+            let reservasLista = [];
+
+            listaEscaladosOrdenada.forEach(esc => {
+                let st = String(esc.status || '').trim().toLowerCase();
+                if (st === 'reserva') {
+                    reservasLista.push(esc);
+                } else {
+                    if (titularesLista.length < limiteTitulares) {
+                        titularesLista.push(esc);
+                    } else {
+                        reservasLista.push(esc);
+                    }
+                }
+            });
+
+            let dataFormatada = globalDataGuerra ? new Date(globalDataGuerra + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada';
+            let horaFormatada = globalHoraGuerra || 'Não informada';
+
+            let textoMsg = `⚔️ *ESCALAÇÃO DE GUERRA - INVICTOS BR* \n\n`;
+            textoMsg += `📌 *Formato:* ${globalFormatoGuerra}\n`;
+            textoMsg += `📅 *Data:* ${dataFormatada}\n`;
+            textoMsg += `🕒 *Horário:* ${horaFormatada}\n\n`;
+            
+            textoMsg += `🌟 *TITULARES:*\n`;
+            titularesLista.forEach((esc, idx) => {
+                let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || { cv: '--' };
+                textoMsg += `${idx + 1}. ${esc.nome} (CV ${membroInfo.cv})\n`;
+            });
+
+            if (reservasLista.length > 0) {
+                textoMsg += `\n🛡️ *RESERVAS:*\n`;
+                reservasLista.forEach((esc, idx) => {
+                    let membroInfo = globalMembrosData.find(m => m.tag === esc.tag || m.nome === esc.nome) || { cv: '--' };
+                    textoMsg += `${idx + 1}. ${esc.nome} (CV ${membroInfo.cv})\n`;
+                });
+            }
+
+            textoMsg += `\nPreparem suas tropas e bons ataques! 🔰`;
+
+            let numeroDestino = "5577991282136";
+            let urlWpp = `https://wa.me/${numeroDestino}?text=` + encodeURIComponent(textoMsg);
+            window.open(urlWpp, '_blank');
+        }
+
+        function abrirModalBilhete() {
+            if (!isAdminLogado) return;
+            document.getElementById('form-bilhete').reset();
+            document.getElementById('modal-bilhete').style.display = 'flex';
+        }
+
+        function fecharModalBilhete() {
+            document.getElementById('modal-bilhete').style.display = 'none';
+        }
+
+        function salvarBilheteGanhador(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let membro = document.getElementById('campo-bilhete-membro').value;
+            let mes = document.getElementById('campo-bilhete-mes').value;
+
+            mostrarCarregamentoAcao("Salvando ganhador do bilhete...");
+
+            let payload = {
+                acao: "cadastrar_bilhete",
+                membro: membro,
+                mes: mes
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if(res.sucesso) {
+                    fecharModalBilhete();
+                    carregarDados(() => {
+                        abrirSubmenu('bilhete');
+                    });
+                } else {
+                    alert("Erro ao salvar: " + (res.erro || "Desconhecido"));
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                console.error(err);
+                alert("Erro de conexão.");
+            });
+        }
+
+        function preencherDadosMembroAdvertencia() {
+            const tagSelecionada = document.getElementById('campo-membro-advertencia').value;
+            let membro = globalCadastroData.find(c => c.tagClash === tagSelecionada);
+            if (membro) {
+                document.getElementById('campo-tag').value = membro.tagClash;
+                document.getElementById('campo-nome-clash').value = membro.nomeClash || membro.nomeReal;
+            } else {
+                document.getElementById('campo-tag').value = '';
+                document.getElementById('campo-nome-clash').value = '';
+            }
+        }
+
+        function renderizarWhatsappMembros() {
+            const container = document.getElementById('whatsapp-members-list');
+            container.innerHTML = '';
+
+            if (globalCadastroData.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhuma vila cadastrada ainda.</p>';
+                return;
+            }
+
+            globalCadastroData.forEach(cad => {
+                let membroClash = globalMembrosData.find(m => m.tag === cad.tagClash);
+                let fotoUrl = membroClash ? membroClash.fotoCV : '';
+                let nomeExibicao = membroClash ? membroClash.nome : (cad.nomeClash || 'Desconhecido');
+
+                let telLimpo = String(cad.telefone || '').replace(/\D/g, '');
+                let ultimos4 = telLimpo.length >= 4 ? telLimpo.slice(-4) : telLimpo;
+                let telMascarado = `...${ultimos4}`;
+
+                let card = document.createElement('div');
+                card.className = 'whatsapp-card';
+                card.innerHTML = `
+                    <div class="whatsapp-card-info">
+                        ${fotoUrl ? `<img src="${fotoUrl}" class="member-avatar" alt="CV">` : '<div style="width:42px;height:42px"></div>'}
+                        <div class="whatsapp-details">
+                            <h4>${cad.nomeReal} <span style="font-size:11px; color: var(--accent-blue)">(${nomeExibicao})</span></h4>
+                            <p>📱 ${telMascarado} | Status: <strong style="color: var(--text-color);">${cad.status || 'Ativo'}</strong></p>
+                        </div>
+                    </div>
+                    <div class="card-actions ${isAdminLogado ? '' : 'admin-only'}">
+                        <button class="btn-icon" onclick='editarCadastro(${JSON.stringify(cad)})'>✏️</button>
+                        <button class="btn-icon delete" onclick="excluirCadastro(${cad.linhaPlanilha})">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function abrirModalCadastro() {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title').innerText = "Cadastrar Vila";
+            document.getElementById('edit-index').value = "";
+            document.getElementById('form-cadastro').reset();
+            popularSelectMembros();
+            document.getElementById('modal-cadastro').style.display = 'flex';
+        }
+
+        function editarCadastro(cad) {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title').innerText = "Editar Cadastro";
+            document.getElementById('edit-index').value = cad.linhaPlanilha;
+            document.getElementById('campo-nome-real').value = cad.nomeReal;
+            document.getElementById('campo-telefone').value = cad.telefone;
+            document.getElementById('campo-status').value = cad.status || "Ativo";
+            
+            popularSelectMembros(cad.tagClash);
+            let selectMembro = document.getElementById('campo-membro-clash');
+            let opt = document.createElement('option');
+            opt.value = cad.tagClash;
+            opt.text = `${cad.nomeClash} (${cad.tagClash})`;
+            opt.selected = true;
+            selectMembro.appendChild(opt);
+
+            document.getElementById('modal-cadastro').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-cadastro').style.display = 'none';
+        }
+
+        function salvarCadastro(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let linha = document.getElementById('edit-index').value;
+            let nomeReal = document.getElementById('campo-nome-real').value;
+            let telefone = document.getElementById('campo-telefone').value;
+            let selectMembro = document.getElementById('campo-membro-clash');
+            let tagClash = selectMembro.value;
+            let optSelecionada = selectMembro.options[selectMembro.selectedIndex];
+            let nomeClash = optSelecionada ? optSelecionada.text.split(' (')[0] : '';
+            let status = document.getElementById('campo-status').value;
+
+            mostrarCarregamentoAcao("Salvando cadastro de membro...");
+
+            let acaoStr = linha ? "editar" : "cadastrar";
+            let payload = {
+                acao: acaoStr,
+                linha: linha,
+                nomeReal: nomeReal,
+                telefone: telefone,
+                tagClash: tagClash,
+                nomeClash: nomeClash,
+                status: status
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    fecharModal();
+                    carregarDados();
+                } else {
+                    alert("Erro ao salvar cadastro.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function excluirCadastro(linhaPlanilha) {
+            if (!isAdminLogado) return;
+            if (!confirm("Tem certeza que deseja excluir este cadastro?")) return;
+
+            mostrarCarregamentoAcao("Excluindo cadastro...");
+
+            let payload = {
+                acao: "excluir",
+                linha: linhaPlanilha
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    carregarDados();
+                } else {
+                    alert("Erro ao excluir.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function abrirModalAdvertencia() {
+            if (!isAdminLogado) return;
+            document.getElementById('modal-title-text').innerText = "Aplicar Advertência";
+            document.getElementById('edit-id-ocorrencia').value = "";
+            document.getElementById('form-advertencia').reset();
+            popularSelectMembrosAdvertencia();
+            document.getElementById('campo-data').valueAsDate = new Date();
+            document.getElementById('modal-advertencia').style.display = 'flex';
+        }
+
+        function fecharModalAdvertencia() {
+            document.getElementById('modal-advertencia').style.display = 'none';
+        }
+
+        function salvarAdvertencia(event) {
+            event.preventDefault();
+            if (!isAdminLogado) return;
+
+            let tag = document.getElementById('campo-tag').value;
+            let nomeClash = document.getElementById('campo-nome-clash').value;
+            let nivel = document.getElementById('campo-nivel').value;
+            let data = document.getElementById('campo-data').value;
+            let motivo = document.getElementById('campo-motivo').value;
+            let punicao = document.getElementById('campo-punicao').value;
+            let statusPunicao = document.getElementById('campo-status-punicao').value;
+
+            if (!tag) {
+                alert("Selecione um membro válido.");
+                return;
+            }
+
+            mostrarCarregamentoAcao("Salvando advertência...");
+
+            let payload = {
+                acao: "cadastrar_advertencia",
+                tagMembro: tag,
+                nomeClash: nomeClash,
+                nivelInfracao: nivel,
+                data: data,
+                motivo: motivo,
+                punicao: punicao,
+                statusPunicao: statusPunicao
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    fecharModalAdvertencia();
+                    carregarDados();
+                } else {
+                    alert("Erro ao salvar advertência.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function excluirAdvertencia(idOcorrencia) {
+            if (!isAdminLogado) return;
+            if (!confirm("Deseja excluir esta advertência?")) return;
+
+            mostrarCarregamentoAcao("Excluindo advertência...");
+
+            let payload = {
+                acao: "excluir_advertencia",
+                idOcorrencia: idOcorrencia
+            };
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                esconderCarregamentoAcao();
+                if (res.sucesso) {
+                    carregarDados();
+                } else {
+                    alert("Erro ao excluir advertência.");
+                }
+            })
+            .catch(err => {
+                esconderCarregamentoAcao();
+                alert("Erro de conexão.");
+            });
+        }
+
+        function renderizarEstatisticasRanking() {
+            const rankingListDiv = document.getElementById('ranking-list');
+            if(!rankingListDiv) return;
+
+            let contagem = {};
+            globalAdvertenciasData.forEach(adv => {
+                let nome = adv.nomeClash || adv.tagMembro;
+                contagem[nome] = (contagem[nome] || 0) + 1;
+            });
+
+            let rankingOrdenado = Object.keys(contagem)
+                .map(nome => ({ nome, total: contagem[nome] }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 3);
+
+            if (rankingOrdenado.length === 0) {
+                rankingListDiv.innerHTML = '<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Nenhuma punição registrada.</p>';
+                return;
+            }
+
+            let html = '';
+            rankingOrdenado.forEach((item, idx) => {
+                html += `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-color);">
+                    <span>#${idx + 1} ${item.nome}</span>
+                    <strong style="color: var(--accent-red);">${item.total} punição(ões)</strong>
+                </div>`;
+            });
+            rankingListDiv.innerHTML = html;
+        }
+
+        function renderizarAdvertencias() {
+            const warningsListDiv = document.getElementById('warnings-list');
+            if(!warningsListDiv) return;
+            warningsListDiv.innerHTML = '';
+
+            const statusInativoFiltro = document.getElementById('filter-status-inativo').value;
+            const gravidadeFiltro = document.getElementById('filter-gravidade').value;
+
+            let filtradas = globalAdvertenciasData.filter(adv => {
+                let cadastroMatch = globalCadastroData.find(c => c.tagClash === adv.tagMembro);
+                let statusClã = cadastroMatch ? (cadastroMatch.status || 'Ativo') : 'Ativo';
+
+                if (statusInativoFiltro !== 'todos' && statusClã !== statusInativoFiltro) {
+                    return false;
+                }
+                if (gravidadeFiltro !== 'todas' && adv.nivelInfracao !== gravidadeFiltro) {
+                    return false;
+                }
+                return true;
+            });
+
+            if (filtradas.length === 0) {
+                warningsListDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhuma advertência encontrada.</p>';
+                return;
+            }
+
+            filtradas.forEach(adv => {
+                let corNivel = 'var(--accent-yellow)';
+                if (adv.nivelInfracao === 'Grave') corNivel = 'var(--accent-red)';
+                if (adv.nivelInfracao === 'Leve') corNivel = 'var(--accent-green)';
+
+                let card = document.createElement('div');
+                card.className = 'whatsapp-card';
+                card.innerHTML = `
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <h4 style="margin: 0; font-size: 14px; color: var(--text-color);">${adv.nomeClash || adv.tagMembro}</h4>
+                            <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: ${corNivel}; font-weight: bold;">${adv.nivelInfracao || 'Leve'}</span>
+                        </div>
+                        <p style="margin: 2px 0; font-size: 12px; color: var(--text-secondary);"><strong>Motivo:</strong> ${adv.motivo || '--'}</p>
+                        <p style="margin: 2px 0; font-size: 12px; color: var(--text-secondary);"><strong>Punição:</strong> ${adv.punicao || '--'} (${adv.statusPunicao || 'Pendente'})</p>
+                        <p style="margin: 2px 0; font-size: 11px; color: var(--text-secondary);">Data: ${adv.data || '--'}</p>
+                    </div>
+                    <div class="card-actions ${isAdminLogado ? '' : 'admin-only'}" style="margin-left: 10px;">
+                        <button class="btn-icon delete" onclick="excluirAdvertencia('${adv.idOcorrencia}')" title="Excluir">🗑️</button>
+                    </div>
+                `;
+                warningsListDiv.appendChild(card);
+            });
+        }
+
+        // Inicialização ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            carregarDados();
+        });
+    </script>
+</body>
+</html>
